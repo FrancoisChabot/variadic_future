@@ -43,6 +43,23 @@ int add_4_to_1(int v) {
   return v + 4;
 }
 
+void finally_4(int v) {
+  EXPECT_EQ(v, 4);
+}
+
+void finally_not_called(int v) {
+  EXPECT_FALSE(true);
+}
+
+void finally_expect_4(expected<int> v) {
+  EXPECT_TRUE(v.has_value());
+  EXPECT_EQ(*v, 4);
+}
+
+void finally_expect_fail(expected<int> v) {
+  EXPECT_FALSE(v.has_value());
+}
+
 int expect_add_4_to_1(expected<int> v) {
   EXPECT_TRUE(v.has_value());
   EXPECT_EQ(*v, 1);
@@ -58,8 +75,6 @@ int expect_add_4_to_1_failure(expected<int> v) {
   EXPECT_FALSE(v.has_value());
   throw std::runtime_error("yo");
 }
-
-
 
 TEST(Future, get_success) {
   // Before the fact
@@ -244,6 +259,78 @@ TEST(Future, st_success_then_expect) {
   }
 }
 
+TEST(Future, st_success_then_finally) {
+  // pre-filled
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    prom.set_value(4);
+    fut.then_finally(finally_4);
+  }
+
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    prom.finish(4);
+    fut.then_finally(finally_4);
+  }
+
+  // post-filled
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    fut.then_finally(finally_4);
+    prom.set_value(4);
+  }
+
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    fut.then_finally(finally_4);
+    prom.finish(4);
+  }
+}
+
+TEST(Future, st_success_then_finally_expect) {
+  // pre-filled
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    prom.set_value(4);
+    fut.then_finally_expect(finally_expect_4);
+  }
+
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    prom.finish(4);
+    fut.then_finally_expect(finally_expect_4);
+  }
+
+  // post-filled
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    fut.then_finally_expect(finally_expect_4);
+    prom.set_value(4);
+  }
+
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    fut.then_finally_expect(finally_expect_4);
+    prom.finish(4);
+  }
+}
+
 
 TEST(Future, st_failure_then) {
   
@@ -368,5 +455,81 @@ TEST(Future, st_failure_then_expect) {
     auto result_fut = fut.then_expect(expect_add_4_to_1_failure);
     prom.finish(unexpected(get_error()));
     EXPECT_THROW(result_fut.get(), std::runtime_error);
+  }
+}
+
+TEST(Future, st_failure_then_finally) {
+  
+  // pre-filled
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    prom.set_exception(get_error());
+    fut.then_finally(finally_not_called);
+  }
+
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    prom.finish(unexpected(get_error()));
+    fut.then_finally(finally_not_called);
+  }
+
+
+  // post-filled
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    fut.then_finally(finally_not_called);
+    prom.set_exception(get_error());
+  }
+
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    fut.then_finally(finally_not_called);
+    prom.finish(unexpected(get_error()));
+  }
+}
+
+TEST(Future, st_failure_then_finally_expect) {
+  
+  // pre-filled
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    prom.set_exception(get_error());
+    fut.then_finally(finally_expect_fail);
+  }
+
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    prom.finish(unexpected(get_error()));
+    fut.then_finally(finally_expect_fail);
+  }
+
+
+  // post-filled
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    fut.then_finally(finally_expect_fail);
+    prom.set_exception(get_error());
+  }
+
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    fut.then_finally(finally_expect_fail);
+    prom.finish(unexpected(get_error()));
   }
 }
