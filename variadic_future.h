@@ -249,7 +249,29 @@ class Future_then_expect_handler : public Future_handler_base<QueueT, Ts...> {
   }
 
   static void do_finish(QueueT* q, std::tuple<expected<Ts>...> v, dst_type dst,
-                        CbT cb) {}
+                        CbT cb) {
+    enqueue(q, [v = std::move(v), cb = std::move(cb), dst = std::move(dst)] {
+      try {
+        if constexpr (std::is_same_v<void, cb_result_type>) {
+          if constexpr (sizeof...(Ts) == 0) {
+            cb({});
+          } else {
+            std::apply(cb, std::move(v));
+          }
+          dst->fullfill({});
+        } else {
+          if constexpr (sizeof...(Ts) == 0) {
+            dst->fullfill(cb({}));
+          } else {
+            dst->fullfill(std::apply(cb, std::move(v)));
+          }
+        }
+
+      } catch (...) {
+        dst->fail(std::current_exception());
+      }
+    });
+}
 
   static void do_fullfill(QueueT* q, std::tuple<Ts...> v, dst_type dst,
                           CbT cb) {
@@ -352,7 +374,15 @@ class Future_then_finally_expect_handler
     do_fail(this->get_queue(), e, std::move(cb_));
   }
 
-  static void do_finish(QueueT* q, std::tuple<expected<Ts>...> value, CbT cb) {}
+  static void do_finish(QueueT* q, std::tuple<expected<Ts>...> value, CbT cb) {
+    if constexpr (sizeof...(Ts) == 0) {
+      // special case, we are expecting an expected<void> here...
+      cb(std::get<0>(value));
+
+    } else {
+      std::apply(cb, std::move(value));
+    }
+  }
 
   static void do_fullfill(QueueT* q, std::tuple<Ts...> value, CbT cb) {
     if constexpr (sizeof...(Ts) == 0) {
@@ -599,7 +629,7 @@ class Future {
     storage_->template set_handler<handler_t>(&queue, std::move(cb));
   }
 
-  auto get_std_future() {
+  auto get_std_future(std::unique_lock<std::mutex>* mtx=nullptr) {
     static_assert(
         sizeof...(Ts) <= 1,
         "converting multi-futures to std::future is not supported yet.");
@@ -615,6 +645,9 @@ class Future {
               p.set_exception(v.error());
             }
           });
+        if(mtx) {
+          mtx->unlock();
+        }
       return fut;
     } else if constexpr (sizeof...(Ts) == 1) {
       using T = std::tuple_element_t<0, std::tuple<Ts...>>;
@@ -628,6 +661,9 @@ class Future {
           p.set_exception(v.error());
         }
       });
+      if(mtx) {
+          mtx->unlock();
+        }
       return fut;
     } else {
       // Not sure... return a std::future<tuple<Ts>>?
@@ -658,6 +694,13 @@ class Promise {
     assert(storage_);
 
     storage_->fullfill(std::make_tuple(std::move(vals)...));
+    storage_.reset();
+  }
+
+  void finish(expected<Ts>... vals) {
+    assert(storage_);
+
+    storage_->finish(std::make_tuple(std::move(vals)...));
     storage_.reset();
   }
 
