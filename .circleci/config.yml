@@ -31,4 +31,4 @@ jobs:
           command: |
             cd _bld
             make coverage
-            bash <(curl -s https://codecov.io/bash) -f test_coverage.info || echo "Codecov did not collect coverage reports"
+            bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"
