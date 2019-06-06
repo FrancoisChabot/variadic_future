@@ -16,6 +16,8 @@
 
 #include "gtest/gtest.h"
 
+#include <queue>
+
 using namespace aom;
 
 // In order to keep the coverage testing sane, we will only instantiate a few specific types
@@ -180,27 +182,6 @@ TEST(Future, st_success_then_expect) {
 
 }
 
-TEST(Future, st_success_then_finally) {
-  // pre-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    prom.set_value(4);
-    fut.then_finally(finally_4);
-  }
-
-  // post-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    fut.then_finally(finally_4);
-    prom.set_value(4);
-  }
-
-}
-
 TEST(Future, st_success_then_finally_expect) {
   // pre-filled
   {
@@ -295,28 +276,6 @@ TEST(Future, st_failure_then_expect) {
 
 }
 
-TEST(Future, st_failure_then_finally) {
-  
-  // pre-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    prom.set_exception(get_error());
-    fut.then_finally(finally_not_called);
-  }
-
-  // post-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    fut.then_finally(finally_not_called);
-    prom.set_exception(get_error());
-  }
-
-}
-
 TEST(Future, st_failure_then_finally_expect) {
   
   // pre-filled
@@ -325,7 +284,7 @@ TEST(Future, st_failure_then_finally_expect) {
     auto fut = prom.get_future();
 
     prom.set_exception(get_error());
-    fut.then_finally(finally_expect_fail);
+    fut.then_finally_expect(finally_expect_fail);
   }
 
   // post-filled
@@ -333,7 +292,7 @@ TEST(Future, st_failure_then_finally_expect) {
     Promise<int> prom;
     auto fut = prom.get_future();
 
-    fut.then_finally(finally_expect_fail);
+    fut.then_finally_expect(finally_expect_fail);
     prom.set_exception(get_error());
   }
 }
@@ -370,4 +329,92 @@ TEST(Future, get_user_type) {
   prom.set_value({4});
 
   EXPECT_EQ(4, fut.get().t);
+}
+
+
+TEST(Future, then_in_queue) {
+
+  std::queue<std::function<void()>> queue;
+
+  int dst = 0;
+  // pre-filled
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    prom.set_value(1);
+    fut.then_finally_expect([&](aom::expected<int> v){ dst += *v;}, queue);
+  }
+
+  EXPECT_EQ(1, queue.size());
+
+  // post-filled
+  {
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    fut.then_finally_expect([&](aom::expected<int> v){ dst += *v;}, queue);
+    prom.set_value(2);
+  }
+
+  EXPECT_EQ(2, queue.size());
+  EXPECT_EQ(0, dst);
+
+  while(!queue.empty()) {
+    queue.front()();
+    queue.pop();
+  }
+
+  EXPECT_EQ(3, dst);
+}
+
+TEST(Future, multiplex_voids) {
+
+  Promise<> prom_a;
+  Promise<> prom_b;
+
+  auto fut = tie(prom_a.get_future(), prom_b.get_future());
+
+
+  int dst = 0;
+  fut.then_finally_expect([&](expected<void>a, expected<void>b){
+    dst = 5;
+    EXPECT_TRUE(a.has_value());
+    EXPECT_TRUE(b.has_value());
+  });
+
+
+  EXPECT_EQ(0, dst);
+  prom_a.set_value();
+  
+  EXPECT_EQ(0, dst);
+  
+  prom_b.set_value();
+  EXPECT_EQ(5, dst);
+
+}
+
+TEST(Future, partial_completion) {
+
+  Promise<int> prom_a;
+  Promise<int> prom_b;
+
+  auto fut = tie(prom_a.get_future(), prom_b.get_future());
+
+
+  int dst = 0;
+  fut.then_finally_expect([&](expected<int>a, expected<int>b){
+    dst += a.value();
+    EXPECT_FALSE(b.has_value());
+  });
+
+
+  EXPECT_EQ(0, dst);
+  prom_a.set_value(4);
+  
+  EXPECT_EQ(0, dst);
+  
+  prom_b.set_exception(get_error());
+  EXPECT_EQ(4, dst);
+
 }
