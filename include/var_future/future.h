@@ -18,12 +18,7 @@
 #include "var_future/config.h"
 #include "var_future/impl/storage_decl.h"
 
-#include <cassert>
-#include <functional>
-#include <future>
 #include <memory>
-#include <mutex>
-#include <optional>
 
 namespace aom {
 

@@ -21,6 +21,8 @@
 #include "var_future/impl/then_expect.h"
 #include "var_future/impl/then_finally_expect.h"
 
+#include <future>
+
 namespace aom {
 
 template <typename... Ts>
