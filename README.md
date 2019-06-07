@@ -7,7 +7,7 @@ Variadic, callback-based futures for C++17.
 
 ## Why?
 
-In short, I need this to properly implement (another project)[https://github.com/FrancoisChabot/easy_grpc] of mine, and it was an interesting exercise.
+In short, I need this to properly implement [another project](https://github.com/FrancoisChabot/easy_grpc) of mine, and it was an interesting exercise.
 
 ## Installation
 
