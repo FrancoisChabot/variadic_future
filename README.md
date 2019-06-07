@@ -33,17 +33,21 @@ The main header `var_future/future.h` is meant to contain all of the user-facing
 
 void foo() {
   aom::Promise<int> prom;
-  aom::Future<int> fut = prom.get_future();
+  {
+    aom::Future<int> fut = prom.get_future();
   
-  fut.then_finally_expect([](aom::expected<int> v){
-    // Do something with v;
-    // This is called in whichever thread fullfills the future.
-  });
+    fut.then_finally_expect([](aom::expected<int> v){
+      // Do something with v;
+      // This is called in whichever thread fullfills the future.
+    });
+  }
   
+  // some time later, perhaps in another thread.
   prom.set_value(2);
 }
 ```
 
+Note that it does not matter that the future is destroyed after the callback is bound. The callback, and its bindings will be kept around until the promise is fullfilled, failed or destroyed.
 
 ### Tieing futures
 
