@@ -134,7 +134,8 @@ void foo() {
 
 * **Fullfilled** every member of the future has a value assigned to it.
 * **Finished** every member of the future has either a value or an error assigned to it.
-  * A future finished with nothing but values is considered **fullfilled**
+  * A future finished with nothing but values is considered both **fullfilled** and **finished**
+  * A future finished with nothing but errors is considered both **failed** and **finished**
 * **Failed** every member of the future has an error assigned to it
 
 ### Methods
