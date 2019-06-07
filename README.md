@@ -120,9 +120,75 @@ void foo() {
 }
 ```
 
-## Quick reference
+## Reference
 
+### Glossary
 
+* **Fullfilled** every member of the future has a value assigned to it.
+* **Finished** every member of the future has either a value or an error assigned to it.
+  * A future finished with nothing but values is considered **fullfilled**
+* **Failed** every member of the future has an error assigned to it
+
+### Methods
+
+**Future::then()**
+
+Chaining callback with failure propagation.
 ```
-aom::
+[1] Future<U> Future<Ts...>::then(cb);
+[2] Future<U> Future<Ts...>::then(cb, queue);
 ```
+* `cb` is a `Callable<U(Ts...)>`
+* [1] `cb` is immediately called when `this` is **fullfilled**.
+* [2] `cb(...)` is pushed in queue when `this` is **fullfilled**.
+* If `this` is failed, `cb` is NOT called
+* If `sizeof...(Ts)>1` any failure causes the complete failure of the future.  
+* The result Future will eventually contain either:
+  * The value returned by `cb`
+  * The error that caused `this` to fail
+  * The exception thrown by `cb`
+
+**Future::then_except()**
+
+Chaining callback.
+```
+[1] Future<U> Future<Ts...>::then_except(cb);
+[2] Future<U> Future<Ts...>::then_except(cb, queue);
+```
+
+* `cb` is a `Callable<U(expected<Ts>...)>`
+* [1] `cb` is immediately called when `this` is **finished**.
+* [2] `cb(...)` is pushed in queue when `this` is **finished**.
+* The result Future will eventually contain either:
+  * The value returned by `cb`
+  * The exception thrown by `cb`
+
+**Future::then_finally_except()**
+
+Simple callback.
+```
+[1] Future<U> Future<Ts...>::then_finally_except(cb);
+[2] Future<U> Future<Ts...>::then_finally_except(cb, queue);
+```
+* `cb` is a `Callable<U(expected<Ts>...)>`
+* [1] `cb` is immediately called when `this` is **finished**.
+* [2] `cb(...)` is pushed in queue when `this` is **finished**.
+
+**Future::get_std_future()**
+
+Bridge to `std` api.
+```
+[1] std::future<T> Future<T>::get_std_future();
+[2] std::future<std::tuple<see_below>> Future<Ts...>::get_std_future();
+```
+
+* Returns a std::future<> that completes upon Future **finishing**
+* if `sizeof...(Ts) > 1`, the resulting tuple will have the types of the non-void `Ts`.
+
+**tie()**
+
+Wait on multiple futures.
+```
+[1] Future<T,U,...> tie(Future<T>, Future<U>, ...);
+```
+* Returns a Future that is **finished** when all passed futures are **finished**
