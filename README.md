@@ -1,13 +1,17 @@
 [![CircleCI](https://circleci.com/gh/FrancoisChabot/variadic_future.svg?style=svg)](https://circleci.com/gh/FrancoisChabot/variadic_future)
 [![codecov](https://codecov.io/gh/FrancoisChabot/variadic_future/branch/master/graph/badge.svg)](https://codecov.io/gh/FrancoisChabot/variadic_future)
 
-# Installation
+# Variadic futures
+
+Variadic, callback-based futures for c++17.
+
+## Installation
 
 Make the contents of the include directory available to your project.
 
-# Usage
+## Usage
 
-## Basic
+### Basic
 
 ```cpp
 #include <iostream>
@@ -55,7 +59,7 @@ void foo() {
 }
 ```
 
-## Tieing futures
+### Tieing futures
 
 You can wait on multiple futures at the same time using the 
 
