@@ -11,7 +11,7 @@ In short, I need this to properly implement [another project](https://github.com
 
 ## But why variadic?
 
-Because it allows for the `tie()` function, which provides a very nice way to way on multiple futures at once.
+Because it allows for the `tie()` function, which provides a very nice way to wait on multiple futures at once.
 
 ## Installation
 
