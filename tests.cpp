@@ -172,6 +172,35 @@ TEST(Future, simple_then) {
   }
 }
 
+TEST(Future, simple_then_failure) {
+  // Post-filled
+  { 
+    Promise<int> prom;
+    auto fut = prom.get_future();
+
+    auto res = fut.then([&](expected<int> v) {
+      return v.value() + 4;
+    });
+
+    prom.set_exception(std::make_exception_ptr(std::runtime_error("nope")));
+    EXPECT_THROW(res.get_std_future().get(), std::runtime_error);
+  }
+
+  // Pre-filled
+  { 
+    Promise<int> prom;
+    auto fut = prom.get_future();
+    prom.set_exception(std::make_exception_ptr(std::runtime_error("nope")));
+
+    auto res = fut.then([&](expected<int> v) {
+      return v.value() + 4;
+    });
+
+    EXPECT_THROW(res.get_std_future().get(), std::runtime_error);
+    
+  }
+}
+
 TEST(Future, simple_get) {
   Promise<int> prom;
   auto fut = prom.get_future();
