@@ -48,7 +48,6 @@ You can wait on multiple futures at the same time using the `tie()` function.
 
 #include "var_future/future.h"
 
-Work_queue main_work_queue;
 void foo() {
   aom::Promise<int> prom_a;
   aom::Promise<int> prom_b;
