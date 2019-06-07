@@ -29,6 +29,30 @@ void foo() {
 }
 ```
 
+
+### Tieing futures
+
+You can wait on multiple futures at the same time using the 
+
+```cpp
+
+#include "var_future/future.h"
+
+Work_queue main_work_queue;
+void foo() {
+  aom::Promise<int> prom_a;
+  aom::Promise<int> prom_b;
+
+  //... Launch something that eventually fullfills the promises.
+
+  aom::Future<int, int> combined = tie(prom_a.get_future(), prom_b.get_future());
+
+  combined.then_finally_expect([](aom::expected<int> a, aom::expected<int> b){
+    //Do something with a and/or b;
+  });
+}
+```
+
 ## Choosing where the callback executes
 
 ```cpp
@@ -45,8 +69,7 @@ void foo() {
   aom::Promise<int> prom;
   aom::Future<int> fut = prom.get_future();
 
-  // When the previous callback completes (with a success or not), push the execution
-  // of this callback in main_work_queue. 
+  // push the execution of this callback in main_work_queue when ready.
   fut.then_finally_expect([](aom::expected<int> v, main_work_queue) {
     //Do something with v;
   });
@@ -91,34 +114,3 @@ void foo() {
 }
 ```
 
-### Tieing futures
-
-You can wait on multiple futures at the same time using the 
-
-```cpp
-#include <iostream>
-#include <thread>
-#include <chrono>
-
-#include "var_future/future.h"
-
-Work_queue main_work_queue;
-void foo() {
-  aom::Promise<int> prom_a;
-  aom::Promise<int> prom_b;
-
-  //... Launch something that eventually fullfills the promises.
-
-  aom::Future<int, int> combined = tie(prom_a.get_future(), prom_b.get_future());
-
-  // This callback will execute in whichever thread completes the last promise.
-  aom::Future<int> final = combined.then([](int a, int b)) {
-    return a * b;
-  });
-
-  // Queue in main_work_queue
-  final.then_finally_expect([](aom::expected<int> result){
-    std::cout << result << "\n";
-  }, main_work_queue);
-}
-```
