@@ -123,6 +123,10 @@ class Future {
   Future& operator=(const Future&) = delete;
 };
 
+struct Unfullfilled_promise : public std::logic_error {
+  Unfullfilled_promise() : std::logic_error("Unfullfilled_promise") {}
+};
+
 template <typename... Ts>
 class Promise {
   static_assert(sizeof...(Ts) >= 1, "you probably meant Promise<void>");
@@ -134,6 +138,12 @@ class Promise {
   using fullfill_type = detail::fullfill_type_t<Ts...>;
   using finish_type = detail::finish_type_t<Ts...>;
   using fail_type = detail::fail_type_t<Ts...>;
+
+  Promise() = default;
+  Promise(Promise&&) = default;
+  Promise& operator=(Promise&&) = default;
+  ~Promise();
+  
 
   // Returns a future that is bound to this promise
   future_type get_future();
@@ -161,6 +171,9 @@ class Promise {
 
  private:
   std::shared_ptr<storage_type> storage_;
+
+  Promise(const Promise&) = delete;
+  Promise& operator=(const Promise&) = delete;
 };
 
 // Ties a set of Future<> into a single Future<> that is finished once all child

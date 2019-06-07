@@ -20,6 +20,13 @@
 namespace aom {
 
 template <typename... Ts>
+Promise<Ts...>::~Promise() {
+  if(storage_) {
+    storage_->fail(std::make_exception_ptr(Unfullfilled_promise{}));
+  }
+}
+
+template <typename... Ts>
 typename Promise<Ts...>::future_type Promise<Ts...>::get_future() {
   assert(!storage_);
 

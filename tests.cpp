@@ -201,6 +201,16 @@ TEST(Future, simple_then_failure) {
   }
 }
 
+TEST(Future, Forgotten_promise) {
+  Future<int> fut;
+  { 
+    Promise<int> prom;
+    fut = prom.get_future();
+  }
+
+  EXPECT_THROW(fut.get_std_future().get(), Unfullfilled_promise);
+}
+
 TEST(Future, simple_get) {
   Promise<int> prom;
   auto fut = prom.get_future();
