@@ -28,7 +28,14 @@ using unexpected = nonstd::unexpected_type<std::exception_ptr>;
 
 // ********************** No Undefined Behavior  *************************//
 
+// There is currently (1) known technical UB in the implementation of the 
+// library. It is tolerated because it's more of a blind spot in the StdLib 
+// specification than an actual problem, and is consistent accross all compilers.
+//
+// Nevertheless, if you want absolute strict standard adherance, uncomment the
+// following line.
+
 //#define VAR_FUTURE_NO_UB
 
-// The library is written in a way
+
 #endif
