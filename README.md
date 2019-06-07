@@ -157,12 +157,12 @@ Chaining callback with failure propagation.
   * The error that caused `this` to fail
   * The exception thrown by `cb`
 
-**Future::then_except()**
+**Future::then_expect()**
 
 Chaining callback.
 ```
-[1] Future<U> Future<Ts...>::then_except(cb);
-[2] Future<U> Future<Ts...>::then_except(cb, queue);
+[1] Future<U> Future<Ts...>::then_expect(cb);
+[2] Future<U> Future<Ts...>::then_expect(cb, queue);
 ```
 
 * `cb` is a `Callable<U(expected<Ts>...)>`
@@ -172,12 +172,12 @@ Chaining callback.
   * The value returned by `cb`
   * The exception thrown by `cb`
 
-**Future::then_finally_except()**
+**Future::then_finally_expect()**
 
 Simple callback.
 ```
-[1] Future<U> Future<Ts...>::then_finally_except(cb);
-[2] Future<U> Future<Ts...>::then_finally_except(cb, queue);
+[1] Future<U> Future<Ts...>::then_finally_expect(cb);
+[2] Future<U> Future<Ts...>::then_finally_expect(cb, queue);
 ```
 * `cb` is a `Callable<U(expected<Ts>...)>`
 * [1] `cb` is immediately called when `this` is **finished**.
