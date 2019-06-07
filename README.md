@@ -7,7 +7,9 @@ Variadic, callback-based futures for C++17.
 
 ## Installation
 
-Make the contents of the include directory available to your project.
+* Make the contents of the include directory available to your project.
+* Have a look at `var_future/config.h` and make changes as needed.
+* If you are from the future, you may want to use `std::expected` instead of `expected_lite`,
 
 ## Usage
 
