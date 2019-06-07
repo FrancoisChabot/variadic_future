@@ -26,6 +26,16 @@ class Future;
 
 namespace detail {
 
+// Determines wether a type is a expected<...>
+template <typename T>
+struct is_expected : public std::false_type {};
+
+template <typename T>
+struct is_expected<expected<T>> : public std::true_type {};
+
+template <typename T>
+constexpr bool is_expected_v = is_expected<T>::value;
+
 // Determines wether a type is a Future<...>
 template <typename T>
 struct is_future : public std::false_type {};
