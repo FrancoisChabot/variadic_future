@@ -53,9 +53,6 @@ constexpr bool is_future_v = is_future<T>::value;
 
 namespace detail {
 
-struct void_tag {};
-
-
 template <std::size_t id=0, typename... Ts>
 std::optional<std::exception_ptr> get_first_failure(
     const std::tuple<expected<Ts>...>& ref) {
@@ -262,7 +259,7 @@ class Future_then_handler : public Future_handler_base<QueueT, void, Ts...> {
       do_fail(q, *failure, std::move(dst), std::move(cb));
     }
     else {
-
+      do_fullfill()
     }
   }
 
@@ -722,6 +719,9 @@ class Future {
   std::shared_ptr<storage_type> storage_;
 };
 
+template<>
+class Future<> : public Future<void> {};
+
 template <typename... Ts>
 class Promise {
  public:
@@ -752,6 +752,9 @@ class Promise {
  private:
   std::shared_ptr<storage_type> storage_;
 };
+
+template<>
+class Promise<> : public Promise<void> {};
 
 namespace detail {
 
