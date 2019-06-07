@@ -42,7 +42,7 @@ void foo() {
 
 ### Tieing futures
 
-You can wait on multiple futures at the same time using the 
+You can wait on multiple futures at the same time using the `tie()` function.
 
 ```cpp
 
