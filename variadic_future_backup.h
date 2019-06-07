@@ -39,6 +39,7 @@ class Future;
 template <typename... Ts>
 class Promise;
 
+// Determines wether a type is a Future<...>
 template <typename T>
 struct is_future : public std::false_type {};
 
@@ -48,13 +49,11 @@ struct is_future<Future<Ts...>> : public std::true_type {};
 template <typename T>
 constexpr bool is_future_v = is_future<T>::value;
 
-namespace detail {
-template <typename... Ts>
-std::tuple<Ts...> extract(expected<Ts>... src) {
-  return std::make_tuple(std::move(*src)...);
-}
 
-template <std::size_t id, typename... Ts>
+
+namespace detail {
+
+template <std::size_t id=0, typename... Ts>
 std::optional<std::exception_ptr> get_first_failure(
     const std::tuple<expected<Ts>...>& ref) {
   if (!std::get<id>(ref).has_value()) {
@@ -68,67 +67,101 @@ std::optional<std::exception_ptr> get_first_failure(
   }
 }
 
+// Convertes a tuple of expected into a tuple of matching values.
 template <typename... Ts>
-class Future_storage;
+std::tuple<Ts...> extract(expected<Ts>... src) {
+  return std::make_tuple(std::move(*src)...);
+}
 
-
+// Convertes a Future<T> into T
 template<typename T>
-struct strip_future {
+struct decay_future {
   using type = T;
 };
 
 template<typename T>
-struct strip_future<Future<T>> {
+struct decay_future<Future<T>> {
   using type = T;
 };
 
 template<>
-struct strip_future<Future<>> {
+struct decay_future<Future<>> {
   using type = void;
 };
 
 template<typename T>
-using strip_future_t = typename strip_future<T>::type;
-// The interface to the fully realized future callback handling.
+using decay_future_t = typename decay_future<T>::type;
 
-class Immediate_queue {};
 
-template <typename Q>
-struct Perform_enqueue {
-  template <typename F>
-  static void exec(Q* q, F&& f) {
-    q->push(std::move(f));
-  }
-};
-
-template <>
-struct Perform_enqueue<Immediate_queue> {
-  template <typename F>
-  static void exec(Immediate_queue*, F&& f) {
+// A special Immediate queue tag type
+struct Immediate_queue {
+  template<typename F>
+  static void push(F&& f) {
     f();
   }
 };
 
+static_assert(std::is_empty_v<Immediate_queue>, "Immediate_queue is supposed to have no overhead whatsoever");
+
+
+template<typename T, typename=void>
+struct has_static_push : std::false_type {};
+
+template<typename T>
+struct has_static_push<T, decltype(void(T::push()))> : std::true_type {};
+
+template<typename T>
+constexpr bool has_static_push_v = has_static_push<T>::value;
+
 template <typename Q, typename F>
 void enqueue(Q* q, F&& f) {
-  Perform_enqueue<Q>::exec(q, std::move(f));
+  q->push(std::forward<F>(f));
 }
+
+template<typename... ArgsT>
+struct finish_type;
+
+template<>
+struct finish_type<> {
+  using type = std::tuple<expected<void>>;
+};
+
+template<typename First>
+struct finish_type<First> {
+  using type = std::tuple<expected<First>>;
+};
+
+template<typename First, typename Second, typename... RestT>
+struct finish_type<First, Second, RestT...> {
+  using lhs_t = std::tuple<expected<First>>;
+  using rhs_t = typename finish_type<Second, RestT...>::type;
+
+  using type = decltype(std::tuple_cat(std::declval<lhs_t>(), std::declval<rhs_t>()));
+};
+
+template<typename... ArgsT>
+using finish_type_t = typename finish_type<ArgsT...>::type;
 
 template <typename... ArgsT>
 class Future_handler_iface {
- public:
- Future_handler_iface() = default;
+public:
+  using fullfill_type = std::tuple<ArgsT...>;
+  using finish_type = finish_type_t<ArgsT...>;
+  using fail_type = std::exception_ptr;
+
+  Future_handler_iface() = default;
   Future_handler_iface(const Future_handler_iface&) = delete;
   Future_handler_iface(Future_handler_iface&&) = delete;
   Future_handler_iface& operator=(const Future_handler_iface&) = delete;
   Future_handler_iface& operator=(Future_handler_iface&&) = delete;
   virtual ~Future_handler_iface() {}
 
-  virtual void fullfill(std::tuple<ArgsT...>) = 0;
-  virtual void fail(std::exception_ptr) = 0;
+  virtual void fullfill(fullfill_type) = 0;
+  virtual void finish(finish_type) = 0;
+  virtual void fail(fail_type) = 0;
 };
 
-template <typename QueueT, typename... Ts>
+template <typename QueueT, typename Enable = void, typename... Ts>
 class Future_handler_base : public Future_handler_iface<Ts...> {
   QueueT* queue_;
 
@@ -136,27 +169,33 @@ class Future_handler_base : public Future_handler_iface<Ts...> {
   using queue_type = QueueT;
 
   Future_handler_base(QueueT* q) : queue_(q) {}
-  ~Future_handler_base() {}
-
+  
  protected:
   QueueT* get_queue() { return queue_; }
 };
 
-template <typename... Ts>
-class Future_handler_base<Immediate_queue, Ts...>
+// If the queue's push() method is static, do not bother storing the pointer.
+template <typename QueueT, typename... Ts>
+class Future_handler_base<QueueT, std::enable_if_t<has_static_push_v<QueueT>>, Ts...>
     : public Future_handler_iface<Ts...> {
  public:
   using queue_type = Immediate_queue;
 
-  Future_handler_base(Immediate_queue*) {}
+  Future_handler_base(QueueT*) {}
 
  protected:
-  constexpr static Immediate_queue* get_queue() { return nullptr; }
+  constexpr static QueueT* get_queue() { return nullptr; }
 };
+
+
+// Determines what type of Future_storage should be used for a callback that
+// returns T.
+template <typename... Ts>
+class Future_storage;
 
 template <typename T>
 struct Storage_for_cb_result {
-  using type = Future_storage<strip_future_t<T>>;
+  using type = Future_storage<decay_future_t<T>>;
 };
 
 template <>
@@ -167,15 +206,18 @@ struct Storage_for_cb_result<void> {
 template <typename T>
 using Storage_for_cb_result_t = typename Storage_for_cb_result<T>::type;
 
+
+// Handler class for defered Future::then() execution
 template <typename CbT, typename QueueT, typename... Ts>
-class Future_then_handler : public Future_handler_base<QueueT, Ts...> {
+class Future_then_handler : public Future_handler_base<QueueT, void, Ts...> {
  public:
   using cb_result_type = std::invoke_result_t<CbT, Ts...>;
   using dst_storage_type = Storage_for_cb_result_t<cb_result_type>;
   using dst_type = std::shared_ptr<dst_storage_type>;
-
+  using finish_type = typename Future_handler_base<QueueT, void, Ts...>::finish_type;
+  
   Future_then_handler(QueueT* q, dst_type dst, CbT cb)
-      : Future_handler_base<QueueT, Ts...>(q),
+      : Future_handler_base<QueueT, void, Ts...>(q),
         dst_(std::move(dst)),
         cb_(std::move(cb)) {}
 
@@ -183,6 +225,11 @@ class Future_then_handler : public Future_handler_base<QueueT, Ts...> {
     do_fullfill(this->get_queue(), std::move(v), std::move(dst_),
                 std::move(cb_));
   };
+
+  void finish(finish_type f) override {
+    do_finish(this->get_queue(), std::move(f), std::move(dst_),
+                std::move(cb_));
+  }
 
   void fail(std::exception_ptr e) override {
     do_fail(this->get_queue(), e, std::move(dst_), std::move(cb_));
@@ -205,7 +252,19 @@ class Future_then_handler : public Future_handler_base<QueueT, Ts...> {
     });
   }
 
+  static void do_finish(QueueT* q, finish_type f, dst_type dst, CbT cb) {
+    auto failure = detail::get_first_failure(f);
+
+    if(failure) {
+      do_fail(q, *failure, std::move(dst), std::move(cb));
+    }
+    else {
+      do_fullfill()
+    }
+  }
+
   static void do_fail(QueueT* q, std::exception_ptr e, dst_type dst, CbT) {
+    // Straight propagation.
     enqueue(q, [dst = std::move(dst), e = std::move(e)] { dst->fail(e); });
   }
 
@@ -226,14 +285,15 @@ struct Expect_then_cb_resolver<CbT> {
 
 // handling for then_expect()
 template <typename CbT, typename QueueT, typename... Ts>
-class Future_then_expect_handler : public Future_handler_base<QueueT, Ts...> {
+class Future_then_expect_handler : public Future_handler_base<QueueT, void,  Ts...> {
  public:
   using cb_result_type = typename Expect_then_cb_resolver<CbT, Ts...>::type;
   using dst_storage_type = Storage_for_cb_result_t<cb_result_type>;
   using dst_type = std::shared_ptr<dst_storage_type>;
+  using finish_type = typename Future_handler_base<QueueT, void, Ts...>::finish_type;
 
   Future_then_expect_handler(QueueT* q, dst_type dst, CbT cb)
-      : Future_handler_base<QueueT, Ts...>(q),
+      : Future_handler_base<QueueT, void, Ts...>(q),
         dst_(std::move(dst)),
         cb_(std::move(cb)) {}
 
@@ -241,6 +301,11 @@ class Future_then_expect_handler : public Future_handler_base<QueueT, Ts...> {
     do_fullfill(this->get_queue(), std::move(v), std::move(dst_),
                 std::move(cb_));
   };
+
+  void finish(finish_type f) override {
+    do_finish(this->get_queue(), std::move(f), std::move(dst_),
+                std::move(cb_));
+  }
 
   void fail(std::exception_ptr e) override {
     do_fail(this->get_queue(), e, std::move(dst_), std::move(cb_));
@@ -264,10 +329,15 @@ class Future_then_expect_handler : public Future_handler_base<QueueT, Ts...> {
             dst->fullfill(std::apply(cb, std::move(v)));
           }
         }
-
       } catch (...) {
         dst->fail(std::current_exception());
       }
+    });
+  }
+
+  static void do_finish(QueueT* q, finish_type f, dst_type dst, CbT cb) {
+    enqueue(q, [cb = std::move(cb), dst = std::move(dst), f = std::move(f)] {
+      //...
     });
   }
 
@@ -292,46 +362,40 @@ class Future_then_expect_handler : public Future_handler_base<QueueT, Ts...> {
   CbT cb_;
 };
 
-template <typename CbT, typename QueueT, typename... Ts>
-class Future_then_finally_handler : public Future_handler_base<QueueT, Ts...> {
-  CbT cb_;
 
- public:
-  Future_then_finally_handler(QueueT* q, CbT cb)
-      : Future_handler_base<QueueT, Ts...>(q), cb_(std::move(cb)) {}
-
-  void fullfill(std::tuple<Ts...> v) override {
-    do_fullfill(this->get_queue(), std::move(v), std::move(cb_));
-  };
-
-  void fail(std::exception_ptr e) override {
-    do_fail(this->get_queue(), e, cb_);
+template<std::size_t i, std::size_t max_i, typename T>
+void fill_multiplexed_failure(T& dst, const std::exception_ptr& e) {
+  if constexpr(i < max_i) {
+    std::get<i>(dst) = unexpected{e};
   }
+}
+template<typename... Ts>
+auto multiplex_failure(std::exception_ptr e) {
+  std::tuple<expected<Ts>...> result;
+  fill_multiplexed_failure<0, sizeof...(Ts)>(result, e);
+  return result;
+}
 
-  static void do_fullfill(QueueT* q, std::tuple<Ts...> value, CbT cb) {
-    enqueue(q, [cb = std::move(cb), v = std::move(value)] {
-      std::apply(cb, std::move(v));
-    });
-  }
-
-  static void do_fail(QueueT* q, std::exception_ptr, CbT) {
-    // Swallowed
-  }
-};
-
-// handling for then_expect()
+// handling for Future::then_finally_expect()
 template <typename CbT, typename QueueT, typename... Ts>
 class Future_then_finally_expect_handler
-    : public Future_handler_base<QueueT, Ts...> {
+    : public Future_handler_base<QueueT, void, Ts...> {
+  
+  using finish_type = typename Future_handler_base<QueueT, void, Ts...>::finish_type;
   CbT cb_;
 
  public:
   Future_then_finally_expect_handler(QueueT* q, CbT cb)
-      : Future_handler_base<QueueT, Ts...>(q), cb_(std::move(cb)) {}
+      : Future_handler_base<QueueT, void,  Ts...>(q), cb_(std::move(cb)) {}
 
   void fullfill(std::tuple<Ts...> v) override {
     do_fullfill(this->get_queue(), std::move(v), std::move(cb_));
   };
+
+  void finish(finish_type f) override {
+    do_finish(this->get_queue(), std::move(f),
+                std::move(cb_));
+  }
 
   void fail(std::exception_ptr e) override {
     do_fail(this->get_queue(), e, std::move(cb_));
@@ -348,11 +412,21 @@ class Future_then_finally_expect_handler
     });
   }
 
-  static void do_fail(QueueT* q, std::exception_ptr e, CbT cb) {
-    static_assert(sizeof...(Ts) < 2);
+  static void do_finish(QueueT* q, finish_type f, CbT cb) {
+    enqueue(q, [cb = std::move(cb), f = std::move(f)]() mutable {
+      std::apply(cb, std::move(f));
+    });
+  }
 
+  static void do_fail(QueueT* q, std::exception_ptr e, CbT cb) {
     enqueue(q, [e = std::move(e), cb = std::move(cb)]() mutable {
-      cb(unexpected{e});
+      if constexpr (sizeof...(Ts) < 2) {
+        cb(unexpected{e});
+      }
+      else {
+        // We have at least two arguments... Fail them all!
+        std::apply(cb, multiplex_failure<Ts...>(e));
+      }
     });
   }
 };
@@ -362,6 +436,7 @@ template <typename... Ts>
 class Future_storage {
  public:
   using value_type = std::tuple<Ts...>;
+  using finish_type = std::tuple<expected<Ts>...>;
   using future_type = Future<Ts...>;
 
   Future_storage() {}
@@ -389,13 +464,24 @@ class Future_storage {
     }
   };
 
+  void finish(finish_type&& v) {
+    std::lock_guard l(mtx);
+    assert(state_ == State::READY || state_ == State::PENDING);
+     if (state_ == State::PENDING) {
+      state_ = State::FINISH;
+      new (&finish_) finish_type(std::move(v));
+    } else {
+      callbacks_->finish(std::move(v));
+    }
+  }
+
   void fail(std::exception_ptr e) {
     std::lock_guard l(mtx);
     assert(state_ == State::READY || state_ == State::PENDING);
 
     if (state_ == State::PENDING) {
       state_ = State::ERROR;
-      new (&error_) std::exception_ptr(e);
+      new (&error_) std::exception_ptr(std::move(e));
     } else {
       callbacks_->fail(e);
     }
@@ -414,6 +500,9 @@ class Future_storage {
     } else if (state_ == State::VALUE) {
       Handler_t::do_fullfill(queue, std::move(value_),
                              std::forward<Args_t>(args)...);
+    } else if (state_ == State::FINISH) {
+      Handler_t::do_finish(queue, std::move(finish_),
+                           std::forward<Args_t>(args)...);
     } else if (state_ == State::ERROR) {
       Handler_t::do_fail(queue, std::move(error_),
                          std::forward<Args_t>(args)...);
@@ -444,6 +533,7 @@ class Future_storage {
     PENDING,
     READY,
     VALUE,
+    FINISH,
     ERROR,
   };
   State state_ = State::PENDING;
@@ -451,6 +541,7 @@ class Future_storage {
   union {
     Future_handler_iface<Ts...>* callbacks_;
     value_type value_;
+    finish_type finish_;
     std::exception_ptr error_;
   };
 
@@ -473,15 +564,16 @@ struct Future_value_type<FirstT, SecondT, RestT...> {
   using type = std::tuple<FirstT, SecondT, RestT...>;
 };
 
+template <typename... Ts>
+using Future_value_type_t = typename Future_value_type<Ts...>::type;
 
 }  // namespace detail
 template <typename... Ts>
 class Future {
  public:
   using promise_type = Promise<Ts...>;
-  using tuple_type = std::tuple<Ts...>;
   using storage_type = detail::Future_storage<Ts...>;
-  using value_type = typename detail::Future_value_type<Ts...>::type;
+  using value_type = detail::Future_value_type_t<Ts...>;
 
   Future() = default;
   Future(std::tuple<Ts...> values) : storage_(std::make_shared<storage_type>()) {
@@ -507,7 +599,7 @@ class Future {
   // will be failed with that same failure, and cb will be destroyed without
   // being invoked.
   //
-  // If you intend to discard the result, use then_finally() instead.
+  // If you intend to discard the result, then you may want to use then_finally_expect() instead.
   template <typename CbT>
   [[nodiscard]] auto then(CbT cb) {
     // Kinda flying by the seats of our pants here...
@@ -521,15 +613,6 @@ class Future {
   [[nodiscard]] auto then_expect(CbT cb) {
     detail::Immediate_queue queue;
     return this->then_expect(std::move(cb), queue);
-  }
-
-  // Identical to then, but does not generate a future, which is lighter
-  // If cb throws an exception, it will bubble up to the calling thread,
-  // wherever that may be.
-  template <typename CbT>
-  void then_finally(CbT cb) {
-    detail::Immediate_queue queue;
-    return this->then_finally(std::move(cb), queue);
   }
 
   template <typename CbT>
@@ -580,14 +663,6 @@ class Future {
   }
 
   template <typename CbT, typename QueueT>
-  void then_finally(CbT cb, QueueT& queue) {
-    assert(storage_);
-
-    using handler_t = detail::Future_then_finally_handler<CbT, QueueT, Ts...>;
-    storage_->template set_handler<handler_t>(&queue, std::move(cb));
-  }
-
-  template <typename CbT, typename QueueT>
   void then_finally_expect(CbT cb, QueueT& queue) {
     assert(storage_);
 
@@ -633,7 +708,7 @@ class Future {
         }
       return fut;
     } else {
-      // Not sure... return a std::future<tuple<Ts>>?
+      // Not sure... return a std::future<tuple<TsTs>>?
     }
   }
 
@@ -643,6 +718,9 @@ class Future {
  private:
   std::shared_ptr<storage_type> storage_;
 };
+
+template<>
+class Future<> : public Future<void> {};
 
 template <typename... Ts>
 class Promise {
@@ -675,29 +753,22 @@ class Promise {
   std::shared_ptr<storage_type> storage_;
 };
 
+template<>
+class Promise<> : public Promise<void> {};
+
 namespace detail {
 
-template <typename... Ts>
+template <typename... FutTs>
 struct Landing {
-  std::tuple<expected<Ts>...> storage_;
+  std::tuple<expected<Future_value_type_t<decay_future_t<FutTs>>>...> landing_;
   std::atomic<int> fullfilled_ = 0;
-  std::atomic<bool> failure_ = false;
-  std::shared_ptr<Future_storage<Ts...>> dst_;
+
+  using storage_type = Future_storage<Future_value_type_t<decay_future_t<FutTs>>...>;
+  std::shared_ptr<storage_type> dst_;
 
   void ping(bool failure) {
-    if (failure) {
-      failure_.store(true);
-    }
-
-    if (++fullfilled_ == sizeof...(Ts)) {
-      if (!failure_.load()) {
-        std::tuple<Ts...> successes =
-            std::apply(extract<Ts...>, std::move(storage_));
-        dst_->fullfill(std::move(successes));
-      } else {
-        // TODO: package the errors?
-        dst_->fail(std::get<0>(storage_).error());
-      }
+    if (++fullfilled_ == sizeof...(FutTs)) {
+      dst_->finish(std::move(landing_));
     }
   }
 };
@@ -709,25 +780,26 @@ template <std::size_t id, typename LandingT, typename Front, typename... Ts>
 void bind_landing(const std::shared_ptr<LandingT>& l, Future<Front> front,
                   Future<Ts>... futs) {
   front.then_finally_expect([=](expected<Front> e) {
-    std::get<id>(l->storage_) = e;
+    std::get<id>(l->landing_) = e;
     l->ping(!e.has_value());
   });
   bind_landing<id + 1>(l, std::move(futs)...);
 }
  
 }  // namespace detail
-template <typename... Ts>
-Future<Ts...> tie(Future<Ts>... futs) {
-  static_assert(sizeof...(Ts) >= 2, "Trying to tie less than two futures?");
+template <typename... FutTs>
+auto tie(FutTs... futs) {
+  static_assert(sizeof...(FutTs) >= 2, "Trying to tie less than two futures?");
 
-  using landing_type = detail::Landing<Ts...>;
-
+  using landing_type = detail::Landing<FutTs...>;
+  using fut_type = typename landing_type::storage_type::future_type; 
   auto landing = std::make_shared<landing_type>();
-  landing->dst_ = std::make_shared<detail::Future_storage<Ts...>>();
+  landing->dst_ = std::make_shared<typename landing_type::storage_type>();
 
   detail::bind_landing<0>(landing, std::move(futs)...);
+  
+  return fut_type{landing->dst_};
 
-  return landing->dst_;
 }
 
 

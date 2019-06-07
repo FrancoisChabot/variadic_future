@@ -12,362 +12,219 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "variadic_future.h"
+#include <iostream>
+#include "var_future/future.h"
 
 #include "gtest/gtest.h"
 
+#include <queue>
+
 using namespace aom;
 
-// In order to keep the coverage testing sane, we will only instantiate a few specific types
-// of futures in these tests: 
-// Future<>                 : The null future
-// Future<int>              : POD types
-// Future<std::string>      : Non-trivial types
-// Future<int, std::string> : Composed types
+TEST(Future, pre_filled_future) {
+  { 
+    Future<void> fut{ std::tuple<>() };
+    int dst = 0;
+    fut.then_finally_expect([&](expected<void> v) {
+      if(v.has_value()) {
+        dst = 1;
+      }
+    });
 
-
-std::exception_ptr get_error() {
-  std::exception_ptr result;
-
-  try {
-    throw std::runtime_error("error");
+    EXPECT_EQ(1, dst);
   }
-  catch(...) {
-    result = std::current_exception();
+
+  { 
+    Future<int> fut{ std::tuple<int>(12) };
+
+    EXPECT_EQ(12, fut.get_std_future().get());
   }
-  return result;
+
+  { 
+    Future<int, std::string> fut{std::tuple<int, std::string>{12, "hi"}};
+
+    EXPECT_EQ(std::make_tuple(12, "hi"), fut.get_std_future().get());
+  }
 }
 
-int add_4_to_1(int v) {
-  EXPECT_EQ(v, 1);
-  return v + 4;
-}
 
-void finally_4(int v) {
-  EXPECT_EQ(v, 4);
-}
+TEST(Future, prom_filled_future) {
+  { 
+    Promise<void> prom;
+    auto fut = prom.get_future();
+    prom.set_value();
+    int dst = 0;
+    fut.then_finally_expect([&](expected<void> v) {
+      if(v.has_value()) {
+        dst = 1;
+      }
+    });
 
-void finally_not_called(int v) {
-  EXPECT_FALSE(true);
-}
+    EXPECT_EQ(1, dst);
+  }
 
-void finally_expect_4(expected<int> v) {
-  EXPECT_TRUE(v.has_value());
-  EXPECT_EQ(*v, 4);
-}
-
-void finally_expect_fail(expected<int> v) {
-  EXPECT_FALSE(v.has_value());
-}
-
-int expect_add_4_to_1(expected<int> v) {
-  EXPECT_TRUE(v.has_value());
-  EXPECT_EQ(*v, 1);
-  return *v + 4;
-}
-
-int expect_add_4_to_1_recover(expected<int> v) {
-  EXPECT_FALSE(v.has_value());
-  return 5;
-}
-
-int expect_add_4_to_1_failure(expected<int> v) {
-  EXPECT_FALSE(v.has_value());
-  throw std::runtime_error("yo");
-}
-
-TEST(Future, get_success) {
-  // Before the fact
-  {
+  { 
     Promise<int> prom;
     auto fut = prom.get_future();
     prom.set_value(12);
-    EXPECT_EQ(fut.get(), 12);
+
+    EXPECT_EQ(12, fut.get_std_future().get());
   }
 
-  // After the fact
-  {
-      Promise<int> prom;
-      std::mutex m;
-      auto fut = prom.get_future();
-      std::unique_lock lock_1(m);
+  { 
+    Promise<int, std::string> prom;
+    auto fut = prom.get_future();
+    prom.set_value(12, "hi");
 
-      std::thread t([&](){
-        std::lock_guard lock_2(m);
-        prom.set_value(12);
-      });
-
-      EXPECT_EQ(fut.get_std_future(&lock_1).get(), 12);
-
-      t.join();
+    EXPECT_EQ(std::make_tuple(12, "hi"), fut.get_std_future().get());
   }
-
 }
 
-TEST(Future, get_failure) {
-  // Before the fact
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-    prom.set_exception(get_error());
-    EXPECT_THROW(fut.get(), std::runtime_error);
-  }
+TEST(Future, simple_then_expect) {
+  Promise<int> p;
+  auto f = p.get_future();
 
-  // After the fact
-  {
-      Promise<int> prom;
-      std::mutex m;
-      auto fut = prom.get_future();
-      std::unique_lock lock_1(m);
+  auto r = f.then_expect([](expected<int> e) {
+    return e.value() * 4;
+  });
+  p.set_value(3);
 
-      std::thread t([&](){
-        std::lock_guard lock_2(m);
-        prom.set_exception(get_error());
-      });
-
-      EXPECT_THROW(fut.get_std_future(&lock_1).get(), std::runtime_error);
-
-      t.join();
-  }
-
+  EXPECT_EQ(r.get_std_future().get(), 12);
 }
 
-TEST(Future, st_success_then) {
-  // pre-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    prom.set_value(1);
-    auto result_fut = fut.then(add_4_to_1);
-    EXPECT_EQ(result_fut.get(), 5);
-  }
-
-
-  // post-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    auto result_fut = fut.then(add_4_to_1);
-    prom.set_value(1);
-    EXPECT_EQ(result_fut.get(), 5);
-  }
-
-}
-
-TEST(Future, st_success_then_expect) {
+TEST(Future, prom_post_filled_future) {
   
-  // pre-filled
-  {
-    Promise<int> prom;
+  { 
+    Promise<void> prom;
     auto fut = prom.get_future();
+    
+    int dst = 0;
+    fut.then_finally_expect([&](expected<void> v) {
+      if(v.has_value()) {
+        dst = 1;
+      }
+    });
 
-    prom.set_value(1);
-    auto result_fut = fut.then_expect(expect_add_4_to_1);
-    EXPECT_EQ(result_fut.get(), 5);
+    prom.set_value();
+
+    EXPECT_EQ(1, dst);
   }
 
-  // post-filled
-  {
+  { 
     Promise<int> prom;
     auto fut = prom.get_future();
 
-    auto result_fut = fut.then_expect(expect_add_4_to_1);
-    prom.set_value(1);
-    EXPECT_EQ(result_fut.get(), 5);
+    int dst = 0;
+    fut.then_finally_expect([&](expected<int> v) {
+      if(v.has_value()) {
+        dst = *v;
+      }
+    });
+    prom.set_value(12);
+
+    EXPECT_EQ(12, dst);
   }
 
-}
-
-TEST(Future, st_success_then_finally) {
-  // pre-filled
-  {
-    Promise<int> prom;
+  { 
+    Promise<int, std::string> prom;
     auto fut = prom.get_future();
 
-    prom.set_value(4);
-    fut.then_finally(finally_4);
-  }
+    int dst = 0;
+    std::string str;
+    fut.then_finally_expect([&](expected<int> v, expected<std::string> s) {
+      if(v.has_value()) {
+        dst = *v;
+        str = *s;
+      }
+    });
+    prom.set_value(12, "hi");
 
-  // post-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    fut.then_finally(finally_4);
-    prom.set_value(4);
-  }
-
-}
-
-TEST(Future, st_success_then_finally_expect) {
-  // pre-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    prom.set_value(4);
-    fut.then_finally_expect(finally_expect_4);
-  }
-
-  // post-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    fut.then_finally_expect(finally_expect_4);
-    prom.set_value(4);
-  }
-
-}
-
-
-TEST(Future, st_failure_then) {
-  
-  // pre-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    prom.set_exception(get_error());
-    auto result_fut = fut.then(add_4_to_1);
-    EXPECT_THROW(result_fut.get(), std::runtime_error);
-  }
-
-  // post-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    auto result_fut = fut.then(add_4_to_1);
-    prom.set_exception(get_error());
-    EXPECT_THROW(result_fut.get(), std::runtime_error);
-  }
-
-}
-
-TEST(Future, st_recover_then_expect) {
-  
-  // pre-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    prom.set_exception(get_error());
-    auto result_fut = fut.then_expect(expect_add_4_to_1_recover);
-    EXPECT_EQ(result_fut.get(), 5);
-  }
-
-  // post-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    auto result_fut = fut.then_expect(expect_add_4_to_1_recover);
-    prom.set_exception(get_error());
-    EXPECT_EQ(result_fut.get(), 5);
-  }
-
-}
-
-TEST(Future, st_failure_then_expect) {
-  
-  // pre-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    prom.set_exception(get_error());
-    auto result_fut = fut.then_expect(expect_add_4_to_1_failure);
-    EXPECT_THROW(result_fut.get(), std::runtime_error);
-  }
-
-  // post-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    auto result_fut = fut.then_expect(expect_add_4_to_1_failure);
-    prom.set_exception(get_error());
-    EXPECT_THROW(result_fut.get(), std::runtime_error);
-  }
-
-}
-
-TEST(Future, st_failure_then_finally) {
-  
-  // pre-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    prom.set_exception(get_error());
-    fut.then_finally(finally_not_called);
-  }
-
-  // post-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    fut.then_finally(finally_not_called);
-    prom.set_exception(get_error());
-  }
-
-}
-
-TEST(Future, st_failure_then_finally_expect) {
-  
-  // pre-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    prom.set_exception(get_error());
-    fut.then_finally(finally_expect_fail);
-  }
-
-  // post-filled
-  {
-    Promise<int> prom;
-    auto fut = prom.get_future();
-
-    fut.then_finally(finally_expect_fail);
-    prom.set_exception(get_error());
+    EXPECT_EQ(12, dst);
+    EXPECT_EQ("hi", str);
   }
 }
 
+TEST(Future, simple_then) {
+  // Post-filled
+  { 
+    Promise<int> prom;
+    auto fut = prom.get_future();
 
-TEST(Future, chain_with_future) {
-  
+    auto res = fut.then([&](expected<int> v) {
+      return v.value() + 4;
+    });
+
+    prom.set_value(3);
+    EXPECT_EQ(7, res.get_std_future().get());
+  }
+
+  // Pre-filled
+  { 
+    Promise<int> prom;
+    auto fut = prom.get_future();
+    prom.set_value(3);
+
+    auto res = fut.then([&](expected<int> v) {
+      return v.value() + 4;
+    });
+
+    EXPECT_EQ(7, res.get_std_future().get());
+  }
+}
+
+TEST(Future, simple_get) {
   Promise<int> prom;
   auto fut = prom.get_future();
 
-  auto result = fut.then([&](int v){
-    Promise<int> tmp;
-    auto tmp_fut = tmp.get_future();
-    tmp.set_value(4);
-    return tmp_fut;
+  prom.set_value(3);
+  EXPECT_EQ(3, fut.get_std_future().get());
+}
+
+TEST(Future, simple_ite) {
+  Promise<int> p_a;
+  Promise<std::string> p_b;
+
+
+  auto f = tie(p_a.get_future(), p_b.get_future())
+    .then([](int a, std::string){
+      return a;
   });
+  p_a.set_value(3);
+  p_b.set_value("yo");
+
+  EXPECT_EQ(3, f.get_std_future().get());
+}
+
+TEST(Future, partial_tie_failure) {
+  Promise<int> p_a;
+  Promise<std::string> p_b;
 
 
-  prom.set_value(12);
+  int dst = 0;
+  tie(p_a.get_future(), p_b.get_future())
+    .then_finally_expect([&](expected<int> a, expected<std::string> b){
+      dst = a.value();
+      EXPECT_FALSE(b.has_value());
+  });
+  EXPECT_EQ(0, dst);
+  p_a.set_value(3);
+  EXPECT_EQ(0, dst);
+  p_b.set_exception(std::make_exception_ptr(std::runtime_error("nope")));
 
-  EXPECT_EQ(4, result.get());
+  EXPECT_EQ(3, dst);
 }
 
 
-struct Some_struct {
-  int t;
-};
-
-TEST(Future, get_user_type) {
-  
-  Promise<Some_struct> prom;
+TEST(Future, void_promise) {
+  Promise<void> prom;
   auto fut = prom.get_future();
 
-  prom.set_value({4});
+  int dst = 0;
+  fut.then_finally_expect([&](expected<void> v) {
+    EXPECT_TRUE(v.has_value());
+    dst = 4;
+  });
 
-  EXPECT_EQ(4, fut.get().t);
+  prom.set_value();
+  EXPECT_EQ(4, dst);
 }

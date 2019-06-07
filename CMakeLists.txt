@@ -28,8 +28,15 @@ find_package(GTest REQUIRED CONFIG)
 
 add_executable(futures_test tests.cpp)
 
+if(MSVC)
+  target_compile_options(futures_test PUBLIC /W4 /WX)
+else()
+  target_compile_options(futures_test PUBLIC -Wall -Wextra -pedantic -Werror)
+endif()
+
+
 target_link_libraries(futures_test GTest::gtest_main GTest::gtest --coverage)
-target_include_directories(futures_test PRIVATE .)
+target_include_directories(futures_test PRIVATE . include)
 target_compile_features(futures_test PUBLIC cxx_std_17)
 
 include(ProcessorCount)
