@@ -14,48 +14,80 @@ Make the contents of the include directory available to your project.
 ### Basic
 
 ```cpp
+
+#include "var_future/future.h"
+
+void foo() {
+  aom::Promise<int> prom;
+  aom::Future<int> fut = prom.get_future();
+  
+  fut.then_finally_expect([](aom::expected<int> v){
+    //Do something with v;
+  });
+  
+  prom.set_value(2);
+}
+```
+
+## Choosing where the callback executes
+
+```cpp
 #include <iostream>
 #include <thread>
 #include <chrono>
 
 #include "var_future/future.h"
 
-// This can be any type that has a thread-safe push(std::function<void()>); method
+// This can be any type that has a thread-safe push(Callable<void()>); method
 Work_queue main_work_queue;
 
 void foo() {
   aom::Promise<int> prom;
   aom::Future<int> fut = prom.get_future();
 
-  // At some point in the future, the promise will be fullfilled.
-  std::thread thread([p=std::move(prom)]() mutable {
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    p.set_value(12);
+  // When the previous callback completes (with a success or not), push the execution
+  // of this callback in main_work_queue. 
+  fut.then_finally_expect([](aom::expected<int> v, main_work_queue) {
+    //Do something with v;
   });
-  thread.detach();
+}
+```
 
-  // When the promise completes successfully, perform this callback directly
-  // in the detached thread. If the promise is failed, just propagate the failure.
-  aom::Future<int> next_fut = fut.then([](int value) {
-    if(value > 100) {
-      throw std::runtime_error("too_large");
-    }
-    return value - 98;
+## Chaining Futures
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <chrono>
+
+#include "var_future/future.h"
+
+// This can be any type that has a thread-safe push(Callable<void()>); method
+Work_queue main_work_queue;
+
+std::Future<int> complete(std::string str) {
+   aom::Promise<int> p;
+   auto result = p.get_future();
+   
+   std::async(std::launch::async, [str, p=std::move(p)] mutable { 
+      std::cout << str ;
+      p.set_value(4); 
+   });
+   
+   return result;
+}
+
+void foo() {
+  aom::Promise<int> prom;
+  aom::Future<int> fut = prom.get_future();
+
+  fut.then([](int v){
+    return std::string("hi") + std::to_string(v);
+  })
+  .then(complete)
+  .then_finally_expect([](aom::expected<int> v, main_work_queue) {
+    //Do something with v;
   });
-
-  // When the previous callback completes (with a success or not), queue the execution
-  // of this callback in main_work_queue
-  next_fut.then_finally_expect([](aom::expected<int> v, main_work_queue) {
-    if(v.has_value()) {
-      std::cout << *v << "\n";
-    }
-    else {
-      std::cout << "something went wrong\n";
-    }
-  });
-
-  // Notice that the futures are deleted long before the promise is fullfilled.
-  // That's ok, the callbacks are still pending and valid.
 }
 ```
 
