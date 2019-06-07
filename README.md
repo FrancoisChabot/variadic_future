@@ -3,7 +3,7 @@
 
 # Variadic futures
 
-Variadic, callback-based futures for c++17.
+Variadic, callback-based futures for C++17.
 
 ## Installation
 
@@ -28,7 +28,7 @@ void foo() {
   aom::Future<int> fut = prom.get_future();
 
   // At some point in the future, the promise will be fullfilled.
-  std::thread thread([p=std::move(prom)] mutable {
+  std::thread thread([p=std::move(prom)]() mutable {
     std::this_thread::sleep_for(std::chrono::seconds(2));
     p.set_value(12);
   });
