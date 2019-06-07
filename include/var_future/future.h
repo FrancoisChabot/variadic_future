@@ -37,45 +37,84 @@ class Future {
   using finish_type = detail::finish_type_t<Ts...>;
   using fail_type = detail::fail_type_t<Ts...>;
 
+  //
   Future() = default;
 
+  // Creates the future in a pre-fullfilled state.
   explicit Future(fullfill_type);
+
+  // Creates the future in a pre-finished state
   explicit Future(finish_type);
+
+  // Creates the future in a pre-failed state
   explicit Future(fail_type);
 
   explicit Future(std::shared_ptr<storage_type> s);
 
   Future(Future&&) = default;
-  Future(const Future&) = delete;
   Future& operator=(Future&&) = default;
-  Future& operator=(const Future&) = delete;
 
-  // Synchronously calls cb once the future has been fulfilled.
-  // cb will be invoked directly in whichever thread fullfills
-  // the future.
+  // Calls cb once the future has been fulfilled. 
+  //
+  // expects: cb to be a Callable(Ts...)
   //
   // Returns: a future of whichever type is returned by cb.
   // If this future is failed, then the resulting future
   // will be failed with that same failure, and cb will be destroyed without
   // being invoked.
   //
-  // If you intend to discard the result, then you may want to use
-  // then_finally_expect() instead.
+  // if cb throws an exception, that exception will become the resulting future's failure
   template <typename CbT>
   [[nodiscard]] auto then(CbT cb);
 
+  // Pushes the execution of cb in queue once the future has been fulfilled.
+  //
+  // expects: cb to be a Callable(Ts...)
+  //
+  // Returns: a future of whichever type is returned by cb.
+  // If this future is failed, then the resulting future
+  // will be failed with that same failure, and cb will be destroyed without
+  // being invoked.
+  //
+  // if cb throws an exception, that exception will become the resulting future's failure
   template <typename CbT, typename QueueT>
   [[nodiscard]] auto then(CbT cb, QueueT& queue);
 
+  // Calls cb once the future has been fulfilled.
+  //
+  // expects: cb to be a Callable(aom::expected<Ts>...)
+  //
+  // Returns: a future of whichever type is returned by cb.
+  // If this future is failed, then the resulting future
+  // will be failed with that same failure, and cb will be destroyed without
+  // being invoked.
+  //
+  // if cb throws an exception, that exception will become the resulting future's failure
   template <typename CbT>
   [[nodiscard]] auto then_expect(CbT cb);
 
+  // Pushes the execution of cb in queue once the future has been fulfilled.
+  //
+  // expects: cb to be a Callable(aom::expected<Ts>...)
+  //
+  // Returns: a future of whichever type is returned by cb.
+  // If this future is failed, then the resulting future
+  // will be failed with that same failure, and cb will be destroyed without
+  // being invoked.
+  //
+  // if cb throws an exception, that exception will become the resulting future's failure
   template <typename CbT, typename QueueT>
   [[nodiscard]] auto then_expect(CbT cb, QueueT& queue);
 
+  // Calls cb once the future has been fulfilled.
+  //
+  // expects: cb to be a Callable(aom::expected<Ts>...)
   template <typename CbT>
   void then_finally_expect(CbT cb);
 
+  // Pushes the execution of cb in queue once the future has been fulfilled.
+  //
+  // expects: cb to be a Callable(aom::expected<Ts>...)
   template <typename CbT, typename QueueT>
   void then_finally_expect(CbT cb, QueueT& queue);
 
@@ -84,6 +123,9 @@ class Future {
 
  private:
   std::shared_ptr<storage_type> storage_;
+
+  Future(const Future&) = delete;
+  Future& operator=(const Future&) = delete;
 };
 
 template <typename... Ts>
@@ -98,14 +140,28 @@ class Promise {
   using finish_type = detail::finish_type_t<Ts...>;
   using fail_type = detail::fail_type_t<Ts...>;
 
+  // Returns a future that is bound to this promise
   future_type get_future();
 
+  // Fullfills the promise.
+  // 
+  // expects: std::forward<Us...>(vals) can be used to initialize fullfill_type.
+  //          which is std::tuple<Ts..> with the void types removed from Ts.
+  //          For example:
+  //          Promise<void, int, void, int> p; p->set_value(1, 2);
   template <typename... Us>
   void set_value(Us&&... vals);
 
+  // Finishes the promise.
+  // 
+  // expects: std::forward<Us...>(vals) can be used to initialize finish_type.
+  //          which is std::tuple<expected<Ts>..>
   template <typename... Us>
   void finish(Us&&... f);
-   
+
+  // Fails the promise.
+  // 
+  // If the promise as more than one member, it fails all of them with the same error.
   void set_exception(fail_type e);
 
  private:
