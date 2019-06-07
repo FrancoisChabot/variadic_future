@@ -9,6 +9,10 @@ Variadic, callback-based futures for C++17.
 
 In short, I need this to properly implement [another project](https://github.com/FrancoisChabot/easy_grpc) of mine, and it was an interesting exercise.
 
+## But why variadic?
+
+Because it allows for the `tie()` function, which provides a very nice way to way on multiple futures at once.
+
 ## Installation
 
 * Make the contents of the include directory available to your project.
