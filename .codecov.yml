@@ -1,2 +1,2 @@
 ignore:
-    - expected_lite.h
+    - include/expected_lite.h

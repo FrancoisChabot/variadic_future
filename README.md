@@ -5,6 +5,14 @@
 
 Variadic, callback-based futures for C++17.
 
+## Why?
+
+In short, I need this to properly implement [another project](https://github.com/FrancoisChabot/easy_grpc) of mine, and it was an interesting exercise.
+
+## But why variadic?
+
+Because it allows for the `tie()` function, which provides a very nice way to wait on multiple futures at once.
+
 ## Installation
 
 * Make the contents of the include directory available to your project.
@@ -28,7 +36,8 @@ void foo() {
   aom::Future<int> fut = prom.get_future();
   
   fut.then_finally_expect([](aom::expected<int> v){
-    //Do something with v;
+    // Do something with v;
+    // This is called in whichever thread fullfills the future.
   });
   
   prom.set_value(2);
@@ -38,13 +47,12 @@ void foo() {
 
 ### Tieing futures
 
-You can wait on multiple futures at the same time using the 
+You can wait on multiple futures at the same time using the `tie()` function.
 
 ```cpp
 
 #include "var_future/future.h"
 
-Work_queue main_work_queue;
 void foo() {
   aom::Promise<int> prom_a;
   aom::Promise<int> prom_b;
