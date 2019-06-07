@@ -36,7 +36,8 @@ void foo() {
   aom::Future<int> fut = prom.get_future();
   
   fut.then_finally_expect([](aom::expected<int> v){
-    //Do something with v;
+    // Do something with v;
+    // This is called in whichever thread fullfills the future.
   });
   
   prom.set_value(2);
