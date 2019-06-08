@@ -36,6 +36,16 @@ typename Promise<Ts...>::future_type Promise<Ts...>::get_future() {
 
 template <typename... Ts>
 template <typename... Us>
+void Promise<Ts...>::finish(Us&&... f) {
+  assert(storage_);
+
+  storage_->finish(std::make_tuple(std::forward<Us>(f)...));
+  storage_.reset();  
+}
+
+
+template <typename... Ts>
+template <typename... Us>
 void Promise<Ts...>::set_value(Us&&... vals) {
   assert(storage_);
 

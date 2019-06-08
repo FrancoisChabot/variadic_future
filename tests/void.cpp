@@ -50,7 +50,25 @@ TEST(Future_void, then_success) {
     Promise<void> p;
     auto f = p.get_future();
 
+    auto one = f.then([](){ return 1;});
+    p.finish(expected<void>());
+
+    EXPECT_EQ(1, one.get_std_future().get());
+  }
+  {
+    Promise<void> p;
+    auto f = p.get_future();
+
     p.set_value();
+    auto one = f.then([](){ return 1;});
+
+    EXPECT_EQ(1, one.get_std_future().get());
+  }
+  {
+    Promise<void> p;
+    auto f = p.get_future();
+
+    p.finish(expected<void>());
     auto one = f.then([](){ return 1;});
 
     EXPECT_EQ(1, one.get_std_future().get());
