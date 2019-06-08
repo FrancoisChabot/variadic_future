@@ -27,6 +27,7 @@ include(GoogleTest)
 find_package(GTest REQUIRED CONFIG)
 
 add_executable(futures_test 
+  tests/int.cpp
   tests/misc.cpp
   tests/void.cpp)
 
