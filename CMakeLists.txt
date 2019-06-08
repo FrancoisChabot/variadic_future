@@ -26,7 +26,9 @@ include(CTest)
 include(GoogleTest)
 find_package(GTest REQUIRED CONFIG)
 
-add_executable(futures_test tests.cpp)
+add_executable(futures_test 
+  tests/misc.cpp
+  tests/void.cpp)
 
 if(MSVC)
   target_compile_options(futures_test PUBLIC /W4 /WX)
