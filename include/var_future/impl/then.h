@@ -29,15 +29,17 @@ class Future_then_handler : public Future_handler_base<QueueT, void, Ts...> {
  public:
   using parent_type = Future_handler_base<QueueT, void, Ts...>;
 
-  using cb_result_type = std::invoke_result_t<CbT, Ts...>;
+  using fullfill_type = typename parent_type::fullfill_type;
+  using finish_type = typename parent_type::finish_type;
+  using fail_type = typename parent_type::fail_type;
+
+  using cb_result_type = decltype(std::apply(std::declval<CbT>(), std::declval<fullfill_type>()));
   static_assert(!is_expected_v<cb_result_type>, "callbacks returning expecteds is not supported yet.");
   
   using dst_storage_type = Storage_for_cb_result_t<cb_result_type>;
   using dst_type = std::shared_ptr<dst_storage_type>;
 
-  using fullfill_type = typename parent_type::fullfill_type;
-  using finish_type = typename parent_type::finish_type;
-  using fail_type = typename parent_type::fail_type;
+
 
   Future_then_handler(QueueT* q, dst_type dst, CbT cb)
       : parent_type(q), dst_(std::move(dst)), cb_(std::move(cb)) {}
