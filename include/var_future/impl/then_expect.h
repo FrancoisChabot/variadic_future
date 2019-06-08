@@ -30,7 +30,7 @@ class Future_then_expect_handler
 public:
   using parent_type = Future_handler_base<QueueT, void, Ts...>;
 
-  using cb_result_type = std::invoke_result_t<CbT, Ts...>;
+  using cb_result_type = std::invoke_result_t<CbT, expected<Ts>...>;
   static_assert(!is_expected_v<cb_result_type>, "callbacks returning expecteds is not supported yet.");
 
   using dst_storage_type = Storage_for_cb_result_t<cb_result_type>;

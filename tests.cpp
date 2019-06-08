@@ -172,6 +172,34 @@ TEST(Future, simple_then) {
   }
 }
 
+TEST(Future, simple_null_then) {
+  // Post-filled
+  { 
+    Promise<void> prom;
+    auto fut = prom.get_future();
+
+    auto res = fut.then_expect([&](expected<void>) {
+      return 4;
+    });
+
+    prom.set_value();
+    EXPECT_EQ(4, res.get_std_future().get());
+  }
+
+  // Pre-filled
+  { 
+    Promise<void> prom;
+    auto fut = prom.get_future();
+    prom.set_value();
+
+    auto res = fut.then_expect([&](expected<void>) {
+      return 4;
+    });
+
+    EXPECT_EQ(4, res.get_std_future().get());
+  }
+}
+
 TEST(Future, simple_then_failure) {
   // Post-filled
   { 
