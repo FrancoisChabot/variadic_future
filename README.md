@@ -3,15 +3,34 @@
 
 # Variadic futures
 
-Variadic, callback-based futures for C++17.
+Variadic, completion-based futures for C++17.
 
 ## Why?
 
 In short, I need this to properly implement [another project](https://github.com/FrancoisChabot/easy_grpc) of mine, and it was an interesting exercise.
 
+More specifically, completion-based futures are a non-blocking, callback-based, synchronization mechanism that hides the callback logic from the asynchronous code, while properly handling error conditions. 
+
 ## But why variadic?
 
-Because it allows for the `tie()` function, which provides a very nice way to wait on multiple futures at once.
+Because it allows for the `tie()` function, which provides a very nice way to asynchronously wait on multiple futures at once:
+
+```
+Future<void> foo() {
+  Future<int> fut_a = ...;
+  Future<bool> fut_b = ...;
+ 
+  Future<int, bool> combined_fut = tie(fut_a, fut_b);
+ 
+  Future<void> result = combined_fut.then([](int a, bool b) {
+    // This is called once both fut_a and fut_b have been successfully completed.
+    std::cout << a << " - " << b;
+  });
+  
+  // If either fut_a or fut_b fails, the result will contain that failure.
+  return result;
+}
+```
 
 ## Installation
 
