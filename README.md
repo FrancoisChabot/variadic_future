@@ -138,9 +138,9 @@ void foo() {
     return std::string("hi") + std::to_string(v);
   })
   .then(complete)
-  .then_finally_expect([](aom::expected<int> v, main_work_queue) {
+  .then_finally_expect([](aom::expected<int> v) {
     //Do something with v;
-  });
+  }, main_work_queue);
 }
 ```
 
