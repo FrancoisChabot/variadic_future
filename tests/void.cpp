@@ -271,3 +271,46 @@ TEST(Future_void, then_expect_finally_success_post) {
 
   EXPECT_EQ(4+ref, expect_noop_count);
 }
+
+namespace {
+  int return_int() {
+    return 1;
+  } 
+
+  int return_int_fail() {
+    throw std::runtime_error("");
+  }
+}
+
+TEST(Future_void, chain_to_int) {
+  pf_set pf;
+
+  pf.complete();
+
+  auto f1 = pf[0].f.then(return_int);
+  auto f2 = pf[1].f.then(return_int);
+  auto f3 = pf[2].f.then(return_int);
+  auto f4 = pf[3].f.then(return_int);
+
+  EXPECT_EQ(1, f1.get_std_future().get());
+  EXPECT_THROW(f2.get_std_future().get(), std::logic_error);
+  EXPECT_EQ(1, f3.get_std_future().get());
+  EXPECT_THROW(f4.get_std_future().get(), std::logic_error);
+}
+
+TEST(Future_void, chain_to_int_fail) {
+  pf_set pf;
+
+  pf.complete();
+
+  auto f1 = pf[0].f.then(return_int_fail);
+  auto f2 = pf[1].f.then(return_int_fail);
+  auto f3 = pf[2].f.then(return_int_fail);
+  auto f4 = pf[3].f.then(return_int_fail);
+
+  
+  EXPECT_THROW(f1.get_std_future().get(), std::runtime_error);
+  EXPECT_THROW(f2.get_std_future().get(), std::logic_error);
+  EXPECT_THROW(f3.get_std_future().get(), std::runtime_error);
+  EXPECT_THROW(f4.get_std_future().get(), std::logic_error);
+}
