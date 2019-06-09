@@ -68,7 +68,7 @@ public:
       try {
         if constexpr (std::is_same_v<void, cb_result_type>) {
           std::apply(cb, std::move(f));
-          dst->fullfill({});
+          dst->fullfill(std::tuple<>{});
         } else {
           dst->fullfill(std::apply(cb, std::move(f)));
         }

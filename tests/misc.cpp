@@ -309,6 +309,24 @@ TEST(Future, partial_tie_failure) {
   EXPECT_EQ(3, dst);
 }
 
+TEST(Future, handler_returning_future) {
+
+  Promise<int> p;
+  auto f = p.get_future();
+
+  auto f2 = f.then([](int x){
+      Promise<int> p;
+      auto f = p.get_future();
+
+      p.set_value(x);
+      return f;
+  });
+
+  p.set_value(3);
+
+  EXPECT_EQ(3, f2.get_std_future().get());
+}
+
 
 TEST(Future, void_promise) {
   Promise<void> prom;

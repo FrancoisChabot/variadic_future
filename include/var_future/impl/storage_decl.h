@@ -88,6 +88,8 @@ class Future_storage {
   ~Future_storage();
 
   void fullfill(fullfill_type&& v);
+  void fullfill(future_type&& f);
+  
   void finish(finish_type&& f);
   void fail(fail_type&& e);
 

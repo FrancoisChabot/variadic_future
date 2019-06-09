@@ -62,7 +62,7 @@ class Future_then_handler : public Future_handler_base<QueueT, void, Ts...> {
       try {
         if constexpr (std::is_same_v<void, cb_result_type>) {
           std::apply(cb, std::move(v));
-          dst->fullfill({});
+          dst->fullfill(std::tuple<>{});
         } else {
           dst->fullfill(std::apply(cb, std::move(v)));
         }
