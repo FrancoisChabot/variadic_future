@@ -24,6 +24,9 @@ Because it allows for the `tie()` function, which provides a very nice way to wa
 The main header `var_future/future.h` is meant to contain all of the user-facing interface, and nothing but the user-facing interface. It serves directly as the main documentation (for now).
 
 ## Usage
+### Prerequisites
+
+I am assuming you are already familiar with the [expected<>](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0323r7.html) concept/syntax.
 
 ### Basic
 
