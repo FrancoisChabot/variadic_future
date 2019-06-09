@@ -73,11 +73,10 @@ void foo() {
 
 ## Choosing where the callback executes
 
-```cpp
-#include <iostream>
-#include <thread>
-#include <chrono>
+This example shows how to use [ASIO](https://think-async.com/Asio/), but the same idea can be applied to other contexts easily.
 
+```cpp
+#include "asio.hpp"
 #include "var_future/future.h"
 
 // This can be any type that has a thread-safe push(Callable<void()>); method
