@@ -81,14 +81,24 @@ void foo() {
 #include "var_future/future.h"
 
 // This can be any type that has a thread-safe push(Callable<void()>); method
-Work_queue main_work_queue;
+struct Work_queue {
+  template<typename T>
+  void push(T&& cb) {
+    asio::post(ctx_, std::forward<T>(cb));
+  }
+
+  asio::io_context& ctx_;
+};
 
 void foo() {
+  asio::io_context io_ctx;
+  Work_queue asio_adapter{io_ctx};
+
   aom::Promise<int> prom;
   aom::Future<int> fut = prom.get_future();
 
-  // push the execution of this callback in main_work_queue when ready.
-  fut.then_finally_expect([](aom::expected<int> v, main_work_queue) {
+  // push the execution of this callback in io_context when ready.
+  fut.then_finally_expect([](aom::expected<int> v, asio_adapter) {
     //Do something with v;
   });
 }

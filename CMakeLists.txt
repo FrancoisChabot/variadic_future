@@ -26,6 +26,10 @@ include(CTest)
 include(GoogleTest)
 find_package(GTest REQUIRED CONFIG)
 
+add_library(var_futures INTERFACE)
+target_include_directories(var_futures INTERFACE . include)
+target_compile_features(var_futures INTERFACE cxx_std_17)
+
 add_executable(futures_test 
   tests/int.cpp
   tests/misc.cpp
@@ -37,10 +41,8 @@ else()
   target_compile_options(futures_test PUBLIC -Wall -Wextra -pedantic -Werror)
 endif()
 
+target_link_libraries(futures_test var_futures GTest::gtest_main GTest::gtest --coverage)
 
-target_link_libraries(futures_test GTest::gtest_main GTest::gtest --coverage)
-target_include_directories(futures_test PRIVATE . include)
-target_compile_features(futures_test PUBLIC cxx_std_17)
 
 include(ProcessorCount)
 ProcessorCount(PROCESSOR_COUNT)
@@ -53,3 +55,5 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 gtest_discover_tests(futures_test)
+
+add_subdirectory(examples)
