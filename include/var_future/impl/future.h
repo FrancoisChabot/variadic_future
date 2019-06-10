@@ -44,6 +44,19 @@ template <typename... Ts>
 Future<Ts...>::Future(detail::Storage_ptr<storage_type> s)
     : storage_(std::move(s)) {}
 
+template <typename... Ts>
+Future<Ts...>::Future(Future<std::tuple<Ts...>>&& rhs) : storage_(new storage_type()) {
+  auto s = storage_;
+  rhs.finally([s=std::move(s)](expected<std::tuple<Ts...>> e) mutable {
+    if(e.has_value()) {
+      s->finish(std::move(*e));
+    }
+    else {
+      s->fail(std::move(e.error()));
+    }
+  });
+}
+
 // Synchronously calls cb once the future has been fulfilled.
 // cb will be invoked directly in whichever thread fullfills
 // the future.

@@ -47,6 +47,9 @@ class Future {
   // Creates the future in a pre-failed state
   explicit Future(fail_type);
 
+  // Promote a future of tuple into a higher-order future.
+  explicit Future(Future<std::tuple<Ts...>>&& rhs);
+
   Future(Future&&) = default;
   Future& operator=(Future&&) = default;
 

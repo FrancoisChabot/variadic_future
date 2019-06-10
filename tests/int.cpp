@@ -405,3 +405,26 @@ TEST(Future_int, te_expected_returning_callback_throw) {
   EXPECT_THROW(f3.std_future().get(), std::runtime_error);
   EXPECT_THROW(f4.std_future().get(), std::runtime_error);
 }
+
+TEST(Future_int, promote_tuple_to_variadic) {
+  Promise<std::tuple<int, int>> p_t;
+  auto f_t = p_t.get_future();
+
+  Future<int, int> real_f{std::move(f_t)};
+
+  int a = 0;
+  int b = 0;
+
+  real_f.finally([&](expected<int> ia, expected<int> ib) {
+    a = *ia;
+    b = *ib;
+  });
+
+  EXPECT_EQ(0, a);
+  EXPECT_EQ(0, b);
+
+  p_t.set_value(std::make_tuple(2,3));
+  EXPECT_EQ(2, a);
+  EXPECT_EQ(3, b);
+
+}
