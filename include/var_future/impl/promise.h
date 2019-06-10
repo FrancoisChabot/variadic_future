@@ -21,7 +21,7 @@ namespace aom {
 
 template <typename... Ts>
 Promise<Ts...>::~Promise() {
-  if(storage_) {
+  if (storage_) {
     storage_->fail(std::make_exception_ptr(Unfullfilled_promise{}));
   }
 }
@@ -40,9 +40,8 @@ void Promise<Ts...>::finish(Us&&... f) {
   assert(storage_);
 
   storage_->finish(std::make_tuple(std::forward<Us>(f)...));
-  storage_.reset();  
+  storage_.reset();
 }
-
 
 template <typename... Ts>
 template <typename... Us>

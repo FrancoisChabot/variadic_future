@@ -62,8 +62,30 @@ namespace {
   }
 }
 
+TEST(Future_void, fundamental_expectations) {
+  // These tests failing do not mean that the library doesn't work.
+  // It's just that some architecture-related assumptions made are not being
+  // met, so performance might be sub-optimal.
+
+  // The special immediate queue type qualifies as having static push.
+  EXPECT_TRUE(detail::has_static_push_v<detail::Immediate_queue>);
+
+  // Base handler should be nothing but a vtable pointer.
+  EXPECT_EQ(sizeof(void*), sizeof(detail::Future_handler_base<detail::Immediate_queue, void>));
+
+  // The then handler of a function pointer callback should match the callculations of the minimal 
+  // soo buffer size.
+  EXPECT_EQ(
+    sizeof(aom::detail::Future_then_handler<decltype(&no_op), aom::detail::Immediate_queue, void>),
+    aom::var_fut_default_min_soo_size
+  );
+
+}
+
 TEST(Future_void, blank) {
   Future<void> fut;
+
+
 }
 
 TEST(Future_void, unfilled_promise_failiure) {

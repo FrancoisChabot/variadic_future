@@ -78,7 +78,6 @@ template <typename CbT>
   return this->then_expect(std::move(cb), queue);
 }
 
-
 template <typename... Ts>
 template <typename CbT>
 void Future<Ts...>::then_finally_expect(CbT cb) {
