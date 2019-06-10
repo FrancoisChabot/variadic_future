@@ -47,8 +47,6 @@ class Future {
   // Creates the future in a pre-failed state
   explicit Future(fail_type);
 
-  explicit Future(detail::Storage_ptr<storage_type> s);
-
   Future(Future&&) = default;
   Future& operator=(Future&&) = default;
 
@@ -123,6 +121,7 @@ class Future {
   // Convenience function to obtain a std::future<> bound to this future.
   auto std_future();
 
+  // Shorthand for std_future().get().
   auto get();
 
  private:
@@ -130,8 +129,26 @@ class Future {
 
   Future(const Future&) = delete;
   Future& operator=(const Future&) = delete;
+
+
+  template<typename CbT, typename QueueT>
+  friend auto async(QueueT& q, CbT&& cb);
+
+  template <typename... Us>
+  friend auto tie(Us&&...);
+
+  template <typename... Us>
+  friend class Future;
+
+  template <typename... Us>
+  friend class Promise;
+  
+  // Primarily internal constructor.
+  explicit Future(detail::Storage_ptr<storage_type> s);
+
 };
 
+// Error assigned to a future when its promise is destroyed before being finished.
 struct Unfullfilled_promise : public std::logic_error {
   Unfullfilled_promise() : std::logic_error("Unfullfilled_promise") {}
 };
