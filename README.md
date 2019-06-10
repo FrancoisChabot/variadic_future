@@ -110,7 +110,7 @@ If a chaining callback throws an exception. That exception becomes the error ass
 
 The callback can either
 
-1. Executed directly wherever the future is fullfilled (**immediate**)
+1. Be executed directly wherever the future is fullfilled (**immediate**)
 2. Be posted to a work pool to be executed by some worker (**deffered**)
 
 **immediate** mode is used by default, just pass your callback to your chosen method and you are done.
@@ -154,7 +154,7 @@ thread.detach();
 `async()` will post the passed operation to the queue, and return a future to the value returned by that function.
 
 ```cpp
-std::future<double> fut = aom::async(queue, [](){return 12.0;})
+aom::Future<double> fut = aom::async(queue, [](){return 12.0;})
 ```
 
 
@@ -205,9 +205,9 @@ void foo() {
   aom::Future<int> fut = prom.get_future();
 
   // push the execution of this callback in io_context when ready.
-  fut.finally([](aom::expected<int> v) {
+  fut.finally(asio_adapter, [](aom::expected<int> v) {
     //Do something with v;
-  }, asio_adapter);
+  });
 }
 ```
 
