@@ -19,6 +19,7 @@
 
 #include "var_future/impl/utils.h"
 
+#include <atomic>
 #include <mutex>
 #include <type_traits>
 
@@ -108,7 +109,7 @@ class Future_storage {
 
   static bool is_ready_state(State v);
 
-  static constexpr std::size_t sso_space =
+  static constexpr std::size_t soo_space =
       std::min(std::size_t(var_fut_min_soo_size),
                std::max({sizeof(fullfill_type), sizeof(finish_type),
                          sizeof(fail_type)}) -
@@ -118,7 +119,7 @@ class Future_storage {
   // optimization.
   struct Callback_data {
     Future_handler_iface<Ts...>* callback_;
-    typename std::aligned_storage<sso_space>::type soo_buffer_;
+    typename std::aligned_storage<soo_space>::type soo_buffer_;
   };
 
   union {
@@ -129,6 +130,58 @@ class Future_storage {
   };
 
   std::mutex mtx_;
+
+  template <typename T>
+  friend struct Storage_ptr;
+
+  std::atomic<std::uint8_t> ref_count_ = 0;
+};
+
+// Yes, we are using a custom std::shared_ptr<> alternative. This is because
+// common handlers have a owning pointer to a Future_storage, and each byte
+// saved increases the likelyhood that it will fit in SOO, which has very large
+// performance impact.
+template <typename T>
+struct Storage_ptr {
+  Storage_ptr() = default;
+  Storage_ptr(T* val) : ptr_(val) { ++(ptr_->ref_count_); }
+
+  Storage_ptr(const Storage_ptr& rhs) : ptr_(rhs.ptr_) {
+    if (ptr_) {
+      ++(ptr_->ref_count_);
+    }
+  }
+
+  Storage_ptr(Storage_ptr&& rhs) : ptr_(rhs.ptr_) { rhs.ptr_ = nullptr; }
+
+  Storage_ptr& operator=(const Storage_ptr& rhs) = delete;
+  Storage_ptr& operator=(Storage_ptr&& rhs) {
+    reset();
+
+    ptr_ = rhs.ptr_;
+    if (ptr_) {
+      ++ptr_->ref_count_;
+    }
+    return *this;
+  }
+
+  void reset() {
+    if (ptr_) {
+      if (--(ptr_->ref_count_) == 0) {
+        delete ptr_;
+      }
+    }
+    ptr_ = nullptr;
+  }
+
+  operator bool() const { return ptr_ != nullptr; }
+
+  ~Storage_ptr() { reset(); }
+
+  T& operator*() const { return *ptr_; }
+  T* operator->() const { return ptr_; }
+
+  T* ptr_ = nullptr;
 };
 
 template <typename T>

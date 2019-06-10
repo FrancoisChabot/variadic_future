@@ -44,12 +44,12 @@ class Future {
   // Creates the future in a pre-failed state
   explicit Future(fail_type);
 
-  explicit Future(std::shared_ptr<storage_type> s);
+  explicit Future(detail::Storage_ptr<storage_type> s);
 
   Future(Future&&) = default;
   Future& operator=(Future&&) = default;
 
-  // Calls cb once the future has been fulfilled. 
+  // Calls cb once the future has been fulfilled.
   //
   // expects: cb to be a Callable(Ts...)
   //
@@ -58,7 +58,8 @@ class Future {
   // will be failed with that same failure, and cb will be destroyed without
   // being invoked.
   //
-  // if cb throws an exception, that exception will become the resulting future's failure
+  // if cb throws an exception, that exception will become the resulting
+  // future's failure
   template <typename CbT>
   [[nodiscard]] auto then(CbT cb);
 
@@ -71,7 +72,8 @@ class Future {
   // will be failed with that same failure, and cb will be destroyed without
   // being invoked.
   //
-  // if cb throws an exception, that exception will become the resulting future's failure
+  // if cb throws an exception, that exception will become the resulting
+  // future's failure
   template <typename CbT, typename QueueT>
   [[nodiscard]] auto then(CbT cb, QueueT& queue);
 
@@ -84,7 +86,8 @@ class Future {
   // will be failed with that same failure, and cb will be destroyed without
   // being invoked.
   //
-  // if cb throws an exception, that exception will become the resulting future's failure
+  // if cb throws an exception, that exception will become the resulting
+  // future's failure
   template <typename CbT>
   [[nodiscard]] auto then_expect(CbT cb);
 
@@ -97,7 +100,8 @@ class Future {
   // will be failed with that same failure, and cb will be destroyed without
   // being invoked.
   //
-  // if cb throws an exception, that exception will become the resulting future's failure
+  // if cb throws an exception, that exception will become the resulting
+  // future's failure
   template <typename CbT, typename QueueT>
   [[nodiscard]] auto then_expect(CbT cb, QueueT& queue);
 
@@ -117,7 +121,7 @@ class Future {
   auto get_std_future();
 
  private:
-  std::shared_ptr<storage_type> storage_;
+  detail::Storage_ptr<storage_type> storage_;
 
   Future(const Future&) = delete;
   Future& operator=(const Future&) = delete;
@@ -143,13 +147,12 @@ class Promise {
   Promise(Promise&&) = default;
   Promise& operator=(Promise&&) = default;
   ~Promise();
-  
 
   // Returns a future that is bound to this promise
   future_type get_future();
 
   // Fullfills the promise.
-  // 
+  //
   // expects: std::forward<Us...>(vals) can be used to initialize fullfill_type.
   //          which is std::tuple<Ts..> with the void types removed from Ts.
   //          For example:
@@ -158,19 +161,20 @@ class Promise {
   void set_value(Us&&... vals);
 
   // Finishes the promise.
-  // 
+  //
   // expects: std::forward<Us...>(vals) can be used to initialize finish_type.
   //          which is std::tuple<expected<Ts>..>
   template <typename... Us>
   void finish(Us&&... f);
 
   // Fails the promise.
-  // 
-  // If the promise as more than one member, it fails all of them with the same error.
+  //
+  // If the promise as more than one member, it fails all of them with the same
+  // error.
   void set_exception(fail_type e);
 
  private:
-  std::shared_ptr<storage_type> storage_;
+  detail::Storage_ptr<storage_type> storage_;
 
   Promise(const Promise&) = delete;
   Promise& operator=(const Promise&) = delete;
