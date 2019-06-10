@@ -210,6 +210,15 @@ void foo() {
   });
 }
 ```
+## FAQs
+
+**Is there a std::shared_future<> equivalent?**
+
+Not yet. If someone would use it, it can be added to the library, we just don't want to add features that would not be used anywhere.
+
+**Why is there no terminating+error propagating method?**
+
+We have to admit that it would be nice to just do `fut.finally([](int a, float b){ ... })`, but the problem with that is that errors would have nowhere to go. Having the path of least resistance leading to dropping errors on the ground by default is just a recipe for disaster in the long run.
 
 ## Reference
 
