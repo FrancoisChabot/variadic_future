@@ -83,7 +83,7 @@ The **arguments** of a callback for a `Future<T, U, V>` will be:
   Future<void, int, void, float> f3;
 
   auto f11 = f1.then([](int, float){});
-  auto f22 = f2.then_expect([](expected<void>, expected<int>, expected<void>, float){});
+  auto f22 = f2.then_expect([](expected<void>, expected<int>, expected<void>, expected<float>){});
   f3.finally([](expected<void>, expected<int>, expected<void>, expected<float>){});
 ```
 
