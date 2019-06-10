@@ -75,7 +75,7 @@ You can use the following matrix to determine which method to use:
 The **arguments** of a callback for a `Future<T, U, V>` will be:
 
 * In error-handling mode: `cb(expected<T>, expected<U>, expected<V>`)
-* In error-handling mode: `cb(T, U, V)` where void arguments are ommited.
+* In error-propagating mode: `cb(T, U, V)` where void arguments are ommited.
 
 ```cpp
   Future<void, int, void, float> f1;
