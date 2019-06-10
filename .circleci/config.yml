@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 jobs:
   debug_build:
     docker:
@@ -58,3 +58,11 @@ jobs:
           command: |
             cd _bld 
             ctest -j $(nproc) -T memcheck
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - debug_build
+      - release_build
+
