@@ -84,7 +84,7 @@ The **arguments** of a callback for a `Future<T, U, V>` will be:
 
   auto f11 = f1.then([](int, float){});
   auto f22 = f2.then_expect([](expected<void>, expected<int>, expected<void>, float){});
-  f3.finally([](expected<void>, expected<int>, expected<void>, float){});
+  f3.finally([](expected<void>, expected<int>, expected<void>, expected<float>){});
 ```
 
 * The **return value** of a chaining callback will become a future of the matching type. If your callback returns a future, then that future is propagated directly. 
