@@ -109,16 +109,17 @@ class Future_storage {
 
   static bool is_ready_state(State v);
 
+  // Calculate how much memory we want to reserve for the eventual callback
   static constexpr std::size_t soo_space =
       std::min(std::size_t(var_fut_min_soo_size),
                std::max({sizeof(fullfill_type), sizeof(finish_type),
                          sizeof(fail_type)}) -
                    sizeof(Future_handler_iface<Ts...>*));
 
-  // The SSO buffer is a parent class so that we can get zero-size base
-  // optimization.
+
   struct Callback_data {
-    Future_handler_iface<Ts...>* callback_;
+    // This will either point to soo_buffer_, or heap-allocated data, depending on state_.
+    Future_handler_iface<Ts...>* callback_; 
     typename std::aligned_storage<soo_space>::type soo_buffer_;
   };
 
@@ -144,7 +145,10 @@ class Future_storage {
 template <typename T>
 struct Storage_ptr {
   Storage_ptr() = default;
-  Storage_ptr(T* val) : ptr_(val) { ++(ptr_->ref_count_); }
+  Storage_ptr(T* val) : ptr_(val) { 
+    assert(val);
+    ++(ptr_->ref_count_); 
+  }
 
   Storage_ptr(const Storage_ptr& rhs) : ptr_(rhs.ptr_) {
     if (ptr_) {
