@@ -154,7 +154,7 @@ thread.detach();
 `async()` will post the passed operation to the queue, and return a future to the value returned by that function.
 
 ```cpp
-std::future<double> fut = aom::async(queue, [](){return 12.0;})
+aom::Future<double> fut = aom::async(queue, [](){return 12.0;})
 ```
 
 
