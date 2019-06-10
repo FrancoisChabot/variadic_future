@@ -15,7 +15,7 @@ More specifically, completion-based futures are a non-blocking, callback-based, 
 
 Because it allows for the `tie()` function, which provides a very nice way to asynchronously wait on multiple futures at once:
 
-```
+```cpp
 Future<void> foo() {
   Future<int> fut_a = ...;
   Future<bool> fut_b = ...;
