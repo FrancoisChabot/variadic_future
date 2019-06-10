@@ -199,12 +199,14 @@ struct Work_queue {
   asio::io_context& ctx_;
 };
 
+int int_generating_operation();
+
 void foo() {
   asio::io_context io_ctx;
   Work_queue asio_adapter{io_ctx};
 
-  aom::Promise<int> prom;
-  aom::Future<int> fut = prom.get_future();
+  // Queue the operation in the asio context, and get a future to the result.
+  aom::Future<int> fut = aom::async(asio_adapter, int_generating_operation);
 
   // push the execution of this callback in io_context when ready.
   fut.finally(asio_adapter, [](aom::expected<int> v) {
