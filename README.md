@@ -110,7 +110,7 @@ If a chaining callback throws an exception. That exception becomes the error ass
 
 The callback can either
 
-1. Executed directly wherever the future is fullfilled (**immediate**)
+1. Be executed directly wherever the future is fullfilled (**immediate**)
 2. Be posted to a work pool to be executed by some worker (**deffered**)
 
 **immediate** mode is used by default, just pass your callback to your chosen method and you are done.
