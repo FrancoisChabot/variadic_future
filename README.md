@@ -218,12 +218,12 @@ Simple callback.
 * [1] `cb` is immediately called when `this` is **finished**.
 * [2] `cb(...)` is pushed in queue when `this` is **finished**.
 
-**Future::get_std_future()**
+**Future::std_future()**
 
 Bridge to `std` api.
 ```
-[1] std::future<T> Future<T>::get_std_future();
-[2] std::future<std::tuple<see_below>> Future<Ts...>::get_std_future();
+[1] std::future<T> Future<T>::std_future();
+[2] std::future<std::tuple<see_below>> Future<Ts...>::std_future();
 ```
 
 * Returns a std::future<> that completes upon Future **finishing**

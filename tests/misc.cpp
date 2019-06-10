@@ -37,13 +37,13 @@ TEST(Future, pre_filled_future) {
   { 
     Future<int> fut{ std::tuple<int>(12) };
 
-    EXPECT_EQ(12, fut.get_std_future().get());
+    EXPECT_EQ(12, fut.std_future().get());
   }
 
   { 
     Future<int, std::string> fut{std::tuple<int, std::string>{12, "hi"}};
 
-    EXPECT_EQ(std::make_tuple(12, "hi"), fut.get_std_future().get());
+    EXPECT_EQ(std::make_tuple(12, "hi"), fut.std_future().get());
   }
 }
 
@@ -68,7 +68,7 @@ TEST(Future, prom_filled_future) {
     auto fut = prom.get_future();
     prom.set_value(12);
 
-    EXPECT_EQ(12, fut.get_std_future().get());
+    EXPECT_EQ(12, fut.std_future().get());
   }
 
   { 
@@ -76,7 +76,7 @@ TEST(Future, prom_filled_future) {
     auto fut = prom.get_future();
     prom.set_value(12, "hi");
 
-    EXPECT_EQ(std::make_tuple(12, "hi"), fut.get_std_future().get());
+    EXPECT_EQ(std::make_tuple(12, "hi"), fut.std_future().get());
   }
 }
 
@@ -89,7 +89,7 @@ TEST(Future, simple_then_expect) {
   });
   p.set_value(3);
 
-  EXPECT_EQ(r.get_std_future().get(), 12);
+  EXPECT_EQ(r.std_future().get(), 12);
 }
 
 TEST(Future, prom_post_filled_future) {
@@ -155,7 +155,7 @@ TEST(Future, simple_then) {
     });
 
     prom.set_value(3);
-    EXPECT_EQ(7, res.get_std_future().get());
+    EXPECT_EQ(7, res.std_future().get());
   }
 
   // Pre-filled
@@ -168,7 +168,7 @@ TEST(Future, simple_then) {
       return v.value() + 4;
     });
 
-    EXPECT_EQ(7, res.get_std_future().get());
+    EXPECT_EQ(7, res.std_future().get());
   }
 }
 
@@ -183,7 +183,7 @@ TEST(Future, simple_null_then) {
     });
 
     prom.set_value();
-    EXPECT_EQ(4, res.get_std_future().get());
+    EXPECT_EQ(4, res.std_future().get());
   }
 
   // Pre-filled
@@ -196,7 +196,7 @@ TEST(Future, simple_null_then) {
       return 4;
     });
 
-    EXPECT_EQ(4, res.get_std_future().get());
+    EXPECT_EQ(4, res.std_future().get());
   }
 }
 
@@ -211,7 +211,7 @@ TEST(Future, simple_null_then_exptec) {
     });
 
     prom.set_value();
-    EXPECT_EQ(4, res.get_std_future().get());
+    EXPECT_EQ(4, res.std_future().get());
   }
 
   // Pre-filled
@@ -224,7 +224,7 @@ TEST(Future, simple_null_then_exptec) {
       return 4;
     });
 
-    EXPECT_EQ(4, res.get_std_future().get());
+    EXPECT_EQ(4, res.std_future().get());
   }
 }
 
@@ -239,7 +239,7 @@ TEST(Future, simple_then_failure) {
     });
 
     prom.set_exception(std::make_exception_ptr(std::runtime_error("nope")));
-    EXPECT_THROW(res.get_std_future().get(), std::runtime_error);
+    EXPECT_THROW(res.std_future().get(), std::runtime_error);
   }
 
   // Pre-filled
@@ -252,7 +252,7 @@ TEST(Future, simple_then_failure) {
       return v.value() + 4;
     });
 
-    EXPECT_THROW(res.get_std_future().get(), std::runtime_error);
+    EXPECT_THROW(res.std_future().get(), std::runtime_error);
     
   }
 }
@@ -264,7 +264,7 @@ TEST(Future, Forgotten_promise) {
     fut = prom.get_future();
   }
 
-  EXPECT_THROW(fut.get_std_future().get(), Unfullfilled_promise);
+  EXPECT_THROW(fut.std_future().get(), Unfullfilled_promise);
 }
 
 TEST(Future, simple_get) {
@@ -272,7 +272,7 @@ TEST(Future, simple_get) {
   auto fut = prom.get_future();
 
   prom.set_value(3);
-  EXPECT_EQ(3, fut.get_std_future().get());
+  EXPECT_EQ(3, fut.std_future().get());
 }
 
 TEST(Future, simple_ite) {
@@ -287,7 +287,7 @@ TEST(Future, simple_ite) {
   p_a.set_value(3);
   p_b.set_value("yo");
 
-  EXPECT_EQ(3, f.get_std_future().get());
+  EXPECT_EQ(3, f.std_future().get());
 }
 
 TEST(Future, partial_tie_failure) {
@@ -324,7 +324,7 @@ TEST(Future, handler_returning_future) {
 
   p.set_value(3);
 
-  EXPECT_EQ(3, f2.get_std_future().get());
+  EXPECT_EQ(3, f2.std_future().get());
 }
 
 

@@ -133,7 +133,7 @@ void Future<Ts...>::then_finally_expect(CbT cb, QueueT& queue) {
 }
 
 template <typename... Ts>
-auto Future<Ts...>::get_std_future() {
+auto Future<Ts...>::std_future() {
   constexpr bool all_voids = std::conjunction_v<std::is_same<Ts, void>...>;
   if constexpr (all_voids) {
     std::promise<void> prom;
@@ -176,6 +176,11 @@ auto Future<Ts...>::get_std_future() {
     });
     return fut;
   }
+}
+
+template <typename... Ts>
+auto Future<Ts...>::get() {
+  return std_future().get();
 }
 
 }  // namespace aom

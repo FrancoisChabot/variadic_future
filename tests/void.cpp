@@ -29,7 +29,7 @@ namespace {
     }
 
     void get() {
-      f.get_std_future().get();
+      f.std_future().get();
     }
 
     Promise<void> p;
@@ -95,7 +95,7 @@ TEST(Future_void, unfilled_promise_failiure) {
     fut = p.get_future();
   }
 
-  EXPECT_THROW(fut.get_std_future().get(), Unfullfilled_promise);
+  EXPECT_THROW(fut.std_future().get(), Unfullfilled_promise);
 }
 
 TEST(Future_void, preloaded_std_get) {
@@ -119,10 +119,10 @@ TEST(Future_void, delayed_std_get) {
     pf.complete();
   });
 
-  auto std_f1 = pf[0].f.get_std_future();
-  auto std_f2 = pf[1].f.get_std_future();
-  auto std_f3 = pf[2].f.get_std_future();
-  auto std_f4 = pf[3].f.get_std_future();
+  auto std_f1 = pf[0].f.std_future();
+  auto std_f2 = pf[1].f.std_future();
+  auto std_f3 = pf[2].f.std_future();
+  auto std_f4 = pf[3].f.std_future();
   
   l.unlock();
   
@@ -144,10 +144,10 @@ TEST(Future_void, then_noop_pre) {
 
   pf.complete();
   
-  EXPECT_NO_THROW(f1.get_std_future().get());
-  EXPECT_THROW(f2.get_std_future().get(), std::logic_error);
-  EXPECT_NO_THROW(f3.get_std_future().get());
-  EXPECT_THROW(f4.get_std_future().get(), std::logic_error);
+  EXPECT_NO_THROW(f1.std_future().get());
+  EXPECT_THROW(f2.std_future().get(), std::logic_error);
+  EXPECT_NO_THROW(f3.std_future().get());
+  EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
 TEST(Future_void, then_noop_post) {
@@ -160,10 +160,10 @@ TEST(Future_void, then_noop_post) {
   auto f3 = pf[2].f.then(no_op);
   auto f4 = pf[3].f.then(no_op);
   
-  EXPECT_NO_THROW(f1.get_std_future().get());
-  EXPECT_THROW(f2.get_std_future().get(), std::logic_error);
-  EXPECT_NO_THROW(f3.get_std_future().get());
-  EXPECT_THROW(f4.get_std_future().get(), std::logic_error);
+  EXPECT_NO_THROW(f1.std_future().get());
+  EXPECT_THROW(f2.std_future().get(), std::logic_error);
+  EXPECT_NO_THROW(f3.std_future().get());
+  EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
 TEST(Future_void, then_failure_pre) {
@@ -176,10 +176,10 @@ TEST(Future_void, then_failure_pre) {
   
   pf.complete();
 
-  EXPECT_THROW(f1.get_std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.get_std_future().get(), std::logic_error);
-  EXPECT_THROW(f3.get_std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.get_std_future().get(), std::logic_error);
+  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f2.std_future().get(), std::logic_error);
+  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
 TEST(Future_void, then_failure_post) {
@@ -192,10 +192,10 @@ TEST(Future_void, then_failure_post) {
   auto f3 = pf[2].f.then(failure);
   auto f4 = pf[3].f.then(failure);
 
-  EXPECT_THROW(f1.get_std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.get_std_future().get(), std::logic_error);
-  EXPECT_THROW(f3.get_std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.get_std_future().get(), std::logic_error);
+  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f2.std_future().get(), std::logic_error);
+  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
 TEST(Future_void, then_expect_success_pre) {
@@ -208,10 +208,10 @@ TEST(Future_void, then_expect_success_pre) {
   
   pf.complete();
 
-  EXPECT_NO_THROW(f1.get_std_future().get());
-  EXPECT_NO_THROW(f2.get_std_future().get());
-  EXPECT_NO_THROW(f3.get_std_future().get());
-  EXPECT_NO_THROW(f4.get_std_future().get());
+  EXPECT_NO_THROW(f1.std_future().get());
+  EXPECT_NO_THROW(f2.std_future().get());
+  EXPECT_NO_THROW(f3.std_future().get());
+  EXPECT_NO_THROW(f4.std_future().get());
 
 }
 
@@ -225,10 +225,10 @@ TEST(Future_void, then_expect_success_post) {
   
   pf.complete();
 
-  EXPECT_NO_THROW(f1.get_std_future().get());
-  EXPECT_NO_THROW(f2.get_std_future().get());
-  EXPECT_NO_THROW(f3.get_std_future().get());
-  EXPECT_NO_THROW(f4.get_std_future().get());
+  EXPECT_NO_THROW(f1.std_future().get());
+  EXPECT_NO_THROW(f2.std_future().get());
+  EXPECT_NO_THROW(f3.std_future().get());
+  EXPECT_NO_THROW(f4.std_future().get());
 }
 
 TEST(Future_void, then_expect_failure_pre) {
@@ -241,10 +241,10 @@ TEST(Future_void, then_expect_failure_pre) {
   auto f3 = pf[2].f.then_expect(expected_noop_fail);
   auto f4 = pf[3].f.then_expect(expected_noop_fail);
 
-  EXPECT_THROW(f1.get_std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.get_std_future().get(), std::runtime_error);
-  EXPECT_THROW(f3.get_std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.get_std_future().get(), std::runtime_error);
+  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f2.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f4.std_future().get(), std::runtime_error);
 }
 
 TEST(Future_void, then_expect_failure_post) {
@@ -257,10 +257,10 @@ TEST(Future_void, then_expect_failure_post) {
 
   pf.complete();
 
-  EXPECT_THROW(f1.get_std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.get_std_future().get(), std::runtime_error);
-  EXPECT_THROW(f3.get_std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.get_std_future().get(), std::runtime_error);
+  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f2.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f4.std_future().get(), std::runtime_error);
 }
 
 
@@ -314,10 +314,10 @@ TEST(Future_void, chain_to_int) {
   auto f3 = pf[2].f.then(return_int);
   auto f4 = pf[3].f.then(return_int);
 
-  EXPECT_EQ(1, f1.get_std_future().get());
-  EXPECT_THROW(f2.get_std_future().get(), std::logic_error);
-  EXPECT_EQ(1, f3.get_std_future().get());
-  EXPECT_THROW(f4.get_std_future().get(), std::logic_error);
+  EXPECT_EQ(1, f1.std_future().get());
+  EXPECT_THROW(f2.std_future().get(), std::logic_error);
+  EXPECT_EQ(1, f3.std_future().get());
+  EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
 TEST(Future_void, chain_to_int_fail) {
@@ -331,8 +331,8 @@ TEST(Future_void, chain_to_int_fail) {
   auto f4 = pf[3].f.then(return_int_fail);
 
   
-  EXPECT_THROW(f1.get_std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.get_std_future().get(), std::logic_error);
-  EXPECT_THROW(f3.get_std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.get_std_future().get(), std::logic_error);
+  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f2.std_future().get(), std::logic_error);
+  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }

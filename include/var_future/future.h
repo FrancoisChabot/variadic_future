@@ -121,7 +121,9 @@ class Future {
   void then_finally_expect(CbT cb, QueueT& queue);
 
   // Convenience function to obtain a std::future<> bound to this future.
-  auto get_std_future();
+  auto std_future();
+
+  auto get();
 
  private:
   detail::Storage_ptr<storage_type> storage_;
@@ -143,7 +145,7 @@ class Promise {
   using storage_type = typename future_type::storage_type;
 
   using value_type = detail::future_value_type_t<Ts...>;
-  
+
   using fullfill_type = detail::fullfill_type_t<Ts...>;
   using finish_type = detail::finish_type_t<Ts...>;
   using fail_type = detail::fail_type_t<Ts...>;
