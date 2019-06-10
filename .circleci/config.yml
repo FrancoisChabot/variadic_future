@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  debug_build:
     docker:
       - image: francoischabot/easy_grpc_buildenv:latest
 
@@ -12,7 +12,7 @@ jobs:
           command: |
             mkdir _bld 
             cd _bld 
-            cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERAGE=1 ..
+            cmake -DVAR_FUTURES_BUILD_EXAMPLES=ON -DVAR_FUTURES_BUILD_TESTS=ON -DVAR_FUTURES_TEST_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug ..
 
       - run:
           name: Build
@@ -32,3 +32,29 @@ jobs:
             cd _bld
             make coverage
             bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"
+  
+            release_build:
+    docker:
+      - image: francoischabot/easy_grpc_buildenv:latest
+
+    steps:
+      - checkout
+
+      - run:
+          name: Create build script
+          command: |
+            mkdir _bld 
+            cd _bld 
+            cmake -DVAR_FUTURES_BUILD_EXAMPLES=ON -DVAR_FUTURES_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release ..
+
+      - run:
+          name: Build
+          command: |
+            cd _bld 
+            make -j $(nproc)
+
+      - run:
+          name: Test
+          command: |
+            cd _bld 
+            ctest -j $(nproc) -T memcheck
