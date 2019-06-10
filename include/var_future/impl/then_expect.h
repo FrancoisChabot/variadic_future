@@ -27,15 +27,17 @@ namespace detail {
 template <typename CbT, typename QueueT, typename... Ts>
 class Future_then_expect_handler
     : public Future_handler_base<QueueT, void, Ts...> {
-public:
+ public:
   using parent_type = Future_handler_base<QueueT, void, Ts...>;
 
   using fullfill_type = typename parent_type::fullfill_type;
   using finish_type = typename parent_type::finish_type;
   using fail_type = typename parent_type::fail_type;
 
-  using cb_result_type = decltype(std::apply(std::declval<CbT>(), std::declval<finish_type>()));
-  static_assert(!is_expected_v<cb_result_type>, "callbacks returning expecteds is not supported yet.");
+  using cb_result_type =
+      decltype(std::apply(std::declval<CbT>(), std::declval<finish_type>()));
+  static_assert(!is_expected_v<cb_result_type>,
+                "callbacks returning expecteds is not supported yet.");
 
   using dst_storage_type = Storage_for_cb_result_t<cb_result_type>;
   using dst_type = std::shared_ptr<dst_storage_type>;

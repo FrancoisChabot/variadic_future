@@ -170,13 +170,15 @@ struct Immediate_queue {
   }
 };
 
+static void no_op_test() {}
 // Determines wether T's duck-typed push() method is static.
 // This will be used in Future_handler_base to omit its instantiation
 template <typename T, typename = void>
 struct has_static_push : std::false_type {};
 
 template <typename T>
-struct has_static_push<T, decltype(void(T::push()))> : std::true_type {};
+struct has_static_push<T, decltype(void(T::push(no_op_test)))>
+    : std::true_type {};
 
 template <typename T>
 constexpr bool has_static_push_v = has_static_push<T>::value;

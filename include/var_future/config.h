@@ -15,6 +15,7 @@
 #ifndef AOM_VARIADIC_FUTURE_CONFIG_INCLUDED_H
 #define AOM_VARIADIC_FUTURE_CONFIG_INCLUDED_H
 
+#include <memory>
 // **************************** std::expected ***************************//
 
 // Change this if you want to use some other expected type.
@@ -32,10 +33,27 @@ using unexpected = nonstd::unexpected_type<std::exception_ptr>;
 // library. It is tolerated because it's more of a blind spot in the StdLib 
 // specification than an actual problem, and is consistent accross all compilers.
 //
-// Nevertheless, if you want absolute strict standard adherance, uncomment the
-// following line.
+// Nevertheless, if you want absolute strict standard adherance, 
 
 //#define VAR_FUTURE_NO_UB
 
+
+namespace aom {
+  static constexpr std::size_t var_fut_default_min_soo_size = 2 * sizeof(void*) + sizeof(std::shared_ptr<int>);
+
+  // A future's shared state can contain either a value, an error, or
+  // callbacks to invoke. When sizeof(value) is large, storing callbacks
+  // in small-object-optimization storage is trivial.
+  //
+  // However, when sizeof(value) is very small, like in a future<void>,
+  // most callbacks would end up on the heap, so we make future_storage a
+  // bit larger than strictly necessary in those cases to accomodate.
+  //
+  // This variable thus represents the size handlers guaranteed to be stored
+  // in SOO storage, which by default matches Future<void>::then([](){});
+  //
+  // The default value is used in tests, so it should be left alone.
+  static constexpr std::size_t var_fut_min_soo_size = var_fut_default_min_soo_size;
+}
 
 #endif

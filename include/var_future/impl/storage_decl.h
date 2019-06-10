@@ -89,7 +89,7 @@ class Future_storage {
 
   void fullfill(fullfill_type&& v);
   void fullfill(future_type&& f);
-  
+
   void finish(finish_type&& f);
   void fail(fail_type&& e);
 
@@ -100,13 +100,29 @@ class Future_storage {
   enum class State {
     PENDING,
     READY,
+    READY_SOO,
     FINISHED,
     FULLFILLED,
     ERROR,
   } state_ = State::PENDING;
 
+  static bool is_ready_state(State v);
+
+  static constexpr std::size_t sso_space =
+      std::min(std::size_t(var_fut_min_soo_size),
+               std::max({sizeof(fullfill_type), sizeof(finish_type),
+                         sizeof(fail_type)}) -
+                   sizeof(Future_handler_iface<Ts...>*));
+
+  // The SSO buffer is a parent class so that we can get zero-size base
+  // optimization.
+  struct Callback_data {
+    Future_handler_iface<Ts...>* callback_;
+    typename std::aligned_storage<sso_space>::type soo_buffer_;
+  };
+
   union {
-    Future_handler_iface<Ts...>* callbacks_;
+    Callback_data cb_data_;
     fullfill_type fullfilled_;
     finish_type finished_;
     fail_type failure_;
