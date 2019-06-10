@@ -66,6 +66,13 @@ void Future_storage<Ts...>::finish(finish_type&& f) {
 }
 
 template <typename... Ts>
+void Future_storage<Ts...>::finish(future_type&& f) {
+  f.finally([this](expected<Ts>... f) {
+    this->finish(std::make_tuple(std::move(f)...));
+  });
+}
+
+template <typename... Ts>
 void Future_storage<Ts...>::fail(fail_type&& e) {
   std::lock_guard l(mtx_);
   assert(is_ready_state(state_) || state_ == State::PENDING);

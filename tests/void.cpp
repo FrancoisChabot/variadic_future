@@ -336,3 +336,44 @@ TEST(Future_void, chain_to_int_fail) {
   EXPECT_THROW(f3.std_future().get(), std::runtime_error);
   EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
+
+expected<void> expected_cb() {
+  return {};
+}
+expected<void> expected_cb_fail() {
+  return unexpected{std::make_exception_ptr(std::runtime_error("yikes"))};
+}
+
+TEST(Future_void, expected_returning_callback) {
+  pf_set pf;
+
+  pf.complete();
+
+  auto f1 = pf[0].f.then(expected_cb);
+  auto f2 = pf[1].f.then(expected_cb);
+  auto f3 = pf[2].f.then(expected_cb);
+  auto f4 = pf[3].f.then(expected_cb);
+
+  
+  EXPECT_NO_THROW(f1.std_future().get());
+  EXPECT_THROW(f2.std_future().get(), std::logic_error);
+  EXPECT_NO_THROW(f3.std_future().get());
+  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+}
+
+TEST(Future_void, expected_returning_callback_fail) {
+  pf_set pf;
+
+  pf.complete();
+
+  auto f1 = pf[0].f.then(expected_cb_fail);
+  auto f2 = pf[1].f.then(expected_cb_fail);
+  auto f3 = pf[2].f.then(expected_cb_fail);
+  auto f4 = pf[3].f.then(expected_cb_fail);
+
+  
+  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f2.std_future().get(), std::logic_error);
+  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+}

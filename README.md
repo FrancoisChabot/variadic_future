@@ -87,7 +87,9 @@ The **arguments** of a callback for a `Future<T, U, V>` will be:
   f3.finally([](expected<void>, expected<int>, expected<void>, expected<float>){});
 ```
 
-* The **return value** of a chaining callback will become a future of the matching type. If your callback returns a future, then that future is propagated directly. 
+* The **return value** of a chaining callback will become a future of the matching type. 
+  * If your callback returns a `Future<T>`, then the result is a `Future<T>` that propagates directly.
+  * If your callback returns an `expected<T>`, then the result is a `Future<T>` that gets set or failed appropriately. 
 * The **return value** of a terminating callback is ignored.
 
 ```cpp
