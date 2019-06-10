@@ -35,8 +35,6 @@ class Future_then_handler : public Future_handler_base<QueueT, void, Ts...> {
 
   using cb_result_type =
       decltype(std::apply(std::declval<CbT>(), std::declval<fullfill_type>()));
-  static_assert(!is_expected_v<cb_result_type>,
-                "callbacks returning expecteds is not supported yet.");
 
   using dst_storage_type = Storage_for_cb_result_t<cb_result_type>;
   using dst_type = Storage_ptr<dst_storage_type>;
@@ -64,7 +62,12 @@ class Future_then_handler : public Future_handler_base<QueueT, void, Ts...> {
           std::apply(cb, std::move(v));
           dst->fullfill(std::tuple<>{});
         } else {
-          dst->fullfill(std::apply(cb, std::move(v)));
+          if constexpr (is_expected_v<cb_result_type>) {
+            dst->finish(std::apply(cb, std::move(v)));
+          }
+          else{
+            dst->fullfill(std::apply(cb, std::move(v)));
+          }
         }
 
       } catch (...) {

@@ -281,3 +281,127 @@ TEST(Future_int, then_expect_finally_success_post) {
 
   EXPECT_EQ(4+ref, expect_noop_count);
 }
+
+expected<int> generate_expected_value(int) {
+  return 3;
+}
+
+expected<int> generate_expected_value_fail(int) {
+  return unexpected{std::make_exception_ptr(std::runtime_error("yo"))};
+}
+
+expected<int> generate_expected_value_throw(int) {
+  throw std::runtime_error("yo");
+}
+
+
+
+TEST(Future_int, expected_returning_callback) {
+  pf_set pf;
+
+  pf.complete();
+
+  auto f1 = pf[0].f.then(generate_expected_value);
+  auto f2 = pf[1].f.then(generate_expected_value);
+  auto f3 = pf[2].f.then(generate_expected_value);
+  auto f4 = pf[3].f.then(generate_expected_value);
+
+  EXPECT_EQ(3, f1.get());
+  EXPECT_THROW(f2.std_future().get(), std::logic_error);
+  EXPECT_EQ(3, f3.get());
+  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+}
+
+TEST(Future_int, expected_returning_callback_fail) {
+  pf_set pf;
+
+  pf.complete();
+
+  auto f1 = pf[0].f.then(generate_expected_value_fail);
+  auto f2 = pf[1].f.then(generate_expected_value_fail);
+  auto f3 = pf[2].f.then(generate_expected_value_fail);
+  auto f4 = pf[3].f.then(generate_expected_value_fail);
+
+  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f2.std_future().get(), std::logic_error);
+  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+}
+
+TEST(Future_int, expected_returning_callback_throw) {
+  pf_set pf;
+
+  pf.complete();
+
+  auto f1 = pf[0].f.then(generate_expected_value_throw);
+  auto f2 = pf[1].f.then(generate_expected_value_throw);
+  auto f3 = pf[2].f.then(generate_expected_value_throw);
+  auto f4 = pf[3].f.then(generate_expected_value_throw);
+
+  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f2.std_future().get(), std::logic_error);
+  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+}
+
+expected<int> te_generate_expected_value(expected<int>) {
+  return 3;
+}
+
+expected<int> te_generate_expected_value_fail(expected<int>) {
+  return unexpected{std::make_exception_ptr(std::runtime_error("yo"))};
+}
+
+expected<int> te_generate_expected_value_throw(expected<int>) {
+  throw std::runtime_error("yo");
+}
+
+
+
+TEST(Future_int, te_expected_returning_callback) {
+  pf_set pf;
+
+  pf.complete();
+
+  auto f1 = pf[0].f.then_expect(te_generate_expected_value);
+  auto f2 = pf[1].f.then_expect(te_generate_expected_value);
+  auto f3 = pf[2].f.then_expect(te_generate_expected_value);
+  auto f4 = pf[3].f.then_expect(te_generate_expected_value);
+
+  EXPECT_EQ(3, f1.get());
+  EXPECT_EQ(3, f2.get());
+  EXPECT_EQ(3, f3.get());
+  EXPECT_EQ(3, f4.get());
+}
+
+TEST(Future_int, te_expected_returning_callback_fail) {
+  pf_set pf;
+
+  pf.complete();
+
+  auto f1 = pf[0].f.then_expect(te_generate_expected_value_fail);
+  auto f2 = pf[1].f.then_expect(te_generate_expected_value_fail);
+  auto f3 = pf[2].f.then_expect(te_generate_expected_value_fail);
+  auto f4 = pf[3].f.then_expect(te_generate_expected_value_fail);
+
+  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f2.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f4.std_future().get(), std::runtime_error);
+}
+
+TEST(Future_int, te_expected_returning_callback_throw) {
+  pf_set pf;
+
+  pf.complete();
+
+  auto f1 = pf[0].f.then_expect(te_generate_expected_value_throw);
+  auto f2 = pf[1].f.then_expect(te_generate_expected_value_throw);
+  auto f3 = pf[2].f.then_expect(te_generate_expected_value_throw);
+  auto f4 = pf[3].f.then_expect(te_generate_expected_value_throw);
+
+  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f2.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
+  EXPECT_THROW(f4.std_future().get(), std::runtime_error);
+}

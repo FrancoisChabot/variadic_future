@@ -92,6 +92,8 @@ class Future_storage {
   void fullfill(future_type&& f);
 
   void finish(finish_type&& f);
+  void finish(future_type&& f);
+  
   void fail(fail_type&& e);
 
   template <typename Handler_t, typename QueueT, typename... Args_t>
@@ -191,6 +193,11 @@ struct Storage_ptr {
 template <typename T>
 struct Storage_for_cb_result {
   using type = Future_storage<decay_future_t<T>>;
+};
+
+template <typename T>
+struct Storage_for_cb_result<expected<T>> {
+  using type = typename Storage_for_cb_result<T>::type;
 };
 
 template <typename T>
