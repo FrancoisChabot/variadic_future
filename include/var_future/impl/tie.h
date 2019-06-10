@@ -29,7 +29,7 @@ struct Landing {
   std::atomic<int> fullfilled_ = 0;
 
   using storage_type = Future_storage<decay_future_t<FutTs>...>;
-  std::shared_ptr<storage_type> dst_;
+  Storage_ptr<storage_type> dst_;
 
   void ping() {
     if (++fullfilled_ == sizeof...(FutTs)) {
@@ -75,7 +75,8 @@ auto tie(FutTs&&... futs) {
   using fut_type = typename landing_type::storage_type::future_type;
 
   auto landing = std::make_shared<landing_type>();
-  landing->dst_ = std::make_shared<typename landing_type::storage_type>();
+  landing->dst_ = detail::Storage_ptr<typename landing_type::storage_type>(
+      new typename landing_type::storage_type());
 
   detail::bind_landing<0>(landing, std::forward<FutTs>(futs)...);
 

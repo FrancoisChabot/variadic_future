@@ -40,7 +40,7 @@ class Future_then_expect_handler
                 "callbacks returning expecteds is not supported yet.");
 
   using dst_storage_type = Storage_for_cb_result_t<cb_result_type>;
-  using dst_type = std::shared_ptr<dst_storage_type>;
+  using dst_type = Storage_ptr<dst_storage_type>;
 
   Future_then_expect_handler(QueueT* q, dst_type dst, CbT cb)
       : parent_type(q), dst_(std::move(dst)), cb_(std::move(cb)) {}

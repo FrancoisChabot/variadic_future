@@ -30,7 +30,8 @@ template <typename... Ts>
 typename Promise<Ts...>::future_type Promise<Ts...>::get_future() {
   assert(!storage_);
 
-  storage_ = std::make_shared<storage_type>();
+  storage_ = detail::Storage_ptr<storage_type>(new storage_type());
+
   return future_type{storage_};
 }
 

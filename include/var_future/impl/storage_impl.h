@@ -86,11 +86,11 @@ void Future_storage<Ts...>::set_handler(QueueT* queue, Args_t&&... args) {
 
   if (state_ == State::PENDING) {
     new (&cb_data_) Callback_data();
-    if constexpr(sizeof(Handler_t) <= sso_space) {
+    if constexpr (sizeof(Handler_t) <= soo_space) {
       state_ = State::READY_SOO;
-      cb_data_.callback_ = new(&cb_data_.soo_buffer_) Handler_t(queue, std::forward<Args_t>(args)...);
-    }
-    else {
+      cb_data_.callback_ = new (&cb_data_.soo_buffer_)
+          Handler_t(queue, std::forward<Args_t>(args)...);
+    } else {
       state_ = State::READY;
       cb_data_.callback_ = new Handler_t(queue, std::forward<Args_t>(args)...);
     }

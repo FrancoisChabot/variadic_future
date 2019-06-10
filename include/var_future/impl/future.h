@@ -26,25 +26,22 @@
 namespace aom {
 
 template <typename... Ts>
-Future<Ts...>::Future(fullfill_type values)
-    : storage_(std::make_shared<storage_type>()) {
+Future<Ts...>::Future(fullfill_type values) : storage_(new storage_type()) {
   storage_->fullfill(std::move(values));
 }
 
 template <typename... Ts>
-Future<Ts...>::Future(finish_type f)
-    : storage_(std::make_shared<storage_type>()) {
+Future<Ts...>::Future(finish_type f) : storage_(new storage_type()) {
   storage_->finish(f);
 }
 
 template <typename... Ts>
-Future<Ts...>::Future(fail_type err)
-    : storage_(std::make_shared<storage_type>()) {
+Future<Ts...>::Future(fail_type err) : storage_(new storage_type()) {
   storage_->fail(err);
 }
 
 template <typename... Ts>
-Future<Ts...>::Future(std::shared_ptr<storage_type> s)
+Future<Ts...>::Future(detail::Storage_ptr<storage_type> s)
     : storage_(std::move(s)) {}
 
 // Synchronously calls cb once the future has been fulfilled.
@@ -104,7 +101,7 @@ template <typename CbT, typename QueueT>
   using result_storage_t = typename handler_t::dst_storage_type;
   using result_fut_t = typename result_storage_t::future_type;
 
-  auto result = std::make_shared<result_storage_t>();
+  detail::Storage_ptr<result_storage_t> result(new result_storage_t());
 
   storage_->template set_handler<handler_t>(&queue, result, std::move(cb));
 
@@ -118,7 +115,7 @@ template <typename CbT, typename QueueT>
   using result_storage_t = typename handler_t::dst_storage_type;
   using result_fut_t = typename result_storage_t::future_type;
 
-  auto result = std::make_shared<result_storage_t>();
+  detail::Storage_ptr<result_storage_t> result(new result_storage_t());
 
   storage_->template set_handler<handler_t>(&queue, result, std::move(cb));
 
