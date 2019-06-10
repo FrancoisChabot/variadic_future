@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AOM_VARIADIC_IMPL_THEN_FINALLY_EXPECT_INCLUDED_H
-#define AOM_VARIADIC_IMPL_THEN_FINALLY_EXPECT_INCLUDED_H
+#ifndef AOM_VARIADIC_IMPL_finally_INCLUDED_H
+#define AOM_VARIADIC_IMPL_finally_INCLUDED_H
 
 #include "var_future/config.h"
 
@@ -23,9 +23,9 @@ namespace aom {
 
 namespace detail {
 
-// handling for Future::then_finally_expect()
+// handling for Future::finally()
 template <typename CbT, typename QueueT, typename... Ts>
-class Future_then_finally_expect_handler
+class Future_finally_handler
     : public Future_handler_base<QueueT, void, Ts...> {
   using parent_type = Future_handler_base<QueueT, void, Ts...>;
 
@@ -36,7 +36,7 @@ class Future_then_finally_expect_handler
   CbT cb_;
 
  public:
-  Future_then_finally_expect_handler(QueueT* q, CbT cb)
+  Future_finally_handler(QueueT* q, CbT cb)
       : parent_type(q), cb_(std::move(cb)) {}
 
   void fullfill(fullfill_type v) override {

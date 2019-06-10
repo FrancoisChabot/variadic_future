@@ -23,7 +23,7 @@ namespace aom {
 
 namespace detail {
 
-// handling for Future::then_finally_expect()
+// handling for Future::finally()
 template <typename CbT, typename QueueT, typename... Ts>
 class Future_then_expect_handler
     : public Future_handler_base<QueueT, void, Ts...> {

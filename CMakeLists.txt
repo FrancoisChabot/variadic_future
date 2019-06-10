@@ -31,6 +31,7 @@ target_include_directories(var_futures INTERFACE . include)
 target_compile_features(var_futures INTERFACE cxx_std_17)
 
 add_executable(futures_test 
+  tests/async.cpp
   tests/int.cpp
   tests/misc.cpp
   tests/void.cpp)

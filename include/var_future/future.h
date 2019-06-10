@@ -78,7 +78,7 @@ class Future {
   // if cb throws an exception, that exception will become the resulting
   // future's failure
   template <typename CbT, typename QueueT>
-  [[nodiscard]] auto then(CbT cb, QueueT& queue);
+  [[nodiscard]] auto then(QueueT& queue, CbT cb);
 
   // Calls cb once the future has been fulfilled.
   //
@@ -106,19 +106,19 @@ class Future {
   // if cb throws an exception, that exception will become the resulting
   // future's failure
   template <typename CbT, typename QueueT>
-  [[nodiscard]] auto then_expect(CbT cb, QueueT& queue);
+  [[nodiscard]] auto then_expect(QueueT& queue, CbT cb);
 
   // Calls cb once the future has been fulfilled.
   //
   // expects: cb to be a Callable(aom::expected<Ts>...)
   template <typename CbT>
-  void then_finally_expect(CbT cb);
+  void finally(CbT cb);
 
   // Pushes the execution of cb in queue once the future has been fulfilled.
   //
   // expects: cb to be a Callable(aom::expected<Ts>...)
   template <typename CbT, typename QueueT>
-  void then_finally_expect(CbT cb, QueueT& queue);
+  void finally(QueueT& queue, CbT cb);
 
   // Convenience function to obtain a std::future<> bound to this future.
   auto std_future();
@@ -192,11 +192,15 @@ class Promise {
 template <typename... FutTs>
 auto tie(FutTs&&... futs);
 
+template<typename CbT, typename QueueT>
+auto async(QueueT& q, CbT&& cb);
+
 }  // namespace aom
 
 #include "var_future/impl/future.h"
 #include "var_future/impl/promise.h"
 #include "var_future/impl/storage_impl.h"
 #include "var_future/impl/tie.h"
+#include "var_future/impl/async.h"
 
 #endif

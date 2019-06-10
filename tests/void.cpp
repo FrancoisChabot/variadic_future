@@ -269,10 +269,10 @@ TEST(Future_void, then_expect_finally_success_pre) {
 
   auto ref = expect_noop_count;
   
-  pf[0].f.then_finally_expect(expected_noop);
-  pf[1].f.then_finally_expect(expected_noop);
-  pf[2].f.then_finally_expect(expected_noop);
-  pf[3].f.then_finally_expect(expected_noop);
+  pf[0].f.finally(expected_noop);
+  pf[1].f.finally(expected_noop);
+  pf[2].f.finally(expected_noop);
+  pf[3].f.finally(expected_noop);
 
   pf.complete();
 
@@ -286,10 +286,10 @@ TEST(Future_void, then_expect_finally_success_post) {
 
   pf.complete();
 
-  pf[0].f.then_finally_expect(expected_noop);
-  pf[1].f.then_finally_expect(expected_noop);
-  pf[2].f.then_finally_expect(expected_noop);
-  pf[3].f.then_finally_expect(expected_noop);
+  pf[0].f.finally(expected_noop);
+  pf[1].f.finally(expected_noop);
+  pf[2].f.finally(expected_noop);
+  pf[3].f.finally(expected_noop);
 
   EXPECT_EQ(4+ref, expect_noop_count);
 }

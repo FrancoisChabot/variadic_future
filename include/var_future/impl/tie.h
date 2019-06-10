@@ -49,13 +49,13 @@ void bind_landing(const std::shared_ptr<LandingT>& l, Future<Front>&& front,
 // but is 100% fine in all known compilers right now.
 // See: https://stackoverflow.com/questions/56497862/
 #ifndef VAR_FUTURE_NO_UB
-  front.then_finally_expect([l](expected<Front>&& e) {
+  front.finally([l](expected<Front>&& e) {
     std::get<id>(l->landing_) = std::move(e);
     l->ping();
   });
 #else
   auto value_landing = &std::get<id>(l->landing_);
-  front.then_finally_expect([=](expected<Front>&& e) {
+  front.finally([=](expected<Front>&& e) {
     *value_landing = std::move(e);
     l->ping();
   });

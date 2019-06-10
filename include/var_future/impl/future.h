@@ -54,7 +54,7 @@ Future<Ts...>::Future(detail::Storage_ptr<storage_type> s)
 // being invoked.
 //
 // If you intend to discard the result, then you may want to use
-// then_finally_expect() instead.
+// finally() instead.
 template <typename... Ts>
 template <typename CbT>
 [[nodiscard]] auto Future<Ts...>::then(CbT cb) {
@@ -62,7 +62,7 @@ template <typename CbT>
   // We rely on the fact that `Immediate_queue` handlers ignore the passed
   // queue.
   detail::Immediate_queue queue;
-  return this->then(std::move(cb), queue);
+  return this->then(queue, std::move(cb));
 }
 
 template <typename... Ts>
@@ -72,14 +72,14 @@ template <typename CbT>
   // We rely on the fact that `Immediate_queue` handlers ignore the passed
   // queue.
   detail::Immediate_queue queue;
-  return this->then_expect(std::move(cb), queue);
+  return this->then_expect(queue, std::move(cb));
 }
 
 template <typename... Ts>
 template <typename CbT>
-void Future<Ts...>::then_finally_expect(CbT cb) {
+void Future<Ts...>::finally(CbT cb) {
   detail::Immediate_queue queue;
-  return this->then_finally_expect(std::move(cb), queue);
+  return this->finally(queue, std::move(cb));
 }
 
 // Queues cb in the target queue once the future has been fulfilled.
@@ -96,7 +96,7 @@ void Future<Ts...>::then_finally_expect(CbT cb) {
 // TODO: Maybe we can add an option to change that behavior
 template <typename... Ts>
 template <typename CbT, typename QueueT>
-[[nodiscard]] auto Future<Ts...>::then(CbT cb, QueueT& queue) {
+[[nodiscard]] auto Future<Ts...>::then(QueueT& queue, CbT cb) {
   using handler_t = detail::Future_then_handler<CbT, QueueT, Ts...>;
   using result_storage_t = typename handler_t::dst_storage_type;
   using result_fut_t = typename result_storage_t::future_type;
@@ -110,7 +110,7 @@ template <typename CbT, typename QueueT>
 
 template <typename... Ts>
 template <typename CbT, typename QueueT>
-[[nodiscard]] auto Future<Ts...>::then_expect(CbT cb, QueueT& queue) {
+[[nodiscard]] auto Future<Ts...>::then_expect(QueueT& queue, CbT cb) {
   using handler_t = detail::Future_then_expect_handler<CbT, QueueT, Ts...>;
   using result_storage_t = typename handler_t::dst_storage_type;
   using result_fut_t = typename result_storage_t::future_type;
@@ -124,11 +124,11 @@ template <typename CbT, typename QueueT>
 
 template <typename... Ts>
 template <typename CbT, typename QueueT>
-void Future<Ts...>::then_finally_expect(CbT cb, QueueT& queue) {
+void Future<Ts...>::finally(QueueT& queue, CbT cb) {
   assert(storage_);
-
+  static_assert(std::is_invocable_v<CbT, expected<Ts>...>, "Finally should be accepting expected arguments");
   using handler_t =
-      detail::Future_then_finally_expect_handler<CbT, QueueT, Ts...>;
+      detail::Future_finally_handler<CbT, QueueT, Ts...>;
   storage_->template set_handler<handler_t>(&queue, std::move(cb));
 }
 
@@ -138,7 +138,7 @@ auto Future<Ts...>::std_future() {
   if constexpr (all_voids) {
     std::promise<void> prom;
     auto fut = prom.get_future();
-    this->then_finally_expect(
+    this->finally(
         [p = std::move(prom)](expected<Ts>... vals) mutable {
           auto err = detail::get_first_error(vals...);
           if (err) {
@@ -153,7 +153,7 @@ auto Future<Ts...>::std_future() {
 
     std::promise<T> prom;
     auto fut = prom.get_future();
-    this->then_finally_expect([p = std::move(prom)](expected<T> v) mutable {
+    this->finally([p = std::move(prom)](expected<T> v) mutable {
       if (v.has_value()) {
         p.set_value(std::move(v.value()));
       } else {
@@ -166,7 +166,7 @@ auto Future<Ts...>::std_future() {
 
     std::promise<tuple_t> p;
     auto fut = p.get_future();
-    this->then_finally_expect([p = std::move(p)](expected<Ts>... v) mutable {
+    this->finally([p = std::move(p)](expected<Ts>... v) mutable {
       auto err = detail::get_first_error(v...);
       if (err) {
         p.set_exception(*err);

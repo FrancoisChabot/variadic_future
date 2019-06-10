@@ -48,7 +48,7 @@ void Future_storage<Ts...>::fullfill(fullfill_type&& v) {
 
 template <typename... Ts>
 void Future_storage<Ts...>::fullfill(future_type&& f) {
-  f.then_finally_expect([this](expected<Ts>... f) {
+  f.finally([this](expected<Ts>... f) {
     this->finish(std::make_tuple(std::move(f)...));
   });
 }

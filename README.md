@@ -47,31 +47,118 @@ The main header `var_future/future.h` is meant to contain all of the user-facing
 
 I am assuming you are already familiar with the [expected<>](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0323r7.html) concept/syntax.
 
-### Basic
+### Consuming futures
+
+
+Let's say that you are using a function that happens to return a `Future<...>`, and you want to execute a callback when the value becomes available:
 
 ```cpp
-
-#include "var_future/future.h"
-
-void foo() {
-  aom::Promise<int> prom;
-  {
-    aom::Future<int> fut = prom.get_future();
-  
-    fut.then_finally_expect([](aom::expected<int> v){
-      // Do something with v;
-      // This is called in whichever thread fullfills the future.
-    });
-  }
-  
-  // some time later, perhaps in another thread.
-  prom.set_value(2);
-}
+Future<int> get_value_eventually();
 ```
 
-Note that it does not matter that the future is destroyed after the callback is bound. The callback, and its bindings will be kept around until the promise is fullfilled, failed or destroyed.
+#### The Method
 
-### Tieing futures
+Which method to use depends on two factors:
+
+1. Is your operation part of a future chain, or is it terminating?
+1. Do you want to handle failures yourself, or let them propagate automatically?
+
+You can use the following matrix to determine which method to use:
+
+|                | error-handling          | error-propagating |
+|----------------|-------------------------|-------------------|
+| **chains**     | `then_expect()`         | `then()`          |
+| **terminates** | `finally()`             | N/A               |
+
+#### The Callback
+
+The **arguments** of a callback for a `Future<T, U, V>` will be:
+
+* In error-handling mode: `cb(expected<T>, expected<U>, expected<V>`)
+* In error-handling mode: `cb(T, U, V)` where void arguments are ommited.
+
+```cpp
+  Future<void, int, void, float> f1;
+  Future<void, int, void, float> f2;
+  Future<void, int, void, float> f3;
+
+  auto f11 = f1.then([](int, float){});
+  auto f22 = f2.then_expect([](expected<void>, expected<int>, expected<void>, float){});
+  f3.finally([](expected<void>, expected<int>, expected<void>, float){});
+```
+
+* The **return value** of a chaining callback will become a future of the matching type. If your callback returns a future, then that future is propagated directly. 
+* The **return value** of a terminating callback is ignored.
+
+```cpp
+Future<int> get_value_eventually();
+
+void sync_proc(int v);
+int sync_op(int v);
+Future<int> async_op(int v);
+
+Future<void> x = get_value_eventually().then(sync_proc);
+get_value_eventually().finally(sync_proc);
+
+Future<int> y = get_value_eventually().then(sync_op);
+Future<int> z = get_value_eventually().then(async_op);
+```
+
+If a chaining callback throws an exception. That exception becomes the error associated with its result future. **Terminating callbacks must not throw exceptions.**
+
+#### The Executor
+
+The callback can either
+
+1. Executed directly wherever the future is fullfilled (**immediate**)
+2. Be posted to a work pool to be executed by some worker (**deffered**)
+
+**immediate** mode is used by default, just pass your callback to your chosen method and you are done.
+
+<aside class="notice">
+N.B. If the future is already fullfilled by the time a callback is attached in <strong>immediate</strong> mode, the callback will be invoked in the thread attaching the callback as the callback is being attached.
+</aside>
+
+For **deferred** mode, you need to pass your queue (or an adapter) as the first parameter to the method.
+
+```cpp
+get_value_eventually()
+  .then([](int v){ return v * v;})             
+  .finally(queue, [](expected<int> v) {
+    if(v.has_value()) {
+      std::cerr << "final value: " << v << "\n";
+    }
+  });
+```
+
+### Producing futures
+
+Futures can be created by `Future::then()` or `Future::then_expect()`, but the chain has to start somewhere.
+
+#### Promises
+
+`Promise<Ts...>` is a lightweight interface you can use to create a future that will eventually be fullfilled (or failed).
+
+```cpp
+Promise<int> prom;
+Future<int> fut = prom.get_future();
+
+std::thread thread([p=std::move(prom)](){ 
+  p.set_value(3); 
+});
+thread.detach();
+```
+
+#### async
+
+`async()` will post the passed operation to the queue, and return a future to the value returned by that function.
+
+```cpp
+std::future<double> fut = aom::async(queue, [](){return 12.0;})
+```
+
+
+#### Tieing futures
 
 You can wait on multiple futures at the same time using the `tie()` function.
 
@@ -80,20 +167,19 @@ You can wait on multiple futures at the same time using the `tie()` function.
 #include "var_future/future.h"
 
 void foo() {
-  aom::Promise<int> prom_a;
-  aom::Promise<int> prom_b;
+  aom::Future<int> fut_a = ...;
+  aom::Future<int> fut_b = ...;
 
-  //... Launch something that eventually fullfills the promises.
+  aom::Future<int, int> combined = tie(fut_a, fut_b);
 
-  aom::Future<int, int> combined = tie(prom_a.get_future(), prom_b.get_future());
-
-  combined.then_finally_expect([](aom::expected<int> a, aom::expected<int> b){
+  combined.finally([](aom::expected<int> a, aom::expected<int> b){
     //Do something with a and/or b;
   });
 }
 ```
 
-## Choosing where the callback executes
+
+## Posting callbacks to an ASIO context.
 
 This example shows how to use [ASIO](https://think-async.com/Asio/), but the same idea can be applied to other contexts easily.
 
@@ -119,47 +205,9 @@ void foo() {
   aom::Future<int> fut = prom.get_future();
 
   // push the execution of this callback in io_context when ready.
-  fut.then_finally_expect([](aom::expected<int> v) {
+  fut.finally([](aom::expected<int> v) {
     //Do something with v;
   }, asio_adapter);
-}
-```
-
-## Chaining Futures
-
-```cpp
-#include <iostream>
-#include <thread>
-#include <chrono>
-
-#include "var_future/future.h"
-
-// This can be any type that has a thread-safe push(Callable<void()>); method
-Work_queue main_work_queue;
-
-std::Future<int> complete(std::string str) {
-   aom::Promise<int> p;
-   auto result = p.get_future();
-   
-   std::async(std::launch::async, [str, p=std::move(p)] mutable { 
-      std::cout << str ;
-      p.set_value(4); 
-   });
-   
-   return result;
-}
-
-void foo() {
-  aom::Promise<int> prom;
-  aom::Future<int> fut = prom.get_future();
-
-  fut.then([](int v){
-    return std::string("hi") + std::to_string(v);
-  })
-  .then(complete)
-  .then_finally_expect([](aom::expected<int> v) {
-    //Do something with v;
-  }, main_work_queue);
 }
 ```
 
@@ -207,12 +255,12 @@ Chaining callback.
   * The value returned by `cb`
   * The exception thrown by `cb`
 
-**Future::then_finally_expect()**
+**Future::finally()**
 
 Simple callback.
 ```
-[1] Future<U> Future<Ts...>::then_finally_expect(cb);
-[2] Future<U> Future<Ts...>::then_finally_expect(cb, queue);
+[1] Future<U> Future<Ts...>::finally(cb);
+[2] Future<U> Future<Ts...>::finally(cb, queue);
 ```
 * `cb` is a `Callable<U(expected<Ts>...)>`
 * [1] `cb` is immediately called when `this` is **finished**.

@@ -23,9 +23,9 @@ int main() {
 
   // Passing the bridge to the future handler methods will cause 
   // the callback to be posted in the asio context.
-  result.then_finally_expect([](aom::expected<int> v) {
+  result.finally(bridge, [](aom::expected<int> v) {
     std::cout << v.value() << "\n";
-  }, bridge);
+  });
 
   
   promise.set_value(14);

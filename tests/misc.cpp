@@ -25,7 +25,7 @@ TEST(Future, pre_filled_future) {
   { 
     Future<void> fut{ std::tuple<>() };
     int dst = 0;
-    fut.then_finally_expect([&](expected<void> v) {
+    fut.finally([&](expected<void> v) {
       if(v.has_value()) {
         dst = 1;
       }
@@ -54,7 +54,7 @@ TEST(Future, prom_filled_future) {
     auto fut = prom.get_future();
     prom.set_value();
     int dst = 0;
-    fut.then_finally_expect([&](expected<void> v) {
+    fut.finally([&](expected<void> v) {
       if(v.has_value()) {
         dst = 1;
       }
@@ -99,7 +99,7 @@ TEST(Future, prom_post_filled_future) {
     auto fut = prom.get_future();
     
     int dst = 0;
-    fut.then_finally_expect([&](expected<void> v) {
+    fut.finally([&](expected<void> v) {
       if(v.has_value()) {
         dst = 1;
       }
@@ -115,7 +115,7 @@ TEST(Future, prom_post_filled_future) {
     auto fut = prom.get_future();
 
     int dst = 0;
-    fut.then_finally_expect([&](expected<int> v) {
+    fut.finally([&](expected<int> v) {
       if(v.has_value()) {
         dst = *v;
       }
@@ -131,7 +131,7 @@ TEST(Future, prom_post_filled_future) {
 
     int dst = 0;
     std::string str;
-    fut.then_finally_expect([&](expected<int> v, expected<std::string> s) {
+    fut.finally([&](expected<int> v, expected<std::string> s) {
       if(v.has_value()) {
         dst = *v;
         str = *s;
@@ -297,7 +297,7 @@ TEST(Future, partial_tie_failure) {
 
   int dst = 0;
   tie(p_a.get_future(), p_b.get_future())
-    .then_finally_expect([&](expected<int> a, expected<std::string> b){
+    .finally([&](expected<int> a, expected<std::string> b){
       dst = a.value();
       EXPECT_FALSE(b.has_value());
   });
@@ -333,7 +333,7 @@ TEST(Future, void_promise) {
   auto fut = prom.get_future();
 
   int dst = 0;
-  fut.then_finally_expect([&](expected<void> v) {
+  fut.finally([&](expected<void> v) {
     EXPECT_TRUE(v.has_value());
     dst = 4;
   });
