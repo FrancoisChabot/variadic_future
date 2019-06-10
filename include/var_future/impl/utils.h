@@ -24,6 +24,16 @@ namespace aom {
 template <typename... Ts>
 class Future;
 
+// Determines wether a type is a Future<...>
+template <typename T>
+struct is_future : public std::false_type {};
+
+template <typename... Ts>
+struct is_future<Future<Ts...>> : public std::true_type {};
+
+template <typename T>
+constexpr bool is_future_v = is_future<T>::value;
+
 namespace detail {
 
 // Determines wether a type is a expected<...>
@@ -35,16 +45,6 @@ struct is_expected<expected<T>> : public std::true_type {};
 
 template <typename T>
 constexpr bool is_expected_v = is_expected<T>::value;
-
-// Determines wether a type is a Future<...>
-template <typename T>
-struct is_future : public std::false_type {};
-
-template <typename... Ts>
-struct is_future<Future<Ts...>> : public std::true_type {};
-
-template <typename T>
-constexpr bool is_future_v = is_future<T>::value;
 
 // Function: get_first_error()
 // Returns the first error in a set of expected<>, if any
@@ -87,6 +87,24 @@ using decay_future_t = typename decay_future<T>::type;
 template <typename LhsT, typename RhsT>
 using tuple_cat_t =
     decltype(std::tuple_cat(std::declval<LhsT>(), std::declval<RhsT>()));
+
+
+template<typename... Ts>
+struct future_value_type;
+
+template<typename T, typename... Ts>
+struct future_value_type<T, Ts...> {
+  using type = T;
+};
+
+template<typename T, typename U, typename... Ts>
+struct future_value_type<T, U, Ts...> {
+  using type = std::tuple<T, U, Ts...>;
+};
+
+template <typename... Ts>
+using future_value_type_t = typename future_value_type<Ts...>::type;
+
 
 // Determines the fullfillment type of a Future<Ts...>
 template <typename... Ts>

@@ -68,7 +68,7 @@ void bind_landing(const std::shared_ptr<LandingT>& l, Future<Front>&& front,
 template <typename... FutTs>
 auto tie(FutTs&&... futs) {
   static_assert(sizeof...(FutTs) >= 2, "Trying to tie less than two futures?");
-  static_assert(std::conjunction_v<detail::is_future<FutTs>...>,
+  static_assert(std::conjunction_v<is_future<FutTs>...>,
                 "trying to tie a non-future");
 
   using landing_type = detail::Landing<std::decay_t<FutTs>...>;

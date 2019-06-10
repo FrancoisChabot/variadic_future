@@ -32,12 +32,12 @@ Future<Ts...>::Future(fullfill_type values) : storage_(new storage_type()) {
 
 template <typename... Ts>
 Future<Ts...>::Future(finish_type f) : storage_(new storage_type()) {
-  storage_->finish(f);
+  storage_->finish(std::move(f));
 }
 
 template <typename... Ts>
 Future<Ts...>::Future(fail_type err) : storage_(new storage_type()) {
-  storage_->fail(err);
+  storage_->fail(std::move(err));
 }
 
 template <typename... Ts>
