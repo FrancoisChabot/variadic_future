@@ -205,9 +205,9 @@ void foo() {
   aom::Future<int> fut = prom.get_future();
 
   // push the execution of this callback in io_context when ready.
-  fut.finally([](aom::expected<int> v) {
+  fut.finally(asio_adapter, [](aom::expected<int> v) {
     //Do something with v;
-  }, asio_adapter);
+  });
 }
 ```
 
