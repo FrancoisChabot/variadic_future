@@ -1,8 +1,8 @@
     
 path_classifiers:
   test:
-    - "/tests/"
+    - /tests/
   library:
-    - "/gtest/"
-    - "/include/nonstd"
+    - /gtest/
+    - /include/nonstd/
 
