@@ -63,6 +63,14 @@ workflows:
   version: 2
   build_and_test:
     jobs:
-      - debug_build
+      - debug_build:
+          filters:
+            branches:
+              ignore:
+                - "gh-pages"
       - release_build
+          filters:
+            branches:
+              ignore:
+                - "gh-pages"
 
