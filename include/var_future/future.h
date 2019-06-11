@@ -38,14 +38,16 @@ class Future {
   //
   Future() = default;
 
-  // Creates the future in a pre-fullfilled state.
-  explicit Future(fullfill_type);
+  // returns a future that's already fullfilled.
+  template <typename... Us>
+  static Future fullfilled(Us&&...);
+  
+  // returns a future that's already finished
+  template <typename... Us>
+  static Future finished(Us&&...);
 
-  // Creates the future in a pre-finished state
-  explicit Future(finish_type);
-
-  // Creates the future in a pre-failed state
-  explicit Future(fail_type);
+  // returns a future that's already failed.
+  static Future failed(std::exception_ptr);
 
   // Promote a future of tuple into a higher-order future.
   explicit Future(Future<std::tuple<Ts...>>&& rhs);

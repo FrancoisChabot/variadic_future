@@ -25,19 +25,39 @@
 
 namespace aom {
 
+// returns a future that's already fullfilled.
 template <typename... Ts>
-Future<Ts...>::Future(fullfill_type values) : storage_(new storage_type()) {
-  storage_->fullfill(std::move(values));
+template <typename... Us>
+Future<Ts...> Future<Ts...>::fullfilled(Us&&... us) {
+  using storage_type = typename Future<Ts...>::storage_type;
+  detail::Storage_ptr<storage_type> store{new storage_type()};
+  
+  store->fullfill(std::make_tuple(std::forward<Us>(us)...));
+
+  return Future<Ts...>{store};
 }
 
+// returns a future that's already finished
 template <typename... Ts>
-Future<Ts...>::Future(finish_type f) : storage_(new storage_type()) {
-  storage_->finish(std::move(f));
+template <typename... Us>
+Future<Ts...> Future<Ts...>::finished(Us&&... us) {
+  using storage_type = typename Future<Ts...>::storage_type;
+  detail::Storage_ptr<storage_type> store{new storage_type()};
+  
+  store->finish(std::make_tuple(std::forward<Us>(us)...));
+
+  return Future<Ts...>{store};
 }
 
+// returns a future that's already failed.
 template <typename... Ts>
-Future<Ts...>::Future(fail_type err) : storage_(new storage_type()) {
-  storage_->fail(std::move(err));
+Future<Ts...> Future<Ts...>::failed(std::exception_ptr e) {
+  using storage_type = typename Future<Ts...>::storage_type;
+  detail::Storage_ptr<storage_type> store{new storage_type()};
+  
+  store->fail(std::move(e));
+
+  return Future<Ts...>{store};
 }
 
 template <typename... Ts>

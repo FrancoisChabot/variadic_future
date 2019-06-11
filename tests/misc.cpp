@@ -23,7 +23,7 @@ using namespace aom;
 
 TEST(Future, pre_filled_future) {
   { 
-    Future<void> fut{ std::tuple<>() };
+    auto fut = Future<void>::fullfilled();
     int dst = 0;
     fut.finally([&](expected<void> v) {
       if(v.has_value()) {
@@ -35,13 +35,13 @@ TEST(Future, pre_filled_future) {
   }
 
   { 
-    Future<int> fut{ std::tuple<int>(12) };
+    auto fut = Future<int>::fullfilled(12);
 
     EXPECT_EQ(12, fut.std_future().get());
   }
 
   { 
-    Future<int, std::string> fut{std::tuple<int, std::string>{12, "hi"}};
+    auto fut = Future<int, std::string>::fullfilled(12, "hi");
 
     EXPECT_EQ(std::make_tuple(12, "hi"), fut.std_future().get());
   }
