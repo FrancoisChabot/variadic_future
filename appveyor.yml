@@ -3,13 +3,12 @@ skip_tags: true
 matrix:
     fast_finish: true
 
-image: Visual Studio 2019 Preview
+image: Visual Studio 2019
 
 environment:
   MSBUILD_FLAGS: /verbosity:minimal /maxcpucount
   matrix:
-  - CMAKE_GENERATOR: "Visual Studio 15 2017"
-  - CMAKE_GENERATOR: "Visual Studio 15 2017 Win64"
+  - CMAKE_GENERATOR: "Visual Studio 16 2019"
 
 configuration:
   - Debug
@@ -21,7 +20,7 @@ install:
 before_build:
   - mkdir _bld
   - cd _bld
-  - cmake -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=%configuration% -DVAR_FUTURES_BUILD_EXAMPLES=ON -DVAR_FUTURES_BUILD_TESTS=ON -DVAR_FUTURES_TEST_COVERAGE=OFF ..
+  - cmake -G "%CMAKE_GENERATOR%" -A x64 -DCMAKE_BUILD_TYPE=%configuration% -DVAR_FUTURES_BUILD_EXAMPLES=ON -DVAR_FUTURES_BUILD_TESTS=ON -DVAR_FUTURES_TEST_COVERAGE=OFF ..
 
 build:
   project: _bld\var_future.sln
