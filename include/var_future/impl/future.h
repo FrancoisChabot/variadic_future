@@ -128,7 +128,7 @@ void Future<Ts...>::finally(CbT&& cb) {
 // thread.
 // TODO: Maybe we can add an option to change that behavior
 template <typename... Ts>
-template <typename CbT, typename QueueT>
+template <typename QueueT, typename CbT>
 [[nodiscard]] auto Future<Ts...>::then(QueueT& queue, CbT&& cb) {
   using handler_t = detail::Future_then_handler<CbT, QueueT, Ts...>;
   using result_storage_t = typename handler_t::dst_storage_type;
@@ -142,7 +142,7 @@ template <typename CbT, typename QueueT>
 }
 
 template <typename... Ts>
-template <typename CbT, typename QueueT>
+template <typename QueueT, typename CbT>
 [[nodiscard]] auto Future<Ts...>::then_expect(QueueT& queue, CbT&& cb) {
   using handler_t = detail::Future_then_expect_handler<CbT, QueueT, Ts...>;
   using result_storage_t = typename handler_t::dst_storage_type;
@@ -156,7 +156,7 @@ template <typename CbT, typename QueueT>
 }
 
 template <typename... Ts>
-template <typename CbT, typename QueueT>
+template <typename QueueT, typename CbT>
 void Future<Ts...>::finally(QueueT& queue, CbT&& cb) {
   assert(storage_);
   static_assert(std::is_invocable_v<CbT, expected<Ts>...>, "Finally should be accepting expected arguments");
@@ -212,7 +212,7 @@ auto Future<Ts...>::std_future() {
 }
 
 template <typename... Ts>
-auto Future<Ts...>::get() {
+typename Future<Ts...>::value_type Future<Ts...>::get() {
   return std_future().get();
 }
 

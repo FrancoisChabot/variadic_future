@@ -22,121 +22,218 @@
 
 namespace aom {
 
+/**
+ * @brief Values that will be eventually available
+ * 
+ * @tparam Ts 
+ * fields set to `void` have special rules applied to them.
+ * The following types may not be used:
+ * - `expected<T>`
+ * - `Future<Ts...>`
+ * - `Promise<T>`
+ * 
+ * @invariant A Future is in one of two states:
+ * - \b Uninitialized: The only legal operation is to assign another future to it.
+ * - \b Ready: All operations are legal.
+ */
 template <typename... Ts>
 class Future {
   static_assert(sizeof...(Ts) >= 1, "you probably meant Future<void>");
 
  public:
-  using storage_type = detail::Future_storage<Ts...>;
   
   using value_type = detail::future_value_type_t<Ts...>;
 
   using fullfill_type = detail::fullfill_type_t<Ts...>;
   using finish_type = detail::finish_type_t<Ts...>;
-  using fail_type = detail::fail_type_t<Ts...>;
 
-  //
+  /**
+  * @brief Construct an \b uninitialized Future
+  * 
+  * @post `this` will be \b uninitialized
+  */
   Future() = default;
 
-  // returns a future that's already fullfilled.
-  template <typename... Us>
-  static Future fullfilled(Us&&...);
+  /**
+   * @brief Move constructor
+   * 
+   * @param rhs 
+   * 
+   * @post `rhs` will be \b uninitialized
+   */
+  Future(Future&& rhs) = default;
+
+  /**
+   * @brief Move assignment
+   * 
+   * @param rhs 
+   * @return Future& 
+   * 
+   * @post `rhs` will be \b uninitialized
+   */
+  Future& operator=(Future&& rhs) = default;
   
-  // returns a future that's already finished
+  /**
+   * @brief Creates a pre-fullfilled future.
+   * 
+   * @tparam Us 
+   * @param values 
+   * @return Future 
+   * 
+   * @post the returned future will be \b ready
+   * @post the returned future will be \b fullfilled
+   */
   template <typename... Us>
-  static Future finished(Us&&...);
+  static Future fullfilled(Us&&... values);
 
-  // returns a future that's already failed.
-  static Future failed(std::exception_ptr);
+  /**
+   * @brief Creates a pre-finished future.
+   * 
+   * @tparam Us 
+   * @param expecteds 
+   * @return Future 
+   * 
+   * @post the returned future will be \b ready
+   * @post the returned future will be \b finished
+   */
+  template <typename... Us>
+  static Future finished(Us&&... expecteds);
 
-  // Promote a future of tuple into a higher-order future.
+  /**
+   * @brief Creates a pre-failed future. 
+   * 
+   * @param error 
+   * @return Future 
+   * 
+   * @post the returned future will be \b ready
+   * @post the returned future will be \b failed
+   */
+  static Future failed(std::exception_ptr error);
+
+  /**
+   * @brief Create a higher-order Future from a `future<tuple>`
+   * 
+   * @param rhs 
+   * 
+   * @post `rhs` will be \b uninitialized.
+   * @post this will inherit the syaye `rhs` was in.
+   */
   explicit Future(Future<std::tuple<Ts...>>&& rhs);
 
-  Future(Future&&) = default;
-  Future& operator=(Future&&) = default;
-
-  // Calls cb once the future has been fulfilled.
-  //
-  // expects: cb to be a Callable(Ts...)
-  //
-  // Returns: a future of whichever type is returned by cb.
-  // If this future is failed, then the resulting future
-  // will be failed with that same failure, and cb will be destroyed without
-  // being invoked.
-  //
-  // if cb throws an exception, that exception will become the resulting
-  // future's failure
+  /**
+   * @brief Creates a future that is finished by the invocation of cb when this
+   *        is fullfilled.
+   * 
+   * @tparam CbT 
+   * @param callback 
+   * @return Future<decltype(callback(Ts...))> a \ready Future
+   * 
+   * @pre the future must be \b ready
+   * @post the future will be \b uninitialized
+   */
   template <typename CbT>
-  [[nodiscard]] auto then(CbT&& cb);
+  [[nodiscard]] auto then(CbT&& callback);
 
-  // Pushes the execution of cb in queue once the future has been fulfilled.
-  //
-  // expects: cb to be a Callable(Ts...)
-  //
-  // Returns: a future of whichever type is returned by cb.
-  // If this future is failed, then the resulting future
-  // will be failed with that same failure, and cb will be destroyed without
-  // being invoked.
-  //
-  // if cb throws an exception, that exception will become the resulting
-  // future's failure
-  template <typename CbT, typename QueueT>
-  [[nodiscard]] auto then(QueueT& queue, CbT&& cb);
+  /**
+   * @brief Creates a future that is finished by the invocation of cb when this
+   *        is finished.
+   * 
+   * @tparam QueueT 
+   * @tparam CbT 
+   * @param queue 
+   * @param callback 
+   * @return auto 
+   * 
+   * @pre the future must be \b ready
+   * @post the future will be \b uninitialized
+   */
+  template <typename QueueT, typename CbT>
+  [[nodiscard]] auto then(QueueT& queue, CbT&& callback);
 
-  // Calls cb once the future has been fulfilled.
-  //
-  // expects: cb to be a Callable(aom::expected<Ts>...)
-  //
-  // Returns: a future of whichever type is returned by cb.
-  // If this future is failed, then the resulting future
-  // will be failed with that same failure, and cb will be destroyed without
-  // being invoked.
-  //
-  // if cb throws an exception, that exception will become the resulting
-  // future's failure
+  /**
+   * @brief Creates a future that is finished by the invocation of cb when this 
+   *        is finished.
+   * 
+   * @tparam CbT 
+   * @param callback 
+   * @return auto 
+   * 
+   * @pre the future must be \b ready
+   * @post the future will be \b uninitialized
+   */
   template <typename CbT>
-  [[nodiscard]] auto then_expect(CbT&& cb);
+  [[nodiscard]] auto then_expect(CbT&& callback);
 
-  // Pushes the execution of cb in queue once the future has been fulfilled.
-  //
-  // expects: cb to be a Callable(aom::expected<Ts>...)
-  //
-  // Returns: a future of whichever type is returned by cb.
-  // If this future is failed, then the resulting future
-  // will be failed with that same failure, and cb will be destroyed without
-  // being invoked.
-  //
-  // if cb throws an exception, that exception will become the resulting
-  // future's failure
-  template <typename CbT, typename QueueT>
-  [[nodiscard]] auto then_expect(QueueT& queue, CbT&& cb);
+  /**
+   * @brief Creates a future that is finished by the invocation of cb from 
+   *        queue when this is finished.
+   * 
+   * @tparam QueueT 
+   * @tparam CbT 
+   * @param queue 
+   * @param callback 
+   * @return auto 
+   * 
+   * @pre the future must be \b ready
+   * @post the future will be \b uninitialized
+   */
+  template <typename QueueT, typename CbT>
+  [[nodiscard]] auto then_expect(QueueT& queue, CbT&& callback);
 
-  // Calls cb once the future has been fulfilled.
-  //
-  // expects: cb to be a Callable(aom::expected<Ts>...)
+  /**
+   * @brief Invokes cb when this is finished.
+   * 
+   * @tparam CbT 
+   * @param callback 
+   * 
+   * @pre the future must be \b ready
+   * @post the future will be \b uninitialized
+   */
   template <typename CbT>
-  void finally(CbT&& cb);
+  void finally(CbT&& callback);
 
-  // Pushes the execution of cb in queue once the future has been fulfilled.
-  //
-  // expects: cb to be a Callable(aom::expected<Ts>...)
-  template <typename CbT, typename QueueT>
-  void finally(QueueT& queue, CbT&& cb);
+  /**
+   * @brief Invokes cb from queue when this is finished.
+   * 
+   * @tparam QueueT 
+   * @tparam CbT 
+   * @param queue 
+   * @param callback 
+   * 
+   * @pre the future must be \b ready
+   * @post the future will be \b uninitialized
+   */
+  template <typename QueueT, typename CbT>
+  void finally(QueueT& queue, CbT&& callback);
 
-  // Convenience function to obtain a std::future<> bound to this future.
+  /**
+   * @brief Blocks until the future is finished, and then either return the 
+   *        value, or throw the error
+   * 
+   * @return auto 
+   * 
+   * @pre the future must be \b ready
+   * @post the future will be \b uninitialized
+   */
+  value_type get();
+
+  /**
+   * @brief Obtain a std::future bound to this future.
+   * 
+   * @return auto 
+   */
   auto std_future();
 
-  // Shorthand for std_future().get().
-  auto get();
-
  private:
+  using storage_type = detail::Future_storage<Ts...>;
+  
   detail::Storage_ptr<storage_type> storage_;
 
   Future(const Future&) = delete;
   Future& operator=(const Future&) = delete;
 
 
-  template<typename CbT, typename QueueT>
+  template <typename QueueT, typename CbT>
   friend auto async(QueueT& q, CbT&& cb);
 
   template <typename... Us>
@@ -148,16 +245,24 @@ class Future {
   template <typename... Us>
   friend class Promise;
   
-  // Primarily internal constructor.
   explicit Future(detail::Storage_ptr<storage_type> s);
 
 };
 
-// Error assigned to a future when its promise is destroyed before being finished.
+/**
+ * @brief Error assigned to a future who's promise is destroyed before being
+ *        finished.
+ * 
+ */
 struct Unfullfilled_promise : public std::logic_error {
   Unfullfilled_promise() : std::logic_error("Unfullfilled_promise") {}
 };
 
+/**
+ * @brief Landing for a value that finishes a Future.
+ * 
+ * @tparam Ts 
+ */
 template <typename... Ts>
 class Promise {
   static_assert(sizeof...(Ts) >= 1, "you probably meant Promise<void>");
@@ -177,30 +282,37 @@ class Promise {
   Promise& operator=(Promise&&) = default;
   ~Promise();
 
-  // Returns a future that is bound to this promise
+  /**
+   * @brief Returns a future that is bound to this promise
+   * 
+   * @return future_type 
+   */
   future_type get_future();
 
-  // Fullfills the promise.
-  //
-  // expects: std::forward<Us...>(vals) can be used to initialize fullfill_type.
-  //          which is std::tuple<Ts..> with the void types removed from Ts.
-  //          For example:
-  //          Promise<void, int, void, int> p; p->set_value(1, 2);
+  /**
+   * @brief Fullfills the promise
+   * 
+   * @tparam Us 
+   * @param values 
+   */
   template <typename... Us>
-  void set_value(Us&&... vals);
+  void set_value(Us&&... values);
 
-  // Finishes the promise.
-  //
-  // expects: std::forward<Us...>(vals) can be used to initialize finish_type.
-  //          which is std::tuple<expected<Ts>..>
+  /**
+   * @brief Finishes the promise
+   * 
+   * @tparam Us 
+   * @param expecteds 
+   */
   template <typename... Us>
-  void finish(Us&&... f);
+  void finish(Us&&... expecteds);
 
-  // Fails the promise.
-  //
-  // If the promise as more than one member, it fails all of them with the same
-  // error.
-  void set_exception(fail_type e);
+  /**
+   * @brief Fails the promise
+   * 
+   * @param error 
+   */
+  void set_exception(fail_type error);
 
  private:
   detail::Storage_ptr<storage_type> storage_;
@@ -209,15 +321,32 @@ class Promise {
   Promise& operator=(const Promise&) = delete;
 };
 
-// Ties a set of Future<> into a single Future<> that is finished once all child
-// futures are finished.
+/**
+ * @brief Ties a set of Future<> into a single Future<> that is finished once
+ *        all child futures are finished.
+ * 
+ * @tparam FutTs 
+ * @param futures 
+ * @return auto 
+ */
 template <typename... FutTs>
-auto tie(FutTs&&... futs);
+auto tie(FutTs&&... futures);
 
 // Convenience function that creates a promise for the result of the cb, pushes
 // cb in q, and returns a future to that promise.
-template<typename CbT, typename QueueT>
-auto async(QueueT& q, CbT&& cb);
+
+/**
+ * @brief Posts a callback into to queue, and return a future that will be 
+ *        finished upon executaiton of the callback. 
+ * 
+ * @tparam QueueT 
+ * @tparam CbT 
+ * @param q 
+ * @param callback 
+ * @return auto 
+ */
+template<typename QueueT, typename CbT>
+auto async(QueueT& q, CbT&& callback);
 
 }  // namespace aom
 

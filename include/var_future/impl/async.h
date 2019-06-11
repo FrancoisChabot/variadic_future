@@ -18,7 +18,7 @@
 #include "var_future/config.h"
 
 namespace aom {
-  template<typename CbT, typename QueueT>
+  template <typename QueueT, typename CbT>
   auto async(QueueT& q, CbT&& cb) {
     using cb_result_type = decltype(cb());
 
