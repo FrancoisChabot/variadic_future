@@ -67,7 +67,7 @@ class Future {
   // if cb throws an exception, that exception will become the resulting
   // future's failure
   template <typename CbT>
-  [[nodiscard]] auto then(CbT cb);
+  [[nodiscard]] auto then(CbT&& cb);
 
   // Pushes the execution of cb in queue once the future has been fulfilled.
   //
@@ -81,7 +81,7 @@ class Future {
   // if cb throws an exception, that exception will become the resulting
   // future's failure
   template <typename CbT, typename QueueT>
-  [[nodiscard]] auto then(QueueT& queue, CbT cb);
+  [[nodiscard]] auto then(QueueT& queue, CbT&& cb);
 
   // Calls cb once the future has been fulfilled.
   //
@@ -95,7 +95,7 @@ class Future {
   // if cb throws an exception, that exception will become the resulting
   // future's failure
   template <typename CbT>
-  [[nodiscard]] auto then_expect(CbT cb);
+  [[nodiscard]] auto then_expect(CbT&& cb);
 
   // Pushes the execution of cb in queue once the future has been fulfilled.
   //
@@ -109,19 +109,19 @@ class Future {
   // if cb throws an exception, that exception will become the resulting
   // future's failure
   template <typename CbT, typename QueueT>
-  [[nodiscard]] auto then_expect(QueueT& queue, CbT cb);
+  [[nodiscard]] auto then_expect(QueueT& queue, CbT&& cb);
 
   // Calls cb once the future has been fulfilled.
   //
   // expects: cb to be a Callable(aom::expected<Ts>...)
   template <typename CbT>
-  void finally(CbT cb);
+  void finally(CbT&& cb);
 
   // Pushes the execution of cb in queue once the future has been fulfilled.
   //
   // expects: cb to be a Callable(aom::expected<Ts>...)
   template <typename CbT, typename QueueT>
-  void finally(QueueT& queue, CbT cb);
+  void finally(QueueT& queue, CbT&& cb);
 
   // Convenience function to obtain a std::future<> bound to this future.
   auto std_future();
