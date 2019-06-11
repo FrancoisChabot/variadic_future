@@ -16,7 +16,7 @@ if (NOT DEFINED VAR_FUTURES_MASTER_PROJECT)
 endif ()
 
 option(VAR_FUTURES_BUILD_EXAMPLES "var_futures examples" OFF)
-option(VAR_FUTURES_BUILD_TESTS "var_futures tests" OFF)
+option(VAR_FUTURES_BUILD_TESTS "var_futures tests" ON)
 option(VAR_FUTURES_TEST_COVERAGE "var_futures Coverage" OFF)
 option(VAR_FUTURES_INSTALL "Generate the install target" ${VAR_FUTURES_MASTER_PROJECT})
 
