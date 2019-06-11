@@ -214,6 +214,8 @@ class Promise {
 template <typename... FutTs>
 auto tie(FutTs&&... futs);
 
+// Convenience function that creates a promise for the result of the cb, pushes
+// cb in q, and returns a future to that promise.
 template<typename CbT, typename QueueT>
 auto async(QueueT& q, CbT&& cb);
 
