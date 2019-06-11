@@ -1,5 +1,5 @@
 [![CircleCI](https://circleci.com/gh/FrancoisChabot/variadic_future.svg?style=svg)](https://circleci.com/gh/FrancoisChabot/variadic_future)
-[![codecov](https://codecov.io/gh/FrancoisChabot/variadic_future/branch/master/graph/badge.svg)](https://codecov.io/gh/FrancoisChabot/variadic_future)
+[![Build status](https://ci.appveyor.com/api/projects/status/b7ppx6xmmor89h4q/branch/master?svg=true)](https://ci.appveyor.com/project/FrancoisChabot/variadic-future/branch/master)
 
 # Variadic futures
 

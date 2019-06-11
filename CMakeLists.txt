@@ -90,7 +90,7 @@ if(VAR_FUTURES_BUILD_TESTS)
   endif()
 
   target_include_directories(futures_test PRIVATE gtest/include)
-  target_link_libraries(futures_test var_futures gtest_main gtest Threads::Threads --coverage)
+  target_link_libraries(futures_test var_futures gtest_main gtest Threads::Threads)
 
   include(ProcessorCount)
   ProcessorCount(PROCESSOR_COUNT)
