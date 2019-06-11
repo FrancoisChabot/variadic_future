@@ -71,7 +71,7 @@ jobs:
     steps:
       - run:
           name: install dependencies
-          command: apk add doxygen git
+          command: apk add doxygen git ssh
 
       - checkout
 
