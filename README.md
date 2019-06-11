@@ -1,3 +1,4 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/13fd183e73ec48ca99a0bd377b010537)](https://app.codacy.com/app/FrancoisChabot/variadic_future?utm_source=github.com&utm_medium=referral&utm_content=FrancoisChabot/variadic_future&utm_campaign=Badge_Grade_Settings)
 [![CircleCI](https://circleci.com/gh/FrancoisChabot/variadic_future.svg?style=svg)](https://circleci.com/gh/FrancoisChabot/variadic_future)
 [![Build status](https://ci.appveyor.com/api/projects/status/b7ppx6xmmor89h4q/branch/master?svg=true)](https://ci.appveyor.com/project/FrancoisChabot/variadic-future/branch/master)
 
