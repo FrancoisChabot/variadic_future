@@ -69,10 +69,11 @@ jobs:
       - GH_NAME: VarFutCI
     
     steps:
-      - checkout
       - run:
-          name: install doxygen
-          command: apk add doxygen
+          name: install dependencies
+          command: apk add doxygen git
+
+      - checkout
 
       - run:
           name: build documentation
