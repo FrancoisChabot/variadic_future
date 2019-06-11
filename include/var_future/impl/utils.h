@@ -160,6 +160,8 @@ void fullfill_to_finish(std::tuple<Ts...>&& src, std::tuple<Us...>& dst) {
   static_assert(sizeof...(Ts) <= sizeof...(Us));
 
   if constexpr (j >= sizeof...(Us)) {
+    (void)src;
+    (void)dst;
     return;
   } else {
     using dst_type = std::tuple_element_t<j, std::tuple<Us...>>;
@@ -178,7 +180,7 @@ void fail_to_expect(const std::exception_ptr& src, std::tuple<Ts...>& dst) {
   if constexpr (i >= sizeof...(Ts)) {
     return;
   } else {
-    std::get<i>(dst) = unexpected{src};
+    std::get<i>(dst) = aom::unexpected{src};
   }
 }
 

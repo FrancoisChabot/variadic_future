@@ -45,7 +45,7 @@ namespace {
       pf[0].p.set_value(1);
       pf[1].p.set_exception(std::make_exception_ptr(std::logic_error("nope")));
       pf[2].p.finish(expected<int>(1));
-      pf[3].p.finish(unexpected(std::make_exception_ptr(std::logic_error(""))));
+      pf[3].p.finish(aom::unexpected(std::make_exception_ptr(std::logic_error(""))));
     }
   };
 
@@ -287,7 +287,7 @@ expected<int> generate_expected_value(int) {
 }
 
 expected<int> generate_expected_value_fail(int) {
-  return unexpected{std::make_exception_ptr(std::runtime_error("yo"))};
+  return aom::unexpected{std::make_exception_ptr(std::runtime_error("yo"))};
 }
 
 expected<int> generate_expected_value_throw(int) {
@@ -349,7 +349,7 @@ expected<int> te_generate_expected_value(expected<int>) {
 }
 
 expected<int> te_generate_expected_value_fail(expected<int>) {
-  return unexpected{std::make_exception_ptr(std::runtime_error("yo"))};
+  return aom::unexpected{std::make_exception_ptr(std::runtime_error("yo"))};
 }
 
 expected<int> te_generate_expected_value_throw(expected<int>) {

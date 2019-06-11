@@ -45,7 +45,7 @@ namespace {
       pf[0].p.set_value();
       pf[1].p.set_exception(std::make_exception_ptr(std::logic_error("nope")));
       pf[2].p.finish(expected<void>());
-      pf[3].p.finish(unexpected(std::make_exception_ptr(std::logic_error(""))));
+      pf[3].p.finish(aom::unexpected(std::make_exception_ptr(std::logic_error(""))));
     }
   };
 
@@ -341,7 +341,7 @@ expected<void> expected_cb() {
   return {};
 }
 expected<void> expected_cb_fail() {
-  return unexpected{std::make_exception_ptr(std::runtime_error("yikes"))};
+  return aom::unexpected{std::make_exception_ptr(std::runtime_error("yikes"))};
 }
 
 TEST(Future_void, expected_returning_callback) {
