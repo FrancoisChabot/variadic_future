@@ -36,6 +36,20 @@ if(VAR_FUTURES_TEST_COVERAGE)
 endif()
 
 
+if(WIN32)
+  macro(get_WIN32_WINNT version)
+      if (WIN32 AND CMAKE_SYSTEM_VERSION)
+          set(ver ${CMAKE_SYSTEM_VERSION})
+          string(REGEX REPLACE "^([0-9])[.]([0-9]).*" "0\\10\\2" ver ${ver})
+          set(${version} "0x${ver}")
+      endif()
+  endmacro()
+
+  get_WIN32_WINNT(ver)
+  add_definitions(-D_WIN32_WINNT=${ver} -D_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING)
+endif()
+
+
 add_library(var_futures INTERFACE)
 target_include_directories(var_futures INTERFACE 
   $<BUILD_INTERFACE:. include>
