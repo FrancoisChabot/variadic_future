@@ -28,7 +28,7 @@ class Future {
 
  public:
   using storage_type = detail::Future_storage<Ts...>;
-  
+
   using value_type = detail::future_value_type_t<Ts...>;
 
   using fullfill_type = detail::fullfill_type_t<Ts...>;
@@ -41,7 +41,7 @@ class Future {
   // returns a future that's already fullfilled.
   template <typename... Us>
   static Future fullfilled(Us&&...);
-  
+
   // returns a future that's already finished
   template <typename... Us>
   static Future finished(Us&&...);
@@ -135,8 +135,7 @@ class Future {
   Future(const Future&) = delete;
   Future& operator=(const Future&) = delete;
 
-
-  template<typename CbT, typename QueueT>
+  template <typename CbT, typename QueueT>
   friend auto async(QueueT& q, CbT&& cb);
 
   template <typename... Us>
@@ -147,13 +146,13 @@ class Future {
 
   template <typename... Us>
   friend class Promise;
-  
+
   // Primarily internal constructor.
   explicit Future(detail::Storage_ptr<storage_type> s);
-
 };
 
-// Error assigned to a future when its promise is destroyed before being finished.
+// Error assigned to a future when its promise is destroyed before being
+// finished.
 struct Unfullfilled_promise : public std::logic_error {
   Unfullfilled_promise() : std::logic_error("Unfullfilled_promise") {}
 };
@@ -214,15 +213,15 @@ class Promise {
 template <typename... FutTs>
 auto tie(FutTs&&... futs);
 
-template<typename CbT, typename QueueT>
+template <typename CbT, typename QueueT>
 auto async(QueueT& q, CbT&& cb);
 
 }  // namespace aom
 
+#include "var_future/impl/async.h"
 #include "var_future/impl/future.h"
 #include "var_future/impl/promise.h"
 #include "var_future/impl/storage_impl.h"
 #include "var_future/impl/tie.h"
-#include "var_future/impl/async.h"
 
 #endif

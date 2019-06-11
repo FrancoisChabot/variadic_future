@@ -3,7 +3,7 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
 
 // Unless required by applicable law or agreed to in writing, software
@@ -23,44 +23,37 @@ using namespace aom;
 
 namespace {
 
-  struct prom_fut {
-    prom_fut() {
-      f = p.get_future();
-    }
+struct prom_fut {
+  prom_fut() { f = p.get_future(); }
 
-    void get() {
-      f.std_future().get();
-    }
+  void get() { f.std_future().get(); }
 
-    Promise<void> p;
-    Future<void> f;
-  };
+  Promise<void> p;
+  Future<void> f;
+};
 
-  struct pf_set {
-    prom_fut pf[4];
+struct pf_set {
+  prom_fut pf[4];
 
-    prom_fut& operator[](std::size_t i) {return pf[i];}
+  prom_fut& operator[](std::size_t i) { return pf[i]; }
 
-    void complete() {
-      pf[0].p.set_value();
-      pf[1].p.set_exception(std::make_exception_ptr(std::logic_error("nope")));
-      pf[2].p.finish(expected<void>());
-      pf[3].p.finish(aom::unexpected(std::make_exception_ptr(std::logic_error(""))));
-    }
-  };
-
-  int expect_noop_count = 0;
-  void expected_noop(expected<void>) {++expect_noop_count;}
-  void expected_noop_fail(expected<void>) {
-    throw std::runtime_error("dead");
+  void complete() {
+    pf[0].p.set_value();
+    pf[1].p.set_exception(std::make_exception_ptr(std::logic_error("nope")));
+    pf[2].p.finish(expected<void>());
+    pf[3].p.finish(
+        aom::unexpected(std::make_exception_ptr(std::logic_error(""))));
   }
+};
 
-  void no_op() {}
+int expect_noop_count = 0;
+void expected_noop(expected<void>) { ++expect_noop_count; }
+void expected_noop_fail(expected<void>) { throw std::runtime_error("dead"); }
 
-  void failure() {
-    throw std::runtime_error("dead");
-  }
-}
+void no_op() {}
+
+void failure() { throw std::runtime_error("dead"); }
+}  // namespace
 
 TEST(Future_void, fundamental_expectations) {
   // These tests failing do not mean that the library doesn't work.
@@ -71,22 +64,17 @@ TEST(Future_void, fundamental_expectations) {
   EXPECT_TRUE(detail::has_static_push_v<detail::Immediate_queue>);
 
   // Base handler should be nothing but a vtable pointer.
-  EXPECT_EQ(sizeof(void*), sizeof(detail::Future_handler_base<detail::Immediate_queue, void>));
+  EXPECT_EQ(sizeof(void*),
+            sizeof(detail::Future_handler_base<detail::Immediate_queue, void>));
 
-  // The then handler of a function pointer callback should match the callculations of the minimal 
-  // soo buffer size.
-  EXPECT_EQ(
-    sizeof(aom::detail::Future_then_handler<decltype(&no_op), aom::detail::Immediate_queue, void>),
-    aom::var_fut_default_min_soo_size
-  );
-
+  // The then handler of a function pointer callback should match the
+  // callculations of the minimal soo buffer size.
+  EXPECT_EQ(sizeof(aom::detail::Future_then_handler<
+                   decltype(&no_op), aom::detail::Immediate_queue, void>),
+            aom::var_fut_default_min_soo_size);
 }
 
-TEST(Future_void, blank) {
-  Future<void> fut;
-
-
-}
+TEST(Future_void, blank) { Future<void> fut; }
 
 TEST(Future_void, unfilled_promise_failiure) {
   Future<void> fut;
@@ -103,10 +91,10 @@ TEST(Future_void, preloaded_std_get) {
 
   pf.complete();
 
-  EXPECT_NO_THROW(  pf[0].get());
-  EXPECT_THROW(     pf[1].get(), std::logic_error);
-  EXPECT_NO_THROW(  pf[2].get());
-  EXPECT_THROW(     pf[3].get(), std::logic_error);
+  EXPECT_NO_THROW(pf[0].get());
+  EXPECT_THROW(pf[1].get(), std::logic_error);
+  EXPECT_NO_THROW(pf[2].get());
+  EXPECT_THROW(pf[3].get(), std::logic_error);
 }
 
 TEST(Future_void, delayed_std_get) {
@@ -123,9 +111,9 @@ TEST(Future_void, delayed_std_get) {
   auto std_f2 = pf[1].f.std_future();
   auto std_f3 = pf[2].f.std_future();
   auto std_f4 = pf[3].f.std_future();
-  
+
   l.unlock();
-  
+
   EXPECT_NO_THROW(std_f1.get());
   EXPECT_THROW(std_f2.get(), std::logic_error);
   EXPECT_NO_THROW(std_f3.get());
@@ -143,7 +131,7 @@ TEST(Future_void, then_noop_pre) {
   auto f4 = pf[3].f.then(no_op);
 
   pf.complete();
-  
+
   EXPECT_NO_THROW(f1.std_future().get());
   EXPECT_THROW(f2.std_future().get(), std::logic_error);
   EXPECT_NO_THROW(f3.std_future().get());
@@ -159,7 +147,7 @@ TEST(Future_void, then_noop_post) {
   auto f2 = pf[1].f.then(no_op);
   auto f3 = pf[2].f.then(no_op);
   auto f4 = pf[3].f.then(no_op);
-  
+
   EXPECT_NO_THROW(f1.std_future().get());
   EXPECT_THROW(f2.std_future().get(), std::logic_error);
   EXPECT_NO_THROW(f3.std_future().get());
@@ -173,7 +161,7 @@ TEST(Future_void, then_failure_pre) {
   auto f2 = pf[1].f.then(failure);
   auto f3 = pf[2].f.then(failure);
   auto f4 = pf[3].f.then(failure);
-  
+
   pf.complete();
 
   EXPECT_THROW(f1.std_future().get(), std::runtime_error);
@@ -205,14 +193,13 @@ TEST(Future_void, then_expect_success_pre) {
   auto f2 = pf[1].f.then_expect(expected_noop);
   auto f3 = pf[2].f.then_expect(expected_noop);
   auto f4 = pf[3].f.then_expect(expected_noop);
-  
+
   pf.complete();
 
   EXPECT_NO_THROW(f1.std_future().get());
   EXPECT_NO_THROW(f2.std_future().get());
   EXPECT_NO_THROW(f3.std_future().get());
   EXPECT_NO_THROW(f4.std_future().get());
-
 }
 
 TEST(Future_void, then_expect_success_post) {
@@ -222,7 +209,7 @@ TEST(Future_void, then_expect_success_post) {
   auto f2 = pf[1].f.then_expect(expected_noop);
   auto f3 = pf[2].f.then_expect(expected_noop);
   auto f4 = pf[3].f.then_expect(expected_noop);
-  
+
   pf.complete();
 
   EXPECT_NO_THROW(f1.std_future().get());
@@ -263,12 +250,11 @@ TEST(Future_void, then_expect_failure_post) {
   EXPECT_THROW(f4.std_future().get(), std::runtime_error);
 }
 
-
 TEST(Future_void, then_expect_finally_success_pre) {
   pf_set pf;
 
   auto ref = expect_noop_count;
-  
+
   pf[0].f.finally(expected_noop);
   pf[1].f.finally(expected_noop);
   pf[2].f.finally(expected_noop);
@@ -276,7 +262,7 @@ TEST(Future_void, then_expect_finally_success_pre) {
 
   pf.complete();
 
-  EXPECT_EQ(4+ref, expect_noop_count);
+  EXPECT_EQ(4 + ref, expect_noop_count);
 }
 
 TEST(Future_void, then_expect_finally_success_post) {
@@ -291,18 +277,14 @@ TEST(Future_void, then_expect_finally_success_post) {
   pf[2].f.finally(expected_noop);
   pf[3].f.finally(expected_noop);
 
-  EXPECT_EQ(4+ref, expect_noop_count);
+  EXPECT_EQ(4 + ref, expect_noop_count);
 }
 
 namespace {
-  int return_int() {
-    return 1;
-  } 
+int return_int() { return 1; }
 
-  int return_int_fail() {
-    throw std::runtime_error("");
-  }
-}
+int return_int_fail() { throw std::runtime_error(""); }
+}  // namespace
 
 TEST(Future_void, chain_to_int) {
   pf_set pf;
@@ -330,16 +312,13 @@ TEST(Future_void, chain_to_int_fail) {
   auto f3 = pf[2].f.then(return_int_fail);
   auto f4 = pf[3].f.then(return_int_fail);
 
-  
   EXPECT_THROW(f1.std_future().get(), std::runtime_error);
   EXPECT_THROW(f2.std_future().get(), std::logic_error);
   EXPECT_THROW(f3.std_future().get(), std::runtime_error);
   EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
-expected<void> expected_cb() {
-  return {};
-}
+expected<void> expected_cb() { return {}; }
 expected<void> expected_cb_fail() {
   return aom::unexpected{std::make_exception_ptr(std::runtime_error("yikes"))};
 }
@@ -354,7 +333,6 @@ TEST(Future_void, expected_returning_callback) {
   auto f3 = pf[2].f.then(expected_cb);
   auto f4 = pf[3].f.then(expected_cb);
 
-  
   EXPECT_NO_THROW(f1.std_future().get());
   EXPECT_THROW(f2.std_future().get(), std::logic_error);
   EXPECT_NO_THROW(f3.std_future().get());
@@ -371,7 +349,6 @@ TEST(Future_void, expected_returning_callback_fail) {
   auto f3 = pf[2].f.then(expected_cb_fail);
   auto f4 = pf[3].f.then(expected_cb_fail);
 
-  
   EXPECT_THROW(f1.std_future().get(), std::runtime_error);
   EXPECT_THROW(f2.std_future().get(), std::logic_error);
   EXPECT_THROW(f3.std_future().get(), std::runtime_error);

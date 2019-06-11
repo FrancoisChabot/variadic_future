@@ -72,8 +72,7 @@ class Future_then_expect_handler
         } else {
           if constexpr (is_expected_v<cb_result_type>) {
             dst->finish(std::apply(cb, std::move(f)));
-          }
-          else{
+          } else {
             dst->fullfill(std::apply(cb, std::move(f)));
           }
         }

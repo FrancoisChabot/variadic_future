@@ -31,7 +31,7 @@ template <typename... Us>
 Future<Ts...> Future<Ts...>::fullfilled(Us&&... us) {
   using storage_type = typename Future<Ts...>::storage_type;
   detail::Storage_ptr<storage_type> store{new storage_type()};
-  
+
   store->fullfill(std::make_tuple(std::forward<Us>(us)...));
 
   return Future<Ts...>{store};
@@ -43,7 +43,7 @@ template <typename... Us>
 Future<Ts...> Future<Ts...>::finished(Us&&... us) {
   using storage_type = typename Future<Ts...>::storage_type;
   detail::Storage_ptr<storage_type> store{new storage_type()};
-  
+
   store->finish(std::make_tuple(std::forward<Us>(us)...));
 
   return Future<Ts...>{store};
@@ -54,7 +54,7 @@ template <typename... Ts>
 Future<Ts...> Future<Ts...>::failed(std::exception_ptr e) {
   using storage_type = typename Future<Ts...>::storage_type;
   detail::Storage_ptr<storage_type> store{new storage_type()};
-  
+
   store->fail(std::move(e));
 
   return Future<Ts...>{store};
@@ -65,13 +65,13 @@ Future<Ts...>::Future(detail::Storage_ptr<storage_type> s)
     : storage_(std::move(s)) {}
 
 template <typename... Ts>
-Future<Ts...>::Future(Future<std::tuple<Ts...>>&& rhs) : storage_(new storage_type()) {
+Future<Ts...>::Future(Future<std::tuple<Ts...>>&& rhs)
+    : storage_(new storage_type()) {
   auto s = storage_;
-  rhs.finally([s=std::move(s)](expected<std::tuple<Ts...>> e) mutable {
-    if(e.has_value()) {
+  rhs.finally([s = std::move(s)](expected<std::tuple<Ts...>> e) mutable {
+    if (e.has_value()) {
       s->finish(std::move(*e));
-    }
-    else {
+    } else {
       s->fail(std::move(e.error()));
     }
   });
@@ -159,9 +159,9 @@ template <typename... Ts>
 template <typename CbT, typename QueueT>
 void Future<Ts...>::finally(QueueT& queue, CbT&& cb) {
   assert(storage_);
-  static_assert(std::is_invocable_v<CbT, expected<Ts>...>, "Finally should be accepting expected arguments");
-  using handler_t =
-      detail::Future_finally_handler<CbT, QueueT, Ts...>;
+  static_assert(std::is_invocable_v<CbT, expected<Ts>...>,
+                "Finally should be accepting expected arguments");
+  using handler_t = detail::Future_finally_handler<CbT, QueueT, Ts...>;
   storage_->template set_handler<handler_t>(&queue, std::move(cb));
 }
 
@@ -171,15 +171,14 @@ auto Future<Ts...>::std_future() {
   if constexpr (all_voids) {
     std::promise<void> prom;
     auto fut = prom.get_future();
-    this->finally(
-        [p = std::move(prom)](expected<Ts>... vals) mutable {
-          auto err = detail::get_first_error(vals...);
-          if (err) {
-            p.set_exception(*err);
-          } else {
-            p.set_value();
-          }
-        });
+    this->finally([p = std::move(prom)](expected<Ts>... vals) mutable {
+      auto err = detail::get_first_error(vals...);
+      if (err) {
+        p.set_exception(*err);
+      } else {
+        p.set_value();
+      }
+    });
     return fut;
   } else if constexpr (sizeof...(Ts) == 1) {
     using T = std::tuple_element_t<0, std::tuple<Ts...>>;

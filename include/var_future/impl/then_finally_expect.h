@@ -25,8 +25,7 @@ namespace detail {
 
 // handling for Future::finally()
 template <typename CbT, typename QueueT, typename... Ts>
-class Future_finally_handler
-    : public Future_handler_base<QueueT, void, Ts...> {
+class Future_finally_handler : public Future_handler_base<QueueT, void, Ts...> {
   using parent_type = Future_handler_base<QueueT, void, Ts...>;
 
   using fullfill_type = typename parent_type::fullfill_type;

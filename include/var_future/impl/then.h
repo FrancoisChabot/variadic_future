@@ -64,8 +64,7 @@ class Future_then_handler : public Future_handler_base<QueueT, void, Ts...> {
         } else {
           if constexpr (is_expected_v<cb_result_type>) {
             dst->finish(std::apply(cb, std::move(v)));
-          }
-          else{
+          } else {
             dst->fullfill(std::apply(cb, std::move(v)));
           }
         }

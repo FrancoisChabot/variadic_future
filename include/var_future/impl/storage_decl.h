@@ -93,7 +93,7 @@ class Future_storage {
 
   void finish(finish_type&& f);
   void finish(future_type&& f);
-  
+
   void fail(fail_type&& e);
 
   template <typename Handler_t, typename QueueT, typename... Args_t>
@@ -118,10 +118,10 @@ class Future_storage {
                          sizeof(fail_type)}) -
                    sizeof(Future_handler_iface<Ts...>*));
 
-
   struct Callback_data {
-    // This will either point to soo_buffer_, or heap-allocated data, depending on state_.
-    Future_handler_iface<Ts...>* callback_; 
+    // This will either point to soo_buffer_, or heap-allocated data, depending
+    // on state_.
+    Future_handler_iface<Ts...>* callback_;
     typename std::aligned_storage<soo_space>::type soo_buffer_;
   };
 
@@ -147,9 +147,9 @@ class Future_storage {
 template <typename T>
 struct Storage_ptr {
   Storage_ptr() = default;
-  Storage_ptr(T* val) : ptr_(val) { 
+  Storage_ptr(T* val) : ptr_(val) {
     assert(val);
-    ++(ptr_->ref_count_); 
+    ++(ptr_->ref_count_);
   }
 
   Storage_ptr(const Storage_ptr& rhs) : ptr_(rhs.ptr_) {

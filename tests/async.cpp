@@ -3,7 +3,7 @@
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
 
 // Unless required by applicable law or agreed to in writing, software
@@ -24,11 +24,11 @@ using namespace aom;
 TEST(async, simple_case) {
   std::queue<std::function<void()>> queue;
 
-  auto fut = async(queue, [](){ return 12;});
+  auto fut = async(queue, []() { return 12; });
 
   EXPECT_EQ(1, queue.size());
   int dst = 0;
-  fut.finally([&](expected<int> x){ dst = x.value();});
+  fut.finally([&](expected<int> x) { dst = x.value(); });
   EXPECT_EQ(0, dst);
 
   queue.front()();
