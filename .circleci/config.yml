@@ -68,7 +68,7 @@ workflows:
             branches:
               ignore:
                 - "gh-pages"
-      - release_build
+      - release_build:
           filters:
             branches:
               ignore:
