@@ -142,6 +142,8 @@ using fail_type_t = std::exception_ptr;
 template <std::size_t i, std::size_t j, typename... Ts, typename... Us>
 void finish_to_fullfill(std::tuple<Ts...>&& src, std::tuple<Us...>& dst) {
   if constexpr (j >= sizeof...(Us)) {
+    (void)src;
+    (void)dst;
     return;
   } else {
     using src_type = std::tuple_element_t<i, std::tuple<Ts...>>;
@@ -192,7 +194,8 @@ struct Immediate_queue {
   }
 };
 
-static void no_op_test() {}
+inline void no_op_test() {}
+
 // Determines wether T's duck-typed push() method is static.
 // This will be used in Future_handler_base to omit its instantiation
 template <typename T, typename = void>
