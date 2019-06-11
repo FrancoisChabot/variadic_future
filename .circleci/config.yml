@@ -1,0 +1,120 @@
+version: 2.1
+jobs:
+  debug_build:
+    docker:
+      - image: francoischabot/easy_grpc_buildenv:latest
+
+    steps:
+      - checkout
+
+      - run:
+          name: Create build script
+          command: |
+            mkdir _bld 
+            cd _bld 
+            cmake -DVAR_FUTURES_BUILD_EXAMPLES=ON -DVAR_FUTURES_BUILD_TESTS=ON -DVAR_FUTURES_TEST_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug ..
+
+      - run:
+          name: Build
+          command: |
+            cd _bld 
+            make -j $(nproc)
+
+      - run:
+          name: Test
+          command: |
+            cd _bld 
+            ctest -j $(nproc) -T memcheck
+
+      - run:
+          name: Coverage
+          command: |
+            cd _bld
+            make coverage
+            bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"
+  
+  release_build:
+    docker:
+      - image: francoischabot/easy_grpc_buildenv:latest
+
+    steps:
+      - checkout
+
+      - run:
+          name: Create build script
+          command: |
+            mkdir _bld 
+            cd _bld 
+            cmake -DVAR_FUTURES_BUILD_EXAMPLES=ON -DVAR_FUTURES_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release ..
+
+      - run:
+          name: Build
+          command: |
+            cd _bld 
+            make -j $(nproc)
+
+      - run:
+          name: Test
+          command: |
+            cd _bld 
+            ctest -j $(nproc) -T memcheck
+
+  rebuild_doc:
+    docker:
+      - image: alpine:edge
+    
+    environment:
+      - DOCS_BRANCH: gh-pages
+      - GH_EMAIL: francois.chabot.dev+var_fut@gmail.com
+      - GH_NAME: VarFutCI
+    
+    steps:
+      - run:
+          name: install dependencies
+          command: apk add doxygen git openssh-client
+
+      - checkout
+
+      - run:
+          name: build documentation
+          command: doxygen
+
+      - deploy:
+          name: deploy_docs
+          command: |
+            git config --global user.email $GH_EMAIL
+            git config --global user.name $GH_NAME
+
+            git clone $CIRCLE_REPOSITORY_URL out
+            cd out
+            git checkout $DOCS_BRANCH || git checkout --orphan $DOCS_BRANCH
+            git rm -rf .
+            cd ..
+
+            cp -a html/. out/.
+            mkdir -p out/.circleci && cp -a .circleci/. out/.circleci/.
+            cd out
+
+            git add -A
+            git commit -m "Automated deployment to GitHub Pages: ${CIRCLE_SHA1}" --allow-empty
+            git push origin $DOCS_BRANCH
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - debug_build:
+          filters:
+            branches:
+              ignore:
+                - "gh-pages"
+      - release_build:
+          filters:
+            branches:
+              ignore:
+                - "gh-pages"
+      - rebuild_doc:
+          filters:
+            branches:
+              only: master
+
