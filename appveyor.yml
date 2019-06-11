@@ -20,7 +20,7 @@ install:
 before_build:
   - mkdir _bld
   - cd _bld
-  - cmake -G "%CMAKE_GENERATOR%" -A x64 -DCMAKE_BUILD_TYPE=%configuration% -DVAR_FUTURES_BUILD_EXAMPLES=ON -DVAR_FUTURES_BUILD_TESTS=ON -DVAR_FUTURES_TEST_COVERAGE=OFF ..
+  - cmake -G "%CMAKE_GENERATOR%" -A x64 -Dgtest_force_shared_crt=ON -DCMAKE_BUILD_TYPE=%configuration% -DVAR_FUTURES_BUILD_EXAMPLES=ON -DVAR_FUTURES_BUILD_TESTS=ON -DVAR_FUTURES_TEST_COVERAGE=OFF ..
 
 build:
   project: _bld\var_future.sln
