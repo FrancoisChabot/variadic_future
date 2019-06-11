@@ -33,15 +33,15 @@ Future<void> foo() {
 }
 ```
 
+## Documentation
+
+You can find the auto-generated API reference [here](https://francoischabot.github.io/variadic_future/annotated.html). User guide is still pending.
+
 ## Installation
 
 * Make the contents of the include directory available to your project.
 * Have a look at `var_future/config.h` and make changes as needed.
 * If you are from the future, you may want to use `std::expected` instead of `expected_lite`,
-
-## Documentation
-
-The main header `var_future/future.h` is meant to contain all of the user-facing interface, and nothing but the user-facing interface. It serves directly as the main documentation (for now).
 
 ## Usage
 ### Prerequisites
