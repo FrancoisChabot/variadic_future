@@ -37,16 +37,7 @@ endif()
 
 
 if(WIN32)
-  macro(get_WIN32_WINNT version)
-      if (WIN32 AND CMAKE_SYSTEM_VERSION)
-          set(ver ${CMAKE_SYSTEM_VERSION})
-          string(REGEX REPLACE "^([0-9])[.]([0-9]).*" "0\\10\\2" ver ${ver})
-          set(${version} "0x${ver}")
-      endif()
-  endmacro()
-
-  get_WIN32_WINNT(ver)
-  add_definitions(-D_WIN32_WINNT=${ver} -D_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING)
+  add_definitions(-D_WIN32_WINNT=0x0601 -D_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING)
 endif()
 
 
