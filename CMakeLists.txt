@@ -35,10 +35,6 @@ if(VAR_FUTURES_TEST_COVERAGE)
   endif()
 endif()
 
-include(CTest)
-
-include(GoogleTest)
-find_package(GTest REQUIRED CONFIG)
 
 add_library(var_futures INTERFACE)
 target_include_directories(var_futures INTERFACE 
@@ -68,6 +64,12 @@ endif()
 
 
 if(VAR_FUTURES_BUILD_TESTS)
+
+  include(CTest)
+  include(GoogleTest)
+  add_subdirectory(gtest)
+  #find_package(GTest REQUIRED CONFIG)
+
   add_executable(futures_test 
     tests/async.cpp
     tests/int.cpp
@@ -80,7 +82,8 @@ if(VAR_FUTURES_BUILD_TESTS)
     target_compile_options(futures_test PUBLIC -Wall -Wextra -pedantic -Werror)
   endif()
 
-  target_link_libraries(futures_test var_futures GTest::gtest_main GTest::gtest --coverage)
+  target_include_directories(futures_test PRIVATE gtest/include)
+  target_link_libraries(futures_test var_futures gtest_main gtest --coverage)
 
 
   include(ProcessorCount)

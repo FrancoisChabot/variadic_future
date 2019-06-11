@@ -15,6 +15,9 @@ configuration:
   - Debug
   - Release
 
+install:
+  - cmd: git submodule update --init --recursive
+
 before_build:
   - mkdir _bld
   - cd _bld
