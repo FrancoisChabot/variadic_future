@@ -72,8 +72,10 @@ if(VAR_FUTURES_BUILD_TESTS)
 
   include(CTest)
   include(GoogleTest)
-  add_subdirectory(gtest)
-  #find_package(GTest REQUIRED CONFIG)
+  find_package(GTest CONFIG)
+  if( NOT GTest_FOUND)
+    add_subdirectory(gtest)
+  endif()
 
   add_executable(futures_test 
     tests/async.cpp
@@ -88,8 +90,7 @@ if(VAR_FUTURES_BUILD_TESTS)
   endif()
 
   target_include_directories(futures_test PRIVATE gtest/include)
-  target_link_libraries(futures_test var_futures gtest_main gtest --coverage)
-
+  target_link_libraries(futures_test var_futures gtest_main gtest Threads::Threads --coverage)
 
   include(ProcessorCount)
   ProcessorCount(PROCESSOR_COUNT)
