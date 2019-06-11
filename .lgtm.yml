@@ -1,0 +1,6 @@
+extraction:
+  cpp:
+    index:
+      exclude: 
+        - /gtest/
+        - /include/nonstd/
