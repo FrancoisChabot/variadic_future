@@ -1,5 +1,6 @@
 [![CircleCI](https://circleci.com/gh/FrancoisChabot/variadic_future.svg?style=svg)](https://circleci.com/gh/FrancoisChabot/variadic_future)
 [![Build status](https://ci.appveyor.com/api/projects/status/b7ppx6xmmor89h4q/branch/master?svg=true)](https://ci.appveyor.com/project/FrancoisChabot/variadic-future/branch/master)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/862b964980034316abf5d3d02c9ee63e)](https://www.codacy.com/app/FrancoisChabot/variadic_future?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=FrancoisChabot/variadic_future&amp;utm_campaign=Badge_Grade)
 
 # Variadic futures
 
