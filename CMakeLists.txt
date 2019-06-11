@@ -35,10 +35,11 @@ if(VAR_FUTURES_TEST_COVERAGE)
   endif()
 endif()
 
-include(CTest)
 
-include(GoogleTest)
-find_package(GTest REQUIRED CONFIG)
+if(WIN32)
+  add_definitions(-D_WIN32_WINNT=0x0601 -D_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING)
+endif()
+
 
 add_library(var_futures INTERFACE)
 target_include_directories(var_futures INTERFACE 
@@ -68,6 +69,14 @@ endif()
 
 
 if(VAR_FUTURES_BUILD_TESTS)
+
+  include(CTest)
+  include(GoogleTest)
+  find_package(GTest CONFIG)
+  if( NOT GTest_FOUND)
+    add_subdirectory(gtest)
+  endif()
+
   add_executable(futures_test 
     tests/async.cpp
     tests/int.cpp
@@ -80,8 +89,8 @@ if(VAR_FUTURES_BUILD_TESTS)
     target_compile_options(futures_test PUBLIC -Wall -Wextra -pedantic -Werror)
   endif()
 
-  target_link_libraries(futures_test var_futures GTest::gtest_main GTest::gtest --coverage)
-
+  target_include_directories(futures_test PRIVATE gtest/include)
+  target_link_libraries(futures_test var_futures gtest_main gtest Threads::Threads --coverage)
 
   include(ProcessorCount)
   ProcessorCount(PROCESSOR_COUNT)
