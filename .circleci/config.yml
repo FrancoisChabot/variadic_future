@@ -59,6 +59,45 @@ jobs:
             cd _bld 
             ctest -j $(nproc) -T memcheck
 
+  rebuild_doc:
+    docker:
+      - image: alpine:edge
+    
+    environment:
+      - DOCS_BRANCH: gh-pages
+      - GH_EMAIL: francois.chabot.dev+var_fut@gmail.com
+      - GH_NAME: VarFutCI
+    
+    steps:
+      - checkout
+      - run:
+          name: install doxygen
+          command: apk add doxygen
+
+      - run:
+          name: build documentation
+          command: doxygen
+
+      - deploy:
+          name: deploy_docs
+          command: |
+            git config --global user.email $GH_EMAIL
+            git config --global user.name $GH_NAME
+
+            git clone $CIRCLE_REPOSITORY_URL out
+            cd out
+            git checkout $DOCS_BRANCH || git checkout --orphan $DOCS_BRANCH
+            git rm -rf .
+            cd ..
+
+            cp -a html/. out/.
+            mkdir -p out/.circleci && cp -a .circleci/. out/.circleci/.
+            cd out
+
+            git add -A
+            git commit -m "Automated deployment to GitHub Pages: ${CIRCLE_SHA1}" --allow-empty
+            git push origin $DOCS_BRANCH
+
 workflows:
   version: 2
   build_and_test:
@@ -73,4 +112,8 @@ workflows:
             branches:
               ignore:
                 - "gh-pages"
+      - rebuild_doc:
+          filters:
+            branches:
+              only: master
 
