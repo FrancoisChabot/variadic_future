@@ -1,6 +1,7 @@
 [![CircleCI](https://circleci.com/gh/FrancoisChabot/variadic_future.svg?style=svg)](https://circleci.com/gh/FrancoisChabot/variadic_future)
 [![Build status](https://ci.appveyor.com/api/projects/status/b7ppx6xmmor89h4q/branch/master?svg=true)](https://ci.appveyor.com/project/FrancoisChabot/variadic-future/branch/master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/862b964980034316abf5d3d02c9ee63e)](https://www.codacy.com/app/FrancoisChabot/variadic_future?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=FrancoisChabot/variadic_future&amp;utm_campaign=Badge_Grade)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/FrancoisChabot/variadic_future.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/FrancoisChabot/variadic_future/alerts/)
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/FrancoisChabot/variadic_future.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/FrancoisChabot/variadic_future/context:cpp)
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://francoischabot.github.io/variadic_future/annotated.html)
 # Variadic futures
