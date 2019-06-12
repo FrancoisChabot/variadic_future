@@ -38,7 +38,7 @@ struct Landing {
   }
 };
 
-// Used by tie to listen to the individual futures.
+// Used by join to listen to the individual futures.
 template <std::size_t id, typename LandingT, typename... FutTs>
 void bind_landing(const std::shared_ptr<LandingT>&, FutTs&&...) {}
 
@@ -66,10 +66,10 @@ void bind_landing(const std::shared_ptr<LandingT>& l, Future<Front>&& front,
 
 }  // namespace detail
 template <typename... FutTs>
-auto tie(FutTs&&... futs) {
-  static_assert(sizeof...(FutTs) >= 2, "Trying to tie less than two futures?");
+auto join(FutTs&&... futs) {
+  static_assert(sizeof...(FutTs) >= 2, "Trying to join less than two futures?");
   static_assert(std::conjunction_v<is_future<FutTs>...>,
-                "trying to tie a non-future");
+                "trying to join a non-future");
 
   using landing_type = detail::Landing<std::decay_t<FutTs>...>;
   using fut_type = typename landing_type::storage_type::future_type;

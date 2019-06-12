@@ -16,14 +16,14 @@ More specifically, completion-based futures are a non-blocking, callback-based, 
 
 ## But why variadic?
 
-Because it allows for the `tie()` function, which provides a very nice way to asynchronously wait on multiple futures at once:
+Because it allows for the `join()` function, which provides a very nice way to asynchronously wait on multiple futures at once:
 
 ```cpp
 Future<void> foo() {
   Future<int> fut_a = ...;
   Future<bool> fut_b = ...;
  
-  Future<int, bool> combined_fut = tie(fut_a, fut_b);
+  Future<int, bool> combined_fut = join(fut_a, fut_b);
  
   Future<void> result = combined_fut.then([](int a, bool b) {
     // This is called once both fut_a and fut_b have been successfully completed.
@@ -165,7 +165,7 @@ aom::Future<double> fut = aom::async(queue, [](){return 12.0;})
 
 #### Tieing futures
 
-You can wait on multiple futures at the same time using the `tie()` function.
+You can wait on multiple futures at the same time using the `join()` function.
 
 ```cpp
 
@@ -175,7 +175,7 @@ void foo() {
   aom::Future<int> fut_a = ...;
   aom::Future<int> fut_b = ...;
 
-  aom::Future<int, int> combined = tie(fut_a, fut_b);
+  aom::Future<int, int> combined = join(fut_a, fut_b);
 
   combined.finally([](aom::expected<int> a, aom::expected<int> b){
     //Do something with a and/or b;
