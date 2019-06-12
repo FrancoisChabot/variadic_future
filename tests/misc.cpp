@@ -280,7 +280,7 @@ TEST(Future, simple_ite) {
   Promise<std::string> p_b;
 
 
-  auto f = tie(p_a.get_future(), p_b.get_future())
+  auto f = join(p_a.get_future(), p_b.get_future())
     .then([](int a, std::string){
       return a;
   });
@@ -290,13 +290,13 @@ TEST(Future, simple_ite) {
   EXPECT_EQ(3, f.std_future().get());
 }
 
-TEST(Future, partial_tie_failure) {
+TEST(Future, partial_join_failure) {
   Promise<int> p_a;
   Promise<std::string> p_b;
 
 
   int dst = 0;
-  tie(p_a.get_future(), p_b.get_future())
+  join(p_a.get_future(), p_b.get_future())
     .finally([&](expected<int> a, expected<std::string> b){
       dst = a.value();
       EXPECT_FALSE(b.has_value());

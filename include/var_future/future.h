@@ -237,7 +237,7 @@ class Future {
   friend auto async(QueueT& q, CbT&& cb);
 
   template <typename... Us>
-  friend auto tie(Us&&...);
+  friend auto join(Us&&...);
 
   template <typename... Us>
   friend class Future;
@@ -330,7 +330,7 @@ class Promise {
  * @return auto 
  */
 template <typename... FutTs>
-auto tie(FutTs&&... futures);
+auto join(FutTs&&... futures);
 
 // Convenience function that creates a promise for the result of the cb, pushes
 // cb in q, and returns a future to that promise.
@@ -353,7 +353,7 @@ auto async(QueueT& q, CbT&& callback);
 #include "var_future/impl/future.h"
 #include "var_future/impl/promise.h"
 #include "var_future/impl/storage_impl.h"
-#include "var_future/impl/tie.h"
+#include "var_future/impl/join.h"
 #include "var_future/impl/async.h"
 
 #endif
