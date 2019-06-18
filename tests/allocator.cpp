@@ -22,18 +22,69 @@
 using namespace aom;
 
 namespace {
+template <typename T>
+struct Test_alloc {
+  template <typename U>
+  struct rebind {
+    using other = Test_alloc<U>;
+  };
+
+  Test_alloc(int* counter, int* total) : counter_(counter), total_(total) {}
+
+  T* allocate(std::size_t count) {
+    ++*counter_;
+    ++*total_;
+    return reinterpret_cast<T*>(std::malloc(count * sizeof(T)));
+  }
+
+  void deallocate(T* ptr, std::size_t) {
+    std::free(ptr);
+    --*counter_;
+  }
+
+  template <typename U>
+  Test_alloc(const Test_alloc<U>& rhs) {
+    counter_ = rhs.counter_;
+    total_ = rhs.total_;
+  }
+
+  template <typename U>
+  Test_alloc& operator=(Test_alloc<U>& rhs) {
+    counter_ = rhs.counter_;
+    total_ = rhs.total_;
+  }
+
+  int* counter_;
+  int* total_;
+};
+
+using Future_type = Basic_future<Test_alloc<void>, int>;
+using Promise_type = Basic_promise<Test_alloc<void>, int>;
 
 struct prom_fut {
-  prom_fut() { f = p.get_future(); }
+  prom_fut(int* counter, int* total) : p(Test_alloc<void>(counter, total)) {
+    f = p.get_future();
+  }
 
   int get() { return f.std_future().get(); }
 
-  Promise<int> p;
-  Future<int> f;
+  Future_type f;
+  Promise_type p;
 };
 
 struct pf_set {
-  prom_fut pf[4];
+  pf_set()
+      : pf{prom_fut(&counter, &total), prom_fut(&counter, &total),
+           prom_fut(&counter, &total), prom_fut(&counter, &total)} {}
+
+  ~pf_set() {
+    std::cerr << "Alloc count was: " << total << "\n";
+    EXPECT_EQ(counter, 0);
+  }
+
+  int counter = 0;
+  int total = 0;
+  std::array<prom_fut, 4> pf;
 
   prom_fut& operator[](std::size_t i) { return pf[i]; }
 
@@ -63,19 +114,22 @@ void expected_noop_fail(expected<int>) { throw std::runtime_error("dead"); }
 
 }  // namespace
 
-TEST(Future_int, blank) { Future<int> fut; }
+TEST(Future_alloc, blank) { Future_type fut; }
 
-TEST(Future_int, unfilled_promise_failiure) {
-  Future<int> fut;
+TEST(Future_alloc, unfilled_promise_failiure) {
+  int counter = 0;
+  int total = 0;
+
+  Future_type fut;
   {
-    Promise<int> p;
+    Promise_type p{Test_alloc<void>(&counter, &total)};
     fut = p.get_future();
   }
 
   EXPECT_THROW(fut.std_future().get(), Unfullfilled_promise);
 }
 
-TEST(Future_int, preloaded_std_get) {
+TEST(Future_alloc, preloaded_std_get) {
   pf_set pf;
 
   pf.complete();
@@ -86,7 +140,7 @@ TEST(Future_int, preloaded_std_get) {
   EXPECT_THROW(pf[3].get(), std::logic_error);
 }
 
-TEST(Future_int, delayed_std_get) {
+TEST(Future_alloc, delayed_std_get) {
   pf_set pf;
 
   std::mutex mtx;
@@ -111,7 +165,7 @@ TEST(Future_int, delayed_std_get) {
   thread.join();
 }
 
-TEST(Future_int, then_noop_pre) {
+TEST(Future_alloc, then_noop_pre) {
   pf_set pf;
 
   auto f1 = pf[0].f.then(no_op);
@@ -127,7 +181,7 @@ TEST(Future_int, then_noop_pre) {
   EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_int, then_noop_post) {
+TEST(Future_alloc, then_noop_post) {
   pf_set pf;
 
   pf.complete();
@@ -143,7 +197,33 @@ TEST(Future_int, then_noop_post) {
   EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_int, then_failure_pre) {
+TEST(Future_alloc, then_noop_pre_large_callback) {
+  pf_set pf;
+
+  struct payload_t {
+    int x = 0;
+    int y = 0;
+    int z = 0;
+  };
+
+  payload_t payload;
+
+  auto callback = [payload](int) {};
+
+  auto f1 = pf[0].f.then(callback);
+  auto f2 = pf[1].f.then(callback);
+  auto f3 = pf[2].f.then(callback);
+  auto f4 = pf[3].f.then(callback);
+
+  pf.complete();
+
+  EXPECT_NO_THROW(f1.std_future().get());
+  EXPECT_THROW(f2.std_future().get(), std::logic_error);
+  EXPECT_NO_THROW(f3.std_future().get());
+  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+}
+
+TEST(Future_alloc, then_failure_pre) {
   pf_set pf;
 
   auto f1 = pf[0].f.then(failure);
@@ -159,7 +239,7 @@ TEST(Future_int, then_failure_pre) {
   EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_int, then_failure_post) {
+TEST(Future_alloc, then_failure_post) {
   pf_set pf;
 
   pf.complete();
@@ -175,7 +255,7 @@ TEST(Future_int, then_failure_post) {
   EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_int, then_expect_success_pre) {
+TEST(Future_alloc, then_expect_success_pre) {
   pf_set pf;
 
   auto f1 = pf[0].f.then_expect(expected_noop);
@@ -191,7 +271,7 @@ TEST(Future_int, then_expect_success_pre) {
   EXPECT_EQ(1, f4.std_future().get());
 }
 
-TEST(Future_int, then_expect_success_post) {
+TEST(Future_alloc, then_expect_success_post) {
   pf_set pf;
 
   auto f1 = pf[0].f.then_expect(expected_noop);
@@ -207,7 +287,7 @@ TEST(Future_int, then_expect_success_post) {
   EXPECT_EQ(1, f4.std_future().get());
 }
 
-TEST(Future_int, then_expect_failure_pre) {
+TEST(Future_alloc, then_expect_failure_pre) {
   pf_set pf;
 
   pf.complete();
@@ -223,7 +303,7 @@ TEST(Future_int, then_expect_failure_pre) {
   EXPECT_THROW(f4.std_future().get(), std::runtime_error);
 }
 
-TEST(Future_int, then_expect_failure_post) {
+TEST(Future_alloc, then_expect_failure_post) {
   pf_set pf;
 
   auto f1 = pf[0].f.then_expect(expected_noop_fail);
@@ -239,7 +319,7 @@ TEST(Future_int, then_expect_failure_post) {
   EXPECT_THROW(f4.std_future().get(), std::runtime_error);
 }
 
-TEST(Future_int, then_expect_finally_success_pre) {
+TEST(Future_alloc, then_expect_finally_success_pre) {
   pf_set pf;
 
   auto ref = expect_noop_count;
@@ -254,7 +334,7 @@ TEST(Future_int, then_expect_finally_success_pre) {
   EXPECT_EQ(4 + ref, expect_noop_count);
 }
 
-TEST(Future_int, then_expect_finally_success_post) {
+TEST(Future_alloc, then_expect_finally_success_post) {
   pf_set pf;
 
   auto ref = expect_noop_count;
@@ -269,6 +349,7 @@ TEST(Future_int, then_expect_finally_success_post) {
   EXPECT_EQ(4 + ref, expect_noop_count);
 }
 
+namespace {
 expected<int> generate_expected_value(int) { return 3; }
 
 expected<int> generate_expected_value_fail(int) {
@@ -278,8 +359,9 @@ expected<int> generate_expected_value_fail(int) {
 expected<int> generate_expected_value_throw(int) {
   throw std::runtime_error("yo");
 }
+}  // namespace
 
-TEST(Future_int, expected_returning_callback) {
+TEST(Future_alloc, expected_returning_callback) {
   pf_set pf;
 
   pf.complete();
@@ -295,7 +377,7 @@ TEST(Future_int, expected_returning_callback) {
   EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_int, expected_returning_callback_fail) {
+TEST(Future_alloc, expected_returning_callback_fail) {
   pf_set pf;
 
   pf.complete();
@@ -311,7 +393,7 @@ TEST(Future_int, expected_returning_callback_fail) {
   EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_int, expected_returning_callback_throw) {
+TEST(Future_alloc, expected_returning_callback_throw) {
   pf_set pf;
 
   pf.complete();
@@ -327,6 +409,7 @@ TEST(Future_int, expected_returning_callback_throw) {
   EXPECT_THROW(f4.std_future().get(), std::logic_error);
 }
 
+namespace {
 expected<int> te_generate_expected_value(expected<int>) { return 3; }
 
 expected<int> te_generate_expected_value_fail(expected<int>) {
@@ -336,8 +419,9 @@ expected<int> te_generate_expected_value_fail(expected<int>) {
 expected<int> te_generate_expected_value_throw(expected<int>) {
   throw std::runtime_error("yo");
 }
+}  // namespace
 
-TEST(Future_int, te_expected_returning_callback) {
+TEST(Future_alloc, te_expected_returning_callback) {
   pf_set pf;
 
   pf.complete();
@@ -353,7 +437,7 @@ TEST(Future_int, te_expected_returning_callback) {
   EXPECT_EQ(3, f4.get());
 }
 
-TEST(Future_int, te_expected_returning_callback_fail) {
+TEST(Future_alloc, te_expected_returning_callback_fail) {
   pf_set pf;
 
   pf.complete();
@@ -369,7 +453,7 @@ TEST(Future_int, te_expected_returning_callback_fail) {
   EXPECT_THROW(f4.std_future().get(), std::runtime_error);
 }
 
-TEST(Future_int, te_expected_returning_callback_throw) {
+TEST(Future_alloc, te_expected_returning_callback_throw) {
   pf_set pf;
 
   pf.complete();
@@ -384,8 +468,8 @@ TEST(Future_int, te_expected_returning_callback_throw) {
   EXPECT_THROW(f3.std_future().get(), std::runtime_error);
   EXPECT_THROW(f4.std_future().get(), std::runtime_error);
 }
-
-TEST(Future_int, promote_tuple_to_variadic) {
+/*
+TEST(Future_alloc, promote_tuple_to_variadic) {
   Promise<std::tuple<int, int>> p_t;
   auto f_t = p_t.get_future();
 
@@ -402,7 +486,8 @@ TEST(Future_int, promote_tuple_to_variadic) {
   EXPECT_EQ(0, a);
   EXPECT_EQ(0, b);
 
-  p_t.set_value(std::make_tuple(2, 3));
+  p_t.set_value(std::make_tuple(2,3));
   EXPECT_EQ(2, a);
   EXPECT_EQ(3, b);
 }
+*/

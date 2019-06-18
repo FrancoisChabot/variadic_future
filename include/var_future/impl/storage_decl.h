@@ -76,53 +76,73 @@ class Future_handler_base<QueueT, std::enable_if_t<has_static_push_v<QueueT>>,
 };
 
 // Holds the shared state associated with a Future<>.
-template <typename... Ts>
-class Future_storage {
+template <typename Alloc, typename... Ts>
+class Future_storage : public Alloc {
+  template <typename T>
+  friend class Storage_ptr;
+
+  Future_storage(const Alloc& alloc);
+
  public:
+  using allocator_type = Alloc;
+
   using fullfill_type = fullfill_type_t<Ts...>;
   using fail_type = fail_type_t<Ts...>;
   using finish_type = finish_type_t<Ts...>;
 
-  using future_type = Future<Ts...>;
+  using future_type = Basic_future<Alloc, Ts...>;
 
-  Future_storage();
   ~Future_storage();
 
   void fullfill(fullfill_type&& v);
-  void fullfill(future_type&& f);
+
+  template <typename Arg_alloc>
+  void fullfill(Basic_future<Arg_alloc, Ts...>&& f);
 
   void finish(finish_type&& f);
-  void finish(future_type&& f);
-  
+
+  template <typename Arg_alloc>
+  void finish(Basic_future<Arg_alloc, Ts...>&& f);
+
   void fail(fail_type&& e);
 
   template <typename Handler_t, typename QueueT, typename... Args_t>
   void set_handler(QueueT* queue, Args_t&&... args);
 
- private:
+  Alloc& allocator() { return *static_cast<Alloc*>(this); }
+
+  const Alloc& allocator() const { return *static_cast<Alloc*>(this); }
+
+  void bind() {
+    assert(state_ == State::UNBOUND);
+    state_ = State::PENDING;
+  }
+
+  // private:
   enum class State {
+    UNBOUND,
     PENDING,
     READY,
-    READY_SOO,
+    READY_SBO,
     FINISHED,
     FULLFILLED,
     ERROR,
-  } state_ = State::PENDING;
+  } state_ = State::UNBOUND;
 
   static bool is_ready_state(State v);
 
   // Calculate how much memory we want to reserve for the eventual callback
-  static constexpr std::size_t soo_space =
-      std::min(std::size_t(var_fut_min_soo_size),
+  static constexpr std::size_t sbo_space =
+      std::max(std::size_t(var_fut_min_sbo_size),
                std::max({sizeof(fullfill_type), sizeof(finish_type),
                          sizeof(fail_type)}) -
                    sizeof(Future_handler_iface<Ts...>*));
 
-
   struct Callback_data {
-    // This will either point to soo_buffer_, or heap-allocated data, depending on state_.
-    Future_handler_iface<Ts...>* callback_; 
-    typename std::aligned_storage<soo_space>::type soo_buffer_;
+    // This will either point to sbo_buffer_, or heap-allocated data, depending
+    // on state_.
+    Future_handler_iface<Ts...>* callback_;
+    typename std::aligned_storage<sbo_space>::type sbo_buffer_;
   };
 
   union {
@@ -142,14 +162,14 @@ class Future_storage {
 
 // Yes, we are using a custom std::shared_ptr<> alternative. This is because
 // common handlers have a owning pointer to a Future_storage, and each byte
-// saved increases the likelyhood that it will fit in SOO, which has very large
+// saved increases the likelyhood that it will fit in SBO, which has very large
 // performance impact.
 template <typename T>
 struct Storage_ptr {
   Storage_ptr() = default;
-  Storage_ptr(T* val) : ptr_(val) { 
+  Storage_ptr(T* val) : ptr_(val) {
     assert(val);
-    ++(ptr_->ref_count_); 
+    ++(ptr_->ref_count_);
   }
 
   Storage_ptr(const Storage_ptr& rhs) : ptr_(rhs.ptr_) {
@@ -162,7 +182,7 @@ struct Storage_ptr {
 
   Storage_ptr& operator=(const Storage_ptr& rhs) = delete;
   Storage_ptr& operator=(Storage_ptr&& rhs) {
-    reset();
+    clear();
 
     ptr_ = rhs.ptr_;
     if (ptr_) {
@@ -171,37 +191,58 @@ struct Storage_ptr {
     return *this;
   }
 
-  void reset() {
+  void clear() {
     if (ptr_) {
       if (--(ptr_->ref_count_) == 0) {
-        delete ptr_;
+        using Alloc = typename T::allocator_type::template rebind<T>::other;
+        Alloc real_alloc(ptr_->allocator());
+        ptr_->~T();
+        real_alloc.deallocate(ptr_, 1);
       }
     }
+  }
+
+  void reset() {
+    clear();
     ptr_ = nullptr;
   }
 
   operator bool() const { return ptr_ != nullptr; }
 
-  ~Storage_ptr() { reset(); }
+  ~Storage_ptr() { clear(); }
 
   T& operator*() const { return *ptr_; }
   T* operator->() const { return ptr_; }
 
+  void allocate(typename T::allocator_type const& alloc) {
+    clear();
+    using Alloc = typename T::allocator_type::template rebind<T>::other;
+
+    Alloc real_alloc(alloc);
+    T* new_ptr = real_alloc.allocate(1);
+    try {
+      ptr_ = new (new_ptr) T(alloc);
+      ++(ptr_->ref_count_);
+    } catch (...) {
+      real_alloc.deallocate(new_ptr, 1);
+    }
+  }
+
   T* ptr_ = nullptr;
 };
 
-template <typename T>
+template <typename Alloc, typename T>
 struct Storage_for_cb_result {
-  using type = Future_storage<decay_future_t<T>>;
+  using type = Future_storage<Alloc, decay_future_t<T>>;
 };
 
-template <typename T>
-struct Storage_for_cb_result<expected<T>> {
-  using type = typename Storage_for_cb_result<T>::type;
+template <typename Alloc, typename T>
+struct Storage_for_cb_result<Alloc, expected<T>> {
+  using type = typename Storage_for_cb_result<Alloc, T>::type;
 };
 
-template <typename T>
-using Storage_for_cb_result_t = typename Storage_for_cb_result<T>::type;
+template <typename Alloc, typename T>
+using Storage_for_cb_result_t = typename Storage_for_cb_result<Alloc, T>::type;
 
 }  // namespace detail
 }  // namespace aom

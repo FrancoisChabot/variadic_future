@@ -24,7 +24,7 @@ namespace aom {
 namespace detail {
 
 // Handler class for defered Future::then() execution
-template <typename CbT, typename QueueT, typename... Ts>
+template <typename Alloc, typename CbT, typename QueueT, typename... Ts>
 class Future_then_handler : public Future_handler_base<QueueT, void, Ts...> {
  public:
   using parent_type = Future_handler_base<QueueT, void, Ts...>;
@@ -36,7 +36,7 @@ class Future_then_handler : public Future_handler_base<QueueT, void, Ts...> {
   using cb_result_type =
       decltype(std::apply(std::declval<CbT>(), std::declval<fullfill_type>()));
 
-  using dst_storage_type = Storage_for_cb_result_t<cb_result_type>;
+  using dst_storage_type = Storage_for_cb_result_t<Alloc, cb_result_type>;
   using dst_type = Storage_ptr<dst_storage_type>;
 
   Future_then_handler(QueueT* q, dst_type dst, CbT cb)
@@ -64,8 +64,7 @@ class Future_then_handler : public Future_handler_base<QueueT, void, Ts...> {
         } else {
           if constexpr (is_expected_v<cb_result_type>) {
             dst->finish(std::apply(cb, std::move(v)));
-          }
-          else{
+          } else {
             dst->fullfill(std::apply(cb, std::move(v)));
           }
         }

@@ -24,7 +24,7 @@ namespace aom {
 namespace detail {
 
 // handling for Future::finally()
-template <typename CbT, typename QueueT, typename... Ts>
+template <typename Alloc, typename CbT, typename QueueT, typename... Ts>
 class Future_then_expect_handler
     : public Future_handler_base<QueueT, void, Ts...> {
  public:
@@ -37,7 +37,7 @@ class Future_then_expect_handler
   using cb_result_type =
       decltype(std::apply(std::declval<CbT>(), std::declval<finish_type>()));
 
-  using dst_storage_type = Storage_for_cb_result_t<cb_result_type>;
+  using dst_storage_type = Storage_for_cb_result_t<Alloc, cb_result_type>;
   using dst_type = Storage_ptr<dst_storage_type>;
 
   Future_then_expect_handler(QueueT* q, dst_type dst, CbT cb)
@@ -72,8 +72,7 @@ class Future_then_expect_handler
         } else {
           if constexpr (is_expected_v<cb_result_type>) {
             dst->finish(std::apply(cb, std::move(f)));
-          }
-          else{
+          } else {
             dst->fullfill(std::apply(cb, std::move(f)));
           }
         }

@@ -25,57 +25,9 @@
 
 namespace aom {
 
-// returns a future that's already fullfilled.
-template <typename... Ts>
-template <typename... Us>
-Future<Ts...> Future<Ts...>::fullfilled(Us&&... us) {
-  using storage_type = typename Future<Ts...>::storage_type;
-  detail::Storage_ptr<storage_type> store{new storage_type()};
-  
-  store->fullfill(std::make_tuple(std::forward<Us>(us)...));
-
-  return Future<Ts...>{store};
-}
-
-// returns a future that's already finished
-template <typename... Ts>
-template <typename... Us>
-Future<Ts...> Future<Ts...>::finished(Us&&... us) {
-  using storage_type = typename Future<Ts...>::storage_type;
-  detail::Storage_ptr<storage_type> store{new storage_type()};
-  
-  store->finish(std::make_tuple(std::forward<Us>(us)...));
-
-  return Future<Ts...>{store};
-}
-
-// returns a future that's already failed.
-template <typename... Ts>
-Future<Ts...> Future<Ts...>::failed(std::exception_ptr e) {
-  using storage_type = typename Future<Ts...>::storage_type;
-  detail::Storage_ptr<storage_type> store{new storage_type()};
-  
-  store->fail(std::move(e));
-
-  return Future<Ts...>{store};
-}
-
-template <typename... Ts>
-Future<Ts...>::Future(detail::Storage_ptr<storage_type> s)
+template <typename Alloc, typename... Ts>
+Basic_future<Alloc, Ts...>::Basic_future(detail::Storage_ptr<storage_type> s)
     : storage_(std::move(s)) {}
-
-template <typename... Ts>
-Future<Ts...>::Future(Future<std::tuple<Ts...>>&& rhs) : storage_(new storage_type()) {
-  auto s = storage_;
-  rhs.finally([s=std::move(s)](expected<std::tuple<Ts...>> e) mutable {
-    if(e.has_value()) {
-      s->finish(std::move(*e));
-    }
-    else {
-      s->fail(std::move(e.error()));
-    }
-  });
-}
 
 // Synchronously calls cb once the future has been fulfilled.
 // cb will be invoked directly in whichever thread fullfills
@@ -88,9 +40,9 @@ Future<Ts...>::Future(Future<std::tuple<Ts...>>&& rhs) : storage_(new storage_ty
 //
 // If you intend to discard the result, then you may want to use
 // finally() instead.
-template <typename... Ts>
+template <typename Alloc, typename... Ts>
 template <typename CbT>
-[[nodiscard]] auto Future<Ts...>::then(CbT&& cb) {
+[[nodiscard]] auto Basic_future<Alloc, Ts...>::then(CbT&& cb) {
   // Kinda flying by the seats of our pants here...
   // We rely on the fact that `Immediate_queue` handlers ignore the passed
   // queue.
@@ -98,9 +50,9 @@ template <typename CbT>
   return this->then(queue, std::forward<CbT>(cb));
 }
 
-template <typename... Ts>
+template <typename Alloc, typename... Ts>
 template <typename CbT>
-[[nodiscard]] auto Future<Ts...>::then_expect(CbT&& cb) {
+[[nodiscard]] auto Basic_future<Alloc, Ts...>::then_expect(CbT&& cb) {
   // Kinda flying by the seats of our pants here...
   // We rely on the fact that `Immediate_queue` handlers ignore the passed
   // queue.
@@ -108,9 +60,9 @@ template <typename CbT>
   return this->then_expect(queue, std::forward<CbT>(cb));
 }
 
-template <typename... Ts>
+template <typename Alloc, typename... Ts>
 template <typename CbT>
-void Future<Ts...>::finally(CbT&& cb) {
+void Basic_future<Alloc, Ts...>::finally(CbT&& cb) {
   detail::Immediate_queue queue;
   return this->finally(queue, std::forward<CbT>(cb));
 }
@@ -127,59 +79,70 @@ void Future<Ts...>::finally(CbT&& cb) {
 // The assignment of the failure will be done synchronously in the fullfilling
 // thread.
 // TODO: Maybe we can add an option to change that behavior
-template <typename... Ts>
+template <typename Alloc, typename... Ts>
 template <typename QueueT, typename CbT>
-[[nodiscard]] auto Future<Ts...>::then(QueueT& queue, CbT&& cb) {
-  using handler_t = detail::Future_then_handler<CbT, QueueT, Ts...>;
-  using result_storage_t = typename handler_t::dst_storage_type;
-  using result_fut_t = typename result_storage_t::future_type;
-
-  detail::Storage_ptr<result_storage_t> result(new result_storage_t());
-
-  storage_->template set_handler<handler_t>(&queue, result, std::move(cb));
-
-  return result_fut_t(std::move(result));
-}
-
-template <typename... Ts>
-template <typename QueueT, typename CbT>
-[[nodiscard]] auto Future<Ts...>::then_expect(QueueT& queue, CbT&& cb) {
-  using handler_t = detail::Future_then_expect_handler<CbT, QueueT, Ts...>;
-  using result_storage_t = typename handler_t::dst_storage_type;
-  using result_fut_t = typename result_storage_t::future_type;
-
-  detail::Storage_ptr<result_storage_t> result(new result_storage_t());
-
-  storage_->template set_handler<handler_t>(&queue, result, std::move(cb));
-
-  return result_fut_t(std::move(result));
-}
-
-template <typename... Ts>
-template <typename QueueT, typename CbT>
-void Future<Ts...>::finally(QueueT& queue, CbT&& cb) {
-  assert(storage_);
-  static_assert(std::is_invocable_v<CbT, expected<Ts>...>, "Finally should be accepting expected arguments");
+[[nodiscard]] auto Basic_future<Alloc, Ts...>::then(QueueT& queue, CbT&& cb) {
   using handler_t =
-      detail::Future_finally_handler<CbT, QueueT, Ts...>;
-  storage_->template set_handler<handler_t>(&queue, std::move(cb));
+      detail::Future_then_handler<Alloc, std::decay_t<CbT>, QueueT, Ts...>;
+  using result_storage_t = typename handler_t::dst_storage_type;
+  using result_fut_t = typename result_storage_t::future_type;
+
+  detail::Storage_ptr<result_storage_t> result;
+  result.allocate(allocator());
+  result->bind();
+
+  storage_->template set_handler<handler_t>(&queue, result, std::move(cb));
+  storage_.reset();
+
+  return result_fut_t(std::move(result));
 }
 
-template <typename... Ts>
-auto Future<Ts...>::std_future() {
+template <typename Alloc, typename... Ts>
+template <typename QueueT, typename CbT>
+[[nodiscard]] auto Basic_future<Alloc, Ts...>::then_expect(QueueT& queue,
+                                                           CbT&& cb) {
+  using handler_t = detail::Future_then_expect_handler<Alloc, std::decay_t<CbT>,
+                                                       QueueT, Ts...>;
+  using result_storage_t = typename handler_t::dst_storage_type;
+  using result_fut_t = typename result_storage_t::future_type;
+
+  detail::Storage_ptr<result_storage_t> result;
+  result.allocate(allocator());
+  result->bind();
+
+  storage_->template set_handler<handler_t>(&queue, result, std::move(cb));
+  storage_.reset();
+
+  return result_fut_t(std::move(result));
+}
+
+template <typename Alloc, typename... Ts>
+template <typename QueueT, typename CbT>
+void Basic_future<Alloc, Ts...>::finally(QueueT& queue, CbT&& cb) {
+  assert(storage_);
+  static_assert(std::is_invocable_v<CbT, expected<Ts>...>,
+                "Finally should be accepting expected arguments");
+  using handler_t =
+      detail::Future_finally_handler<std::decay_t<CbT>, QueueT, Ts...>;
+  storage_->template set_handler<handler_t>(&queue, std::move(cb));
+
+  storage_.reset();
+}
+
+template <typename Alloc, typename... Ts>
+auto Basic_future<Alloc, Ts...>::std_future() {
   constexpr bool all_voids = std::conjunction_v<std::is_same<Ts, void>...>;
   if constexpr (all_voids) {
     std::promise<void> prom;
     auto fut = prom.get_future();
-    this->finally(
-        [p = std::move(prom)](expected<Ts>... vals) mutable {
-          auto err = detail::get_first_error(vals...);
-          if (err) {
-            p.set_exception(*err);
-          } else {
-            p.set_value();
-          }
-        });
+    this->finally([p = std::move(prom)](expected<Ts>... vals) mutable {
+      auto err = detail::get_first_error(vals...);
+      if (err) {
+        p.set_exception(*err);
+      } else {
+        p.set_value();
+      }
+    });
     return fut;
   } else if constexpr (sizeof...(Ts) == 1) {
     using T = std::tuple_element_t<0, std::tuple<Ts...>>;
@@ -211,9 +174,37 @@ auto Future<Ts...>::std_future() {
   }
 }
 
-template <typename... Ts>
-typename Future<Ts...>::value_type Future<Ts...>::get() {
+template <typename Alloc, typename... Ts>
+typename Basic_future<Alloc, Ts...>::value_type
+Basic_future<Alloc, Ts...>::get() {
   return std_future().get();
+}
+
+template <typename Alloc, typename... Ts>
+Alloc& Basic_future<Alloc, Ts...>::allocator() {
+  assert(storage_);
+  return storage_->allocator();
+}
+
+template <typename Alloc, typename... Ts>
+Basic_future<Alloc, Ts...> flatten(
+    Basic_future<Alloc, std::tuple<Ts...>>& rhs) {
+  using storage_type = typename Basic_future<Alloc, Ts...>::storage_type;
+
+  detail::Storage_ptr<storage_type> storage;
+
+  storage.allocate(rhs.allocator());
+  storage->bind();
+
+  rhs.finally([storage](expected<std::tuple<Ts...>> e) mutable {
+    if (e.has_value()) {
+      storage->finish(std::move(*e));
+    } else {
+      storage->fail(std::move(e.error()));
+    }
+  });
+
+  return Basic_future<Alloc, Ts...>(std::move(storage));
 }
 
 }  // namespace aom

@@ -18,34 +18,32 @@
 #include "var_future/config.h"
 
 namespace aom {
-  template <typename QueueT, typename CbT>
-  auto async(QueueT& q, CbT&& cb) {
-    using cb_result_type = decltype(cb());
+template <typename QueueT, typename CbT>
+auto async(QueueT& q, CbT&& cb) {
+  using cb_result_type = decltype(cb());
 
-    using dst_storage_type = detail::Storage_for_cb_result_t<cb_result_type>;
-    using result_fut_t = typename dst_storage_type::future_type;
+  using dst_storage_type =
+      detail::Storage_for_cb_result_t<std::allocator<void>, cb_result_type>;
+  using result_fut_t = typename dst_storage_type::future_type;
 
-    detail::Storage_ptr<dst_storage_type> res(new dst_storage_type());
+  detail::Storage_ptr<dst_storage_type> res;
+  res.allocate(std::allocator<void>());
+  res->bind();
 
-    detail::enqueue(&q, [cb = std::move(cb), res] {
-      try {
-        if constexpr (std::is_same_v<void, cb_result_type>) {
-          cb();
-          res->fullfill();
-        }
-        else {
-          res->fullfill(cb());
-        }
+  detail::enqueue(&q, [cb = std::move(cb), res] {
+    try {
+      if constexpr (std::is_same_v<void, cb_result_type>) {
+        cb();
+        res->fullfill();
+      } else {
+        res->fullfill(cb());
       }
-      catch(...) {
-        res->fail(std::current_exception());
-      }
-    });
-    
-    return result_fut_t{res};
-  }
+    } catch (...) {
+      res->fail(std::current_exception());
+    }
+  });
+
+  return result_fut_t{res};
+}
 }  // namespace aom
 #endif
-
-
-
