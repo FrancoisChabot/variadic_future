@@ -26,16 +26,17 @@ namespace aom {
 
 namespace detail {
 
-template <typename... Ts>
-Future_storage<Ts...>::Future_storage() {}
+template <typename Alloc, typename... Ts>
+Future_storage<Alloc, Ts...>::Future_storage(const Alloc& alloc)
+    : Alloc(alloc) {}
 
-template <typename... Ts>
-bool Future_storage<Ts...>::is_ready_state(State v) {
-  return v == State::READY || v == State::READY_SOO;
+template <typename Alloc, typename... Ts>
+bool Future_storage<Alloc, Ts...>::is_ready_state(State v) {
+  return v == State::READY || v == State::READY_SBO;
 }
 
-template <typename... Ts>
-void Future_storage<Ts...>::fullfill(fullfill_type&& v) {
+template <typename Alloc, typename... Ts>
+void Future_storage<Alloc, Ts...>::fullfill(fullfill_type&& v) {
   std::lock_guard l(mtx_);
   assert(is_ready_state(state_) || state_ == State::PENDING);
   if (state_ == State::PENDING) {
@@ -46,15 +47,17 @@ void Future_storage<Ts...>::fullfill(fullfill_type&& v) {
   }
 }
 
-template <typename... Ts>
-void Future_storage<Ts...>::fullfill(future_type&& f) {
+template <typename Alloc, typename... Ts>
+template <typename Arg_alloc>
+void Future_storage<Alloc, Ts...>::fullfill(
+    Basic_future<Arg_alloc, Ts...>&& f) {
   f.finally([this](expected<Ts>... f) {
     this->finish(std::make_tuple(std::move(f)...));
   });
 }
 
-template <typename... Ts>
-void Future_storage<Ts...>::finish(finish_type&& f) {
+template <typename Alloc, typename... Ts>
+void Future_storage<Alloc, Ts...>::finish(finish_type&& f) {
   std::lock_guard l(mtx_);
   assert(is_ready_state(state_) || state_ == State::PENDING);
   if (state_ == State::PENDING) {
@@ -65,15 +68,16 @@ void Future_storage<Ts...>::finish(finish_type&& f) {
   }
 }
 
-template <typename... Ts>
-void Future_storage<Ts...>::finish(future_type&& f) {
+template <typename Alloc, typename... Ts>
+template <typename Arg_alloc>
+void Future_storage<Alloc, Ts...>::finish(Basic_future<Arg_alloc, Ts...>&& f) {
   f.finally([this](expected<Ts>... f) {
     this->finish(std::make_tuple(std::move(f)...));
   });
 }
 
-template <typename... Ts>
-void Future_storage<Ts...>::fail(fail_type&& e) {
+template <typename Alloc, typename... Ts>
+void Future_storage<Alloc, Ts...>::fail(fail_type&& e) {
   std::lock_guard l(mtx_);
   assert(is_ready_state(state_) || state_ == State::PENDING);
 
@@ -85,21 +89,34 @@ void Future_storage<Ts...>::fail(fail_type&& e) {
   }
 }
 
-template <typename... Ts>
+template <typename Alloc, typename... Ts>
 template <typename Handler_t, typename QueueT, typename... Args_t>
-void Future_storage<Ts...>::set_handler(QueueT* queue, Args_t&&... args) {
+void Future_storage<Alloc, Ts...>::set_handler(QueueT* queue,
+                                               Args_t&&... args) {
   std::lock_guard l(mtx_);
   assert(!is_ready_state(state_));
 
   if (state_ == State::PENDING) {
     new (&cb_data_) Callback_data();
-    if constexpr (sizeof(Handler_t) <= soo_space) {
-      state_ = State::READY_SOO;
-      cb_data_.callback_ = new (&cb_data_.soo_buffer_)
-          Handler_t(queue, std::forward<Args_t>(args)...);
+    if constexpr (sizeof(Handler_t) <= sbo_space) {
+      state_ = State::READY_SBO;
+      void* ptr = &cb_data_.sbo_buffer_;
+      cb_data_.callback_ =
+          new (ptr) Handler_t(queue, std::forward<Args_t>(args)...);
     } else {
-      state_ = State::READY;
-      cb_data_.callback_ = new Handler_t(queue, std::forward<Args_t>(args)...);
+      using alloc_traits = std::allocator_traits<Alloc>;
+      using Real_alloc = typename alloc_traits::template rebind_alloc<Handler_t>;
+    
+      Real_alloc real_alloc(allocator());
+      auto ptr = real_alloc.allocate(1);
+      try {
+        cb_data_.callback_ =
+            new (ptr) Handler_t(queue, std::forward<Args_t>(args)...);
+        state_ = State::READY;
+      } catch (...) {
+        real_alloc.deallocate(ptr, 1);
+        throw;
+      }
     }
   } else if (state_ == State::FULLFILLED) {
     Handler_t::do_fullfill(queue, std::move(fullfilled_),
@@ -113,15 +130,22 @@ void Future_storage<Ts...>::set_handler(QueueT* queue, Args_t&&... args) {
   }
 }
 
-template <typename... Ts>
-Future_storage<Ts...>::~Future_storage() {
+template <typename Alloc, typename... Ts>
+Future_storage<Alloc, Ts...>::~Future_storage() {
   assert(state_ != State::PENDING);
   switch (state_) {
     case State::READY:
-      delete cb_data_.callback_;
+      cb_data_.callback_->~Future_handler_iface<Ts...>();
+      {
+        using alloc_traits = std::allocator_traits<Alloc>;
+        using Real_alloc = typename alloc_traits::template rebind_alloc<Future_handler_iface<Ts...>>;
+
+        Real_alloc real_alloc(allocator());
+        real_alloc.deallocate(cb_data_.callback_, 1);
+      }
       cb_data_.~Callback_data();
       break;
-    case State::READY_SOO:
+    case State::READY_SBO:
       cb_data_.callback_->~Future_handler_iface<Ts...>();
       cb_data_.~Callback_data();
       break;
@@ -134,6 +158,7 @@ Future_storage<Ts...>::~Future_storage() {
     case State::ERROR:
       failure_.~fail_type();
       break;
+    case State::UNBOUND:
     case State::PENDING:
       break;
   }

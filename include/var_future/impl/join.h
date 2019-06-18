@@ -23,12 +23,12 @@ namespace aom {
 
 namespace detail {
 
-template <typename... FutTs>
+template <typename Alloc, typename... FutTs>
 struct Landing {
   std::tuple<expected<decay_future_t<FutTs>>...> landing_;
   std::atomic<int> fullfilled_ = 0;
 
-  using storage_type = Future_storage<decay_future_t<FutTs>...>;
+  using storage_type = Future_storage<Alloc, decay_future_t<FutTs>...>;
   Storage_ptr<storage_type> dst_;
 
   void ping() {
@@ -65,20 +65,25 @@ void bind_landing(const std::shared_ptr<LandingT>& l, Future<Front>&& front,
 }
 
 }  // namespace detail
-template <typename... FutTs>
-auto join(FutTs&&... futs) {
-  static_assert(sizeof...(FutTs) >= 2, "Trying to join less than two futures?");
+
+template <typename FirstT, typename... FutTs>
+auto join(FirstT&& first, FutTs&&... futs) {
+  static_assert(sizeof...(FutTs) >= 1, "Trying to join less than two futures?");
+  static_assert(is_future_v<FirstT>);
   static_assert(std::conjunction_v<is_future<FutTs>...>,
                 "trying to join a non-future");
 
-  using landing_type = detail::Landing<std::decay_t<FutTs>...>;
+  using landing_type =
+      detail::Landing<typename FirstT::allocator_type, std::decay_t<FirstT>,
+                      std::decay_t<FutTs>...>;
   using fut_type = typename landing_type::storage_type::future_type;
 
   auto landing = std::make_shared<landing_type>();
-  landing->dst_ = detail::Storage_ptr<typename landing_type::storage_type>(
-      new typename landing_type::storage_type());
+  landing->dst_.allocate(first.allocator());
+  landing->dst_->bind();
 
-  detail::bind_landing<0>(landing, std::forward<FutTs>(futs)...);
+  detail::bind_landing<0>(landing, std::forward<FirstT>(first),
+                          std::forward<FutTs>(futs)...);
 
   return fut_type{landing->dst_};
 }

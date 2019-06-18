@@ -78,15 +78,17 @@ if(VAR_FUTURES_BUILD_TESTS)
   endif()
 
   add_executable(futures_test 
+    tests/allocator.cpp
     tests/async.cpp
     tests/int.cpp
     tests/misc.cpp
-    tests/void.cpp)
+    tests/void.cpp
+    )
 
   if(MSVC)
     target_compile_options(futures_test PUBLIC /W4 /WX)
   else()
-    target_compile_options(futures_test PUBLIC -Wall -Wextra -pedantic -Werror)
+    target_compile_options(futures_test PUBLIC -Wall -Wextra -pedantic -Werror -ftemplate-backtrace-limit=0 )
   endif()
 
   target_include_directories(futures_test PRIVATE gtest/include)
