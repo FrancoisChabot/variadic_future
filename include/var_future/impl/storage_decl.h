@@ -194,7 +194,9 @@ struct Storage_ptr {
   void clear() {
     if (ptr_) {
       if (--(ptr_->ref_count_) == 0) {
-        using Alloc = typename T::allocator_type::template rebind<T>::other;
+        using alloc_traits = std::allocator_traits<typename T::allocator_type>;
+        using Alloc = typename alloc_traits::template rebind_alloc<T>;
+    
         Alloc real_alloc(ptr_->allocator());
         ptr_->~T();
         real_alloc.deallocate(ptr_, 1);
@@ -216,7 +218,8 @@ struct Storage_ptr {
 
   void allocate(typename T::allocator_type const& alloc) {
     clear();
-    using Alloc = typename T::allocator_type::template rebind<T>::other;
+    using alloc_traits = std::allocator_traits<typename T::allocator_type>;
+    using Alloc = typename alloc_traits::template rebind_alloc<T>;
 
     Alloc real_alloc(alloc);
     T* new_ptr = real_alloc.allocate(1);

@@ -26,6 +26,8 @@ using namespace aom;
 namespace {
 template <typename T>
 struct Test_alloc {
+  using value_type = T;
+
   template <typename U>
   struct rebind {
     using other = Test_alloc<U>;
@@ -63,6 +65,8 @@ struct Test_alloc {
 
 template <>
 struct Test_alloc<void> {
+  using value_type = void;
+  
   template <typename U>
   struct rebind {
     using other = Test_alloc<U>;
