@@ -68,7 +68,6 @@ $(function() {
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="classaom_1_1Basic__future-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">aom::Basic_future&lt; Alloc, Ts &gt; Class Template Reference</div>  </div>
@@ -82,11 +81,17 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
+<tr class="memitem:a493ab55e64968c2b174e09eb91b2deb7"><td class="memItemLeft" align="right" valign="top"><a id="a493ab55e64968c2b174e09eb91b2deb7"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__future.html#a493ab55e64968c2b174e09eb91b2deb7">storage_type</a> = detail::Future_storage&lt; Alloc, Ts... &gt;</td></tr>
+<tr class="memdesc:a493ab55e64968c2b174e09eb91b2deb7"><td class="mdescLeft">&#160;</td><td class="mdescRight">The underlying storage type. <br /></td></tr>
+<tr class="separator:a493ab55e64968c2b174e09eb91b2deb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac9f29758d5ba25371935d7a0e2a07204"><td class="memItemLeft" align="right" valign="top"><a id="ac9f29758d5ba25371935d7a0e2a07204"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>allocator_type</b> = Alloc</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__future.html#ac9f29758d5ba25371935d7a0e2a07204">allocator_type</a> = Alloc</td></tr>
+<tr class="memdesc:ac9f29758d5ba25371935d7a0e2a07204"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocator. <br /></td></tr>
 <tr class="separator:ac9f29758d5ba25371935d7a0e2a07204"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a304628d82f5a0e9f349a08b020d5ae57"><td class="memItemLeft" align="right" valign="top"><a id="a304628d82f5a0e9f349a08b020d5ae57"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><b>value_type</b> = detail::future_value_type_t&lt; Ts... &gt;</td></tr>
+using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__future.html#a304628d82f5a0e9f349a08b020d5ae57">value_type</a> = detail::future_value_type_t&lt; Ts... &gt;</td></tr>
+<tr class="memdesc:a304628d82f5a0e9f349a08b020d5ae57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Ts... <br /></td></tr>
 <tr class="separator:a304628d82f5a0e9f349a08b020d5ae57"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a716a540e3c02e17d8e693cd4d67633bd"><td class="memItemLeft" align="right" valign="top"><a id="a716a540e3c02e17d8e693cd4d67633bd"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>fullfill_type</b> = detail::fullfill_type_t&lt; Ts... &gt;</td></tr>
@@ -94,10 +99,6 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>fullfill_type</b> = 
 <tr class="memitem:ae4633f42c33ab2fd674a1ee9b71b6ca6"><td class="memItemLeft" align="right" valign="top"><a id="ae4633f42c33ab2fd674a1ee9b71b6ca6"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>finish_type</b> = detail::finish_type_t&lt; Ts... &gt;</td></tr>
 <tr class="separator:ae4633f42c33ab2fd674a1ee9b71b6ca6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a493ab55e64968c2b174e09eb91b2deb7"><td class="memItemLeft" align="right" valign="top"><a id="a493ab55e64968c2b174e09eb91b2deb7"></a>
-using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__future.html#a493ab55e64968c2b174e09eb91b2deb7">storage_type</a> = detail::Future_storage&lt; Alloc, Ts... &gt;</td></tr>
-<tr class="memdesc:a493ab55e64968c2b174e09eb91b2deb7"><td class="mdescLeft">&#160;</td><td class="mdescRight">The underlying storage type. <br /></td></tr>
-<tr class="separator:a493ab55e64968c2b174e09eb91b2deb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -134,25 +135,19 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad359e0e860a4a022c6c805f5d3d995c7"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__future.html#ad359e0e860a4a022c6c805f5d3d995c7">finally</a> (QueueT &amp;queue, CbT &amp;&amp;callback)</td></tr>
 <tr class="memdesc:ad359e0e860a4a022c6c805f5d3d995c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Invokes cb from queue when this is finished.  <a href="#ad359e0e860a4a022c6c805f5d3d995c7">More...</a><br /></td></tr>
 <tr class="separator:ad359e0e860a4a022c6c805f5d3d995c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af2088ec868dcbec532f57e418232c187"><td class="memItemLeft" align="right" valign="top">value_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__future.html#af2088ec868dcbec532f57e418232c187">get</a> ()</td></tr>
+<tr class="memitem:af2088ec868dcbec532f57e418232c187"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classaom_1_1Basic__future.html#a304628d82f5a0e9f349a08b020d5ae57">value_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__future.html#af2088ec868dcbec532f57e418232c187">get</a> ()</td></tr>
 <tr class="memdesc:af2088ec868dcbec532f57e418232c187"><td class="mdescLeft">&#160;</td><td class="mdescRight">Blocks until the future is finished, and then either return the value, or throw the error.  <a href="#af2088ec868dcbec532f57e418232c187">More...</a><br /></td></tr>
 <tr class="separator:af2088ec868dcbec532f57e418232c187"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab8309c7d3b1aebb8de818d700ab15ebf"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__future.html#ab8309c7d3b1aebb8de818d700ab15ebf">std_future</a> ()</td></tr>
 <tr class="memdesc:ab8309c7d3b1aebb8de818d700ab15ebf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtain a std::future bound to this future.  <a href="#ab8309c7d3b1aebb8de818d700ab15ebf">More...</a><br /></td></tr>
 <tr class="separator:ab8309c7d3b1aebb8de818d700ab15ebf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2e4b6da539c7b1618fd55964dab2e8f8"><td class="memItemLeft" align="right" valign="top">allocator_type &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__future.html#a2e4b6da539c7b1618fd55964dab2e8f8">allocator</a> ()</td></tr>
+<tr class="memitem:a2e4b6da539c7b1618fd55964dab2e8f8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classaom_1_1Basic__future.html#ac9f29758d5ba25371935d7a0e2a07204">allocator_type</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__future.html#a2e4b6da539c7b1618fd55964dab2e8f8">allocator</a> ()</td></tr>
 <tr class="memdesc:a2e4b6da539c7b1618fd55964dab2e8f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the allocator associated with this future.  <a href="#a2e4b6da539c7b1618fd55964dab2e8f8">More...</a><br /></td></tr>
 <tr class="separator:a2e4b6da539c7b1618fd55964dab2e8f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5bf56c283add65ff7c42667e02cb0586"><td class="memItemLeft" align="right" valign="top"><a id="a5bf56c283add65ff7c42667e02cb0586"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__future.html#a5bf56c283add65ff7c42667e02cb0586">Basic_future</a> (detail::Storage_ptr&lt; <a class="el" href="classaom_1_1Basic__future.html#a493ab55e64968c2b174e09eb91b2deb7">storage_type</a> &gt; s)</td></tr>
 <tr class="memdesc:a5bf56c283add65ff7c42667e02cb0586"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a future directly from its underlying storage. <br /></td></tr>
 <tr class="separator:a5bf56c283add65ff7c42667e02cb0586"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a6781fd2407ffdf26bf50ca6ac17c27a7"><td class="memItemLeft" align="right" valign="top"><a id="a6781fd2407ffdf26bf50ca6ac17c27a7"></a>
-detail::Storage_ptr&lt; <a class="el" href="classaom_1_1Basic__future.html#a493ab55e64968c2b174e09eb91b2deb7">storage_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>storage_</b></td></tr>
-<tr class="separator:a6781fd2407ffdf26bf50ca6ac17c27a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;typename Alloc, typename... Ts&gt;<br />
@@ -253,7 +248,7 @@ template&lt;typename Alloc , typename... Ts&gt; </div>
 template&lt;typename Alloc , typename... Ts&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">allocator_type&amp; <a class="el" href="classaom_1_1Basic__future.html">aom::Basic_future</a>&lt; Alloc, Ts &gt;::allocator </td>
+          <td class="memname"><a class="el" href="classaom_1_1Basic__future.html#ac9f29758d5ba25371935d7a0e2a07204">allocator_type</a>&amp; <a class="el" href="classaom_1_1Basic__future.html">aom::Basic_future</a>&lt; Alloc, Ts &gt;::allocator </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -364,7 +359,7 @@ template&lt;typename QueueT , typename CbT &gt; </div>
 template&lt;typename Alloc , typename... Ts&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">value_type <a class="el" href="classaom_1_1Basic__future.html">aom::Basic_future</a>&lt; Alloc, Ts &gt;::get </td>
+          <td class="memname"><a class="el" href="classaom_1_1Basic__future.html#a304628d82f5a0e9f349a08b020d5ae57">value_type</a> <a class="el" href="classaom_1_1Basic__future.html">aom::Basic_future</a>&lt; Alloc, Ts &gt;::get </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
