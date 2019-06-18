@@ -207,5 +207,17 @@ Basic_future<Alloc, Ts...> flatten(
   return Basic_future<Alloc, Ts...>(std::move(storage));
 }
 
+/**
+ * @brief Permits a callback to produce a higher-order future.
+ * 
+ * @tparam Ts 
+ * @param args 
+ * @return auto 
+ */
+template<typename... Ts>
+auto segmented(Ts&&... args) {
+  return detail::Segmented_callback_result<std::decay_t<Ts>...>{ std::make_tuple(std::forward<Ts>(args)...)};
+}
+
 }  // namespace aom
 #endif
