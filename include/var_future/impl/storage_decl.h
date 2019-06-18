@@ -79,7 +79,7 @@ class Future_handler_base<QueueT, std::enable_if_t<has_static_push_v<QueueT>>,
 template <typename Alloc, typename... Ts>
 class Future_storage : public Alloc {
   template <typename T>
-  friend class Storage_ptr;
+  friend struct Storage_ptr;
 
   Future_storage(const Alloc& alloc);
 
