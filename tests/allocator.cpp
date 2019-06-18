@@ -34,20 +34,41 @@ struct Test_alloc {
   Test_alloc(int* counter, int* total) : counter_(counter), total_(total) {}
 
   T* allocate(std::size_t count) {
-    if constexpr(std::is_same_v<void, T>) {
-      return nullptr;
-    }
-    else {
-      ++*counter_;
-      ++*total_;
-      return reinterpret_cast<T*>(std::malloc(count * sizeof(T)));
-    }
+    ++*counter_;
+    ++*total_;
+    return reinterpret_cast<T*>(std::malloc(count * sizeof(T)));
   }
 
   void deallocate(T* ptr, std::size_t) {
     std::free(ptr);
     --*counter_;
   }
+
+  template <typename U>
+  explicit Test_alloc(const Test_alloc<U>& rhs) {
+    counter_ = rhs.counter_;
+    total_ = rhs.total_;
+  }
+
+  template <typename U>
+  Test_alloc& operator=(Test_alloc<U>& rhs) {
+    counter_ = rhs.counter_;
+    total_ = rhs.total_;
+    return *this;
+  }
+
+  int* counter_;
+  int* total_;
+};
+
+template <>
+struct Test_alloc<void> {
+  template <typename U>
+  struct rebind {
+    using other = Test_alloc<U>;
+  };
+
+  Test_alloc(int* counter, int* total) : counter_(counter), total_(total) {}
 
   template <typename U>
   explicit Test_alloc(const Test_alloc<U>& rhs) {
