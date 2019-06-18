@@ -155,6 +155,7 @@ using fail_type_t = std::exception_ptr;
 
 template <std::size_t i, typename... Ts>
 auto finish_to_fullfill(std::tuple<Ts...>&& src) {
+  (void)src;
   assert(std::get<i>(src).has_value());
 
   using val_t = typename std::tuple_element_t<i, std::tuple<Ts...>>::value_type;
@@ -179,6 +180,7 @@ auto finish_to_fullfill(std::tuple<Ts...>&& src) {
 
 template <std::size_t i, std::size_t j, typename Result_t, typename... Ts>
 auto fullfill_to_finish(std::tuple<Ts...>&& src) {
+  (void)src;
   using dst_t = std::tuple_element_t<i, Result_t>;
   if constexpr(std::is_same_v<expected<void>, dst_t>) {
     if constexpr(i == std::tuple_size_v<Result_t> - 1) {
@@ -201,30 +203,10 @@ auto fullfill_to_finish(std::tuple<Ts...>&& src) {
     }
   }
 }
-/*
-template <std::size_t i, std::size_t j, typename... Ts, typename... Us>
-void fullfill_to_finish(std::tuple<Ts...>&& src, std::tuple<Us...>& dst) {
-  static_assert(sizeof...(Ts) <= sizeof...(Us));
-
-  if constexpr (j >= sizeof...(Us)) {
-    (void)src;
-    (void)dst;
-    return;
-  } else {
-    using dst_type = std::tuple_element_t<j, std::tuple<Us...>>;
-    if constexpr (std::is_same_v<expected<void>, dst_type>) {
-      std::get<j>(dst) = {};
-      fullfill_to_finish<i, j + 1>(std::move(src), dst);
-    } else {
-      std::get<j>(dst) = std::move(std::get<i>(src));
-      fullfill_to_finish<i + 1, j + 1>(std::move(src), dst);
-    }
-  }
-}
-*/
 
 template <std::size_t i, typename T>
 auto fail_to_expect(const std::exception_ptr& src) {
+  (void)src;
   using element_t = std::tuple_element_t<i, T>;
   std::tuple<element_t> val_tup(unexpected{src});
 
