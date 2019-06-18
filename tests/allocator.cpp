@@ -34,9 +34,14 @@ struct Test_alloc {
   Test_alloc(int* counter, int* total) : counter_(counter), total_(total) {}
 
   T* allocate(std::size_t count) {
-    ++*counter_;
-    ++*total_;
-    return reinterpret_cast<T*>(std::malloc(count * sizeof(T)));
+    if constexpr(std::is_same_v<void, T>) {
+      return nullptr;
+    }
+    else {
+      ++*counter_;
+      ++*total_;
+      return reinterpret_cast<T*>(std::malloc(count * sizeof(T)));
+    }
   }
 
   void deallocate(T* ptr, std::size_t) {
@@ -45,7 +50,7 @@ struct Test_alloc {
   }
 
   template <typename U>
-  Test_alloc(const Test_alloc<U>& rhs) {
+  explicit Test_alloc(const Test_alloc<U>& rhs) {
     counter_ = rhs.counter_;
     total_ = rhs.total_;
   }
@@ -54,6 +59,7 @@ struct Test_alloc {
   Test_alloc& operator=(Test_alloc<U>& rhs) {
     counter_ = rhs.counter_;
     total_ = rhs.total_;
+    return *this;
   }
 
   int* counter_;
@@ -209,6 +215,10 @@ TEST(Future_alloc, then_noop_pre_large_callback) {
   };
 
   payload_t payload;
+
+  payload.x = 1;
+  payload.y = 1;
+  payload.z = 1;
 
   auto callback = [payload](int) {};
 
