@@ -290,3 +290,25 @@ TEST(Future, void_promise) {
   prom.set_value();
   EXPECT_EQ(4, dst);
 }
+
+
+TEST(Future, variadic_get) {
+  static_assert(std::is_same_v<Future<void>::value_type, void>);
+  static_assert(std::is_same_v<Future<int>::value_type, int>);
+  static_assert(std::is_same_v<Future<void, void>::value_type, void>);
+  static_assert(std::is_same_v<Future<int, int>::value_type, std::tuple<int, int>>);
+  static_assert(std::is_same_v<Future<int, void>::value_type, int>);
+  static_assert(std::is_same_v<Future<void, int>::value_type, int>);
+  static_assert(std::is_same_v<Future<void, int, void>::value_type, int>);
+  static_assert(std::is_same_v<Future<int, void, int>::value_type, std::tuple<int, int>>);
+}
+
+
+TEST(Future, variadic_get_failure) {
+  Promise<void, void> p;
+  auto f = p.get_future();
+
+  p.set_exception(std::make_exception_ptr(std::runtime_error("dead")));
+
+  EXPECT_THROW(f.get(), std::runtime_error);
+}

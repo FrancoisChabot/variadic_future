@@ -40,13 +40,16 @@ namespace aom {
 template <typename Alloc, typename... Ts>
 class Basic_future {
   static_assert(sizeof...(Ts) >= 1, "you probably meant Future<void>");
-  static_assert(
-      !std::is_same_v<std::tuple<Ts...>, std::tuple<std::tuple<void>>>);
 
  public:
-  using allocator_type = Alloc;
-  using value_type = detail::future_value_type_t<Ts...>;
+   /// The underlying storage type.
+  using storage_type = detail::Future_storage<Alloc, Ts...>;
 
+  /// Allocator
+  using allocator_type = Alloc;
+
+  /// Ts...
+  using value_type = detail::future_value_type_t<Ts...>;
   using fullfill_type = detail::fullfill_type_t<Ts...>;
   using finish_type = detail::finish_type_t<Ts...>;
 
@@ -189,14 +192,12 @@ class Basic_future {
    */
   allocator_type& allocator();
 
-  /// The underlying storage type.
-  using storage_type = detail::Future_storage<Alloc, Ts...>;
-
   /**
    * @brief Create a future directly from its underlying storage.
    */
   explicit Basic_future(detail::Storage_ptr<storage_type> s);
 
+private:
   detail::Storage_ptr<storage_type> storage_;
 };
 

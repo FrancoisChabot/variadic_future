@@ -110,6 +110,22 @@ struct fullfill_type<T, Ts...> {
   using type = tuple_cat_t<lhs_t, rhs_t>;
 };
 
+
+template<typename FTypeT>
+struct fullfill_to_value {
+  using type = FTypeT;
+};
+
+template<>
+struct fullfill_to_value<std::tuple<>> {
+  using type = void;
+};
+
+template<typename T>
+struct fullfill_to_value<std::tuple<T>> {
+  using type = T;
+};
+
 // Determines the fullfillment type of a Future<Ts...>
 template <typename... Ts>
 using fullfill_type_t = typename fullfill_type<Ts...>::type;
@@ -121,7 +137,9 @@ struct future_value_type<T, Ts...> {
 
 template <typename T, typename U, typename... Ts>
 struct future_value_type<T, U, Ts...> {
-  using type = fullfill_type<T, U, Ts...>;
+  using f_type = fullfill_type_t<T, U, Ts...>;
+
+  using type = typename fullfill_to_value<f_type>::type;
 };
 
 template <typename... Ts>
