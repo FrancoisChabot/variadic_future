@@ -46,10 +46,6 @@ class Future_finally_handler : public Future_handler_base<QueueT, void, Ts...> {
     do_finish(this->get_queue(), std::move(f), std::move(cb_));
   };
 
-  void fail(fail_type e) override {
-    do_fail(this->get_queue(), e, std::move(cb_));
-  }
-
   static void do_fullfill(QueueT* q, fullfill_type v, CbT cb) {
     auto cb_args = fullfill_to_finish<0, 0, std::tuple<expected<Ts>...>>(std::move(v));
     do_finish(q, std::move(cb_args), std::move(cb));
