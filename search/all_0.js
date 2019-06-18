@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['async',['async',['../classaom_1_1Future.html#a796cd6e84b37bdb87c66350e6244eede',1,'aom::Future']]]
+  ['allocator',['allocator',['../classaom_1_1Basic__future.html#a2e4b6da539c7b1618fd55964dab2e8f8',1,'aom::Basic_future']]]
 ];

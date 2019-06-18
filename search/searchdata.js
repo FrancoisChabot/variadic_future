@@ -1,9 +1,9 @@
 var indexSectionsWithContent =
 {
-  0: "afgopstu",
-  1: "fpu",
-  2: "fgost",
-  3: "a"
+  0: "abfgostu",
+  1: "bu",
+  2: "abfgost",
+  3: "s"
 };
 
 var indexSectionNames =
@@ -11,7 +11,7 @@ var indexSectionNames =
   0: "all",
   1: "classes",
   2: "functions",
-  3: "related"
+  3: "typedefs"
 };
 
 var indexSectionLabels =
@@ -19,6 +19,6 @@ var indexSectionLabels =
   0: "All",
   1: "Classes",
   2: "Functions",
-  3: "Friends"
+  3: "Typedefs"
 };
 
