@@ -104,7 +104,9 @@ void Future_storage<Alloc, Ts...>::set_handler(QueueT* queue,
       cb_data_.callback_ =
           new (ptr) Handler_t(queue, std::forward<Args_t>(args)...);
     } else {
-      using Real_alloc = typename Alloc::template rebind<Handler_t>::other;
+      using alloc_traits = std::allocator_traits<Alloc>;
+      using Real_alloc = typename alloc_traits::template rebind_alloc<Handler_t>;
+    
       Real_alloc real_alloc(allocator());
       auto ptr = real_alloc.allocate(1);
       try {
@@ -135,8 +137,9 @@ Future_storage<Alloc, Ts...>::~Future_storage() {
     case State::READY:
       cb_data_.callback_->~Future_handler_iface<Ts...>();
       {
-        using Real_alloc =
-            typename Alloc::template rebind<Future_handler_iface<Ts...>>::other;
+        using alloc_traits = std::allocator_traits<Alloc>;
+        using Real_alloc = typename alloc_traits::template rebind_alloc<Future_handler_iface<Ts...>>;
+
         Real_alloc real_alloc(allocator());
         real_alloc.deallocate(cb_data_.callback_, 1);
       }
