@@ -316,6 +316,10 @@ auto async(QueueT& q, CbT&& callback);
 template <typename Alloc, typename... Ts>
 Basic_future<Alloc, Ts...> flatten(Basic_future<Alloc, std::tuple<Ts...>>& rhs);
 
+template<typename... Ts>
+auto segmented(Ts&&... args);
+
+
 }  // namespace aom
 
 #include "var_future/impl/async.h"

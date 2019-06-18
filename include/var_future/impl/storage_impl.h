@@ -48,6 +48,12 @@ void Future_storage<Alloc, Ts...>::fullfill(fullfill_type&& v) {
 }
 
 template <typename Alloc, typename... Ts>
+template <typename... Us>
+void Future_storage<Alloc, Ts...>::fullfill(Segmented_callback_result<Us...>&& f) {
+  fullfill(std::move(f.values_));
+}
+
+template <typename Alloc, typename... Ts>
 template <typename Arg_alloc>
 void Future_storage<Alloc, Ts...>::fullfill(
     Basic_future<Arg_alloc, Ts...>&& f) {

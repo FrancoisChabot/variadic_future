@@ -27,6 +27,12 @@ namespace aom {
 
 namespace detail {
 
+template<typename... Ts>
+struct Segmented_callback_result {
+  std::tuple<Ts...> values_;
+};
+
+
 template <typename... Ts>
 class Future_handler_iface {
  public:
@@ -98,6 +104,9 @@ class Future_storage : public Alloc {
 
   template <typename Arg_alloc>
   void fullfill(Basic_future<Arg_alloc, Ts...>&& f);
+
+  template <typename... Us>
+  void fullfill(Segmented_callback_result<Us...>&& f);
 
   void finish(finish_type&& f);
 
@@ -242,6 +251,11 @@ struct Storage_for_cb_result {
 template <typename Alloc, typename T>
 struct Storage_for_cb_result<Alloc, expected<T>> {
   using type = typename Storage_for_cb_result<Alloc, T>::type;
+};
+
+template <typename Alloc, typename... Us>
+struct Storage_for_cb_result<Alloc, Segmented_callback_result<Us...>> {
+  using type = Future_storage<Alloc, decay_future_t<Us>...>;
 };
 
 template <typename Alloc, typename T>

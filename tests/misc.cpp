@@ -303,7 +303,6 @@ TEST(Future, variadic_get) {
   static_assert(std::is_same_v<Future<int, void, int>::value_type, std::tuple<int, int>>);
 }
 
-
 TEST(Future, variadic_get_failure) {
   Promise<void, void> p;
   auto f = p.get_future();
@@ -311,4 +310,19 @@ TEST(Future, variadic_get_failure) {
   p.set_exception(std::make_exception_ptr(std::runtime_error("dead")));
 
   EXPECT_THROW(f.get(), std::runtime_error);
+}
+
+TEST(Future, segmented_callback) {
+  Promise<void> p;
+
+  auto f = p.get_future().then([](){
+    return segmented(12, 12);
+  })
+  .then([](int a, int b) {
+    return a + b;
+  });
+
+  p.set_value();
+
+  EXPECT_EQ(24, f.get());
 }
