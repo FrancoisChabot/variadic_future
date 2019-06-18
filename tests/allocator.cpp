@@ -17,7 +17,9 @@
 
 #include "gtest/gtest.h"
 
+#include <array>
 #include <queue>
+
 
 using namespace aom;
 
