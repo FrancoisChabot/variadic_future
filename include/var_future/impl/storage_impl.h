@@ -91,7 +91,8 @@ void Future_storage<Alloc, Ts...>::fail(fail_type&& e) {
     state_ = State::ERROR;
     new (&failure_) fail_type(std::move(e));
   } else {
-    cb_data_.callback_->fail(e);
+    auto cb_args = fail_to_expect<0, std::tuple<expected<Ts>...>>(e);
+    cb_data_.callback_->finish(cb_args);
   }
 }
 

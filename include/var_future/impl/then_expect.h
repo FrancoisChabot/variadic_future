@@ -52,10 +52,6 @@ class Future_then_expect_handler
     do_finish(this->get_queue(), std::move(f), std::move(dst_), std::move(cb_));
   };
 
-  void fail(fail_type e) override {
-    do_fail(this->get_queue(), e, std::move(dst_), std::move(cb_));
-  }
-
   static void do_fullfill(QueueT* q, fullfill_type v, dst_type dst, CbT cb) {
      
     auto cb_args = fullfill_to_finish<0, 0, std::tuple<expected<Ts>...>>(std::move(v));

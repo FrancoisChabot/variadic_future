@@ -51,10 +51,6 @@ class Future_then_handler : public Future_handler_base<QueueT, void, Ts...> {
     do_finish(this->get_queue(), f, std::move(dst_), std::move(cb_));
   }
 
-  void fail(fail_type e) override {
-    do_fail(this->get_queue(), e, std::move(dst_), std::move(cb_));
-  }
-
   static void do_fullfill(QueueT* q, fullfill_type v, dst_type dst, CbT cb) {
     enqueue(q, [cb = std::move(cb), dst = std::move(dst), v = std::move(v)] {
       try {

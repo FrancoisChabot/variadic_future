@@ -55,7 +55,7 @@ class Future_handler_iface {
   virtual void finish(finish_type) = 0;
 
   // The future has been failed.
-  virtual void fail(fail_type) = 0;
+  // virtual void fail(fail_type) = 0;
 };
 
 template <typename QueueT, typename Enable = void, typename... Ts>
