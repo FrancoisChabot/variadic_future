@@ -26,7 +26,7 @@ Basic_promise<Alloc, Ts...>::Basic_promise(const Alloc& alloc) {
 
 template <typename Alloc, typename... Ts>
 Basic_promise<Alloc, Ts...>::~Basic_promise() {
-  if (storage_) {
+  if (storage_ && storage_->state_ == storage_type::State::PENDING) {
     storage_->fail(std::make_exception_ptr(Unfullfilled_promise{}));
   }
 }

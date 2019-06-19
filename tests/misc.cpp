@@ -21,6 +21,12 @@
 
 using namespace aom;
 
+TEST(Future, ignored_promise) {
+  Promise<int> prom;
+
+  (void)prom;
+}
+
 TEST(Future, prom_filled_future) {
   {
     Promise<void> prom;

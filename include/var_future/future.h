@@ -22,6 +22,9 @@
 
 namespace aom {
 
+template <typename Alloc, typename... Ts>
+class Basic_promise;
+
 /**
  * @brief Values that will be eventually available
  *
@@ -42,6 +45,8 @@ class Basic_future {
   static_assert(sizeof...(Ts) >= 1, "you probably meant Future<void>");
 
  public:
+  using promise_type = Basic_promise<Alloc, Ts...>;
+
    /// The underlying storage type.
   using storage_type = detail::Future_storage<Alloc, Ts...>;
 
