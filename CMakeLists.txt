@@ -81,6 +81,7 @@ if(VAR_FUTURES_BUILD_TESTS)
     tests/allocator.cpp
     tests/async.cpp
     tests/int.cpp
+    tests/future_of_reference.cpp
     tests/misc.cpp
     tests/void.cpp
     )

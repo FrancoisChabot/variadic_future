@@ -56,7 +56,7 @@ template <typename... Us>
 void Basic_promise<Alloc, Ts...>::set_value(Us&&... vals) {
   assert(storage_);
 
-  storage_->fullfill(std::make_tuple(std::forward<Us>(vals)...));
+  storage_->fullfill(fullfill_type(std::forward<Us>(vals)...));
   storage_.reset();
 }
 

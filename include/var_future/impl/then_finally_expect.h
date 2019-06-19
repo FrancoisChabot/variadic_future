@@ -51,8 +51,7 @@ class Future_finally_handler : public Future_handler_base<QueueT, void, Ts...> {
   }
 
   static void do_fullfill(QueueT* q, fullfill_type v, CbT cb) {
-    std::tuple<expected<Ts>...> cb_args;
-    fullfill_to_finish<0, 0>(std::move(v), cb_args);
+    auto cb_args = fullfill_to_finish<0, 0, std::tuple<expected<Ts>...>>(std::move(v));
     do_finish(q, std::move(cb_args), std::move(cb));
   }
 
@@ -63,8 +62,7 @@ class Future_finally_handler : public Future_handler_base<QueueT, void, Ts...> {
   }
 
   static void do_fail(QueueT* q, fail_type e, CbT cb) {
-    std::tuple<expected<Ts>...> cb_args;
-    fail_to_expect<0>(std::move(e), cb_args);
+    auto cb_args = fail_to_expect<0, std::tuple<expected<Ts>...>>(std::move(e));
     do_finish(q, std::move(cb_args), std::move(cb));
   }
 };
