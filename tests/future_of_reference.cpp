@@ -30,7 +30,9 @@ TEST(Ref_Future, simple_case) {
 
   p.set_value(var);
 
-  int& var_ref = f.get();
+  f.finally([](expected<std::reference_wrapper<int>> dst) {
+    (*dst).get() = 4;
+  });
 
-  EXPECT_EQ(&var_ref, &var);
+  EXPECT_EQ(var, 4);
 }
