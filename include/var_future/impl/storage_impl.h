@@ -165,7 +165,6 @@ Future_storage<Alloc, Ts...>::~Future_storage() {
     case State::ERROR:
       failure_.~fail_type();
       break;
-    case State::UNBOUND:
     case State::PENDING:
       break;
   }

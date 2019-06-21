@@ -237,17 +237,19 @@ class Basic_promise {
   using finish_type = detail::finish_type_t<Ts...>;
   using fail_type = detail::fail_type_t<Ts...>;
 
-  Basic_promise(const Alloc& alloc = Alloc());
+  Basic_promise();
   Basic_promise(Basic_promise&&) = default;
   Basic_promise& operator=(Basic_promise&&) = default;
   ~Basic_promise();
 
+
   /**
-   * @brief Returns a future that is bound to this promise
-   *
-   * @return future_type
+   * @brief Get the future object
+   * 
+   * @param alloc The allocator to use when creating the interal state
+   * @return future_type 
    */
-  future_type get_future();
+  future_type get_future(const Alloc& alloc = Alloc());
 
   /**
    * @brief Fullfills the promise

@@ -20,24 +20,21 @@
 namespace aom {
 
 template <typename Alloc, typename... Ts>
-Basic_promise<Alloc, Ts...>::Basic_promise(const Alloc& alloc) {
-  storage_.allocate(alloc);
+Basic_promise<Alloc, Ts...>::Basic_promise() {
+  
 }
 
 template <typename Alloc, typename... Ts>
 Basic_promise<Alloc, Ts...>::~Basic_promise() {
-  if (storage_ && storage_->state_ == storage_type::State::PENDING) {
+  if (storage_) {
     storage_->fail(std::make_exception_ptr(Unfullfilled_promise{}));
   }
 }
 
 template <typename Alloc, typename... Ts>
 typename Basic_promise<Alloc, Ts...>::future_type
-Basic_promise<Alloc, Ts...>::get_future() {
-  assert(storage_);
-  assert(storage_->state_ == storage_type::State::UNBOUND);
-
-  storage_->bind();
+Basic_promise<Alloc, Ts...>::get_future(const Alloc& alloc) {
+  storage_.allocate(alloc);
 
   return future_type{storage_};
 }

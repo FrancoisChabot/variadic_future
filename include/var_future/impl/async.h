@@ -28,7 +28,6 @@ auto async(QueueT& q, CbT&& cb) {
 
   detail::Storage_ptr<dst_storage_type> res;
   res.allocate(std::allocator<void>());
-  res->bind();
 
   detail::enqueue(&q, [cb = std::move(cb), res] {
     try {

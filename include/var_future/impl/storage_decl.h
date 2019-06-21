@@ -122,21 +122,15 @@ class Future_storage : public Alloc {
 
   const Alloc& allocator() const { return *static_cast<Alloc*>(this); }
 
-  void bind() {
-    assert(state_ == State::UNBOUND);
-    state_ = State::PENDING;
-  }
-
   // private:
   enum class State {
-    UNBOUND,
     PENDING,
     READY,
     READY_SBO,
     FINISHED,
     FULLFILLED,
     ERROR,
-  } state_ = State::UNBOUND;
+  } state_ = State::PENDING;
 
   static bool is_ready_state(State v);
 

@@ -89,7 +89,6 @@ template <typename QueueT, typename CbT>
 
   detail::Storage_ptr<result_storage_t> result;
   result.allocate(allocator());
-  result->bind();
 
   storage_->template set_handler<handler_t>(&queue, result, std::move(cb));
   storage_.reset();
@@ -108,8 +107,7 @@ template <typename QueueT, typename CbT>
 
   detail::Storage_ptr<result_storage_t> result;
   result.allocate(allocator());
-  result->bind();
-
+  
   storage_->template set_handler<handler_t>(&queue, result, std::move(cb));
   storage_.reset();
 
@@ -194,8 +192,7 @@ Basic_future<Alloc, Ts...> flatten(
   detail::Storage_ptr<storage_type> storage;
 
   storage.allocate(rhs.allocator());
-  storage->bind();
-
+  
   rhs.finally([storage](expected<std::tuple<Ts...>> e) mutable {
     if (e.has_value()) {
       storage->finish(std::move(*e));

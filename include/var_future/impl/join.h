@@ -80,7 +80,6 @@ auto join(FirstT&& first, FutTs&&... futs) {
 
   auto landing = std::make_shared<landing_type>();
   landing->dst_.allocate(first.allocator());
-  landing->dst_->bind();
 
   detail::bind_landing<0>(landing, std::forward<FirstT>(first),
                           std::forward<FutTs>(futs)...);
