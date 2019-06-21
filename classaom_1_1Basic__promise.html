@@ -103,18 +103,15 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>fail_type</b> = deta
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a5032aebf9bc9ff4a551ed0d149d2dda6"><td class="memItemLeft" align="right" valign="top"><a id="a5032aebf9bc9ff4a551ed0d149d2dda6"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Basic_promise</b> (const Alloc &amp;alloc=Alloc())</td></tr>
-<tr class="separator:a5032aebf9bc9ff4a551ed0d149d2dda6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac06e405d3711e4c45fa9a6f32af3aca5"><td class="memItemLeft" align="right" valign="top"><a id="ac06e405d3711e4c45fa9a6f32af3aca5"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Basic_promise</b> (<a class="el" href="classaom_1_1Basic__promise.html">Basic_promise</a> &amp;&amp;)=default</td></tr>
 <tr class="separator:ac06e405d3711e4c45fa9a6f32af3aca5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af970a273505f09f18e73991703bf10eb"><td class="memItemLeft" align="right" valign="top"><a id="af970a273505f09f18e73991703bf10eb"></a>
 <a class="el" href="classaom_1_1Basic__promise.html">Basic_promise</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classaom_1_1Basic__promise.html">Basic_promise</a> &amp;&amp;)=default</td></tr>
 <tr class="separator:af970a273505f09f18e73991703bf10eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a73bdbbdfe7c9e16ee7f4995c1c9d8957"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classaom_1_1Basic__future.html">future_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__promise.html#a73bdbbdfe7c9e16ee7f4995c1c9d8957">get_future</a> ()</td></tr>
-<tr class="memdesc:a73bdbbdfe7c9e16ee7f4995c1c9d8957"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a future that is bound to this promise.  <a href="#a73bdbbdfe7c9e16ee7f4995c1c9d8957">More...</a><br /></td></tr>
-<tr class="separator:a73bdbbdfe7c9e16ee7f4995c1c9d8957"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae55046701d2f0626438d714692c0ab13"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classaom_1_1Basic__future.html">future_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__promise.html#ae55046701d2f0626438d714692c0ab13">get_future</a> (const Alloc &amp;alloc=Alloc())</td></tr>
+<tr class="memdesc:ae55046701d2f0626438d714692c0ab13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the future object.  <a href="#ae55046701d2f0626438d714692c0ab13">More...</a><br /></td></tr>
+<tr class="separator:ae55046701d2f0626438d714692c0ab13"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a018f202bf91c051109b313c78e2bb150"><td class="memTemplParams" colspan="2">template&lt;typename... Us&gt; </td></tr>
 <tr class="memitem:a018f202bf91c051109b313c78e2bb150"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__promise.html#a018f202bf91c051109b313c78e2bb150">set_value</a> (Us &amp;&amp;... values)</td></tr>
 <tr class="memdesc:a018f202bf91c051109b313c78e2bb150"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fullfills the promise.  <a href="#a018f202bf91c051109b313c78e2bb150">More...</a><br /></td></tr>
@@ -187,8 +184,8 @@ template&lt;typename... Us&gt; </div>
 
 </div>
 </div>
-<a id="a73bdbbdfe7c9e16ee7f4995c1c9d8957"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a73bdbbdfe7c9e16ee7f4995c1c9d8957">&#9670;&nbsp;</a></span>get_future()</h2>
+<a id="ae55046701d2f0626438d714692c0ab13"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae55046701d2f0626438d714692c0ab13">&#9670;&nbsp;</a></span>get_future()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -198,13 +195,20 @@ template&lt;typename Alloc , typename... Ts&gt; </div>
         <tr>
           <td class="memname"><a class="el" href="classaom_1_1Basic__future.html">future_type</a> <a class="el" href="classaom_1_1Basic__promise.html">aom::Basic_promise</a>&lt; Alloc, Ts &gt;::get_future </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">const Alloc &amp;&#160;</td>
+          <td class="paramname"><em>alloc</em> = <code>Alloc()</code></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Returns a future that is bound to this promise. </p>
+<p>Get the future object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">alloc</td><td>The allocator to use when creating the interal state </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd>future_type </dd></dl>
 
 </div>
