@@ -93,6 +93,7 @@ The **arguments** of a callback for a `Future<T, U, V>` will be:
 * The **return value** of a chaining callback will become a future of the matching type. 
   * If your callback returns a `Future<T>`, then the result is a `Future<T>` that propagates directly.
   * If your callback returns an `expected<T>`, then the result is a `Future<T>` that gets set or failed appropriately. 
+  * if your callback returns `aom::segmented(T, U, ...)`, the the result is a `Future<T,U,...>`
 * The **return value** of a terminating callback is ignored.
 
 ```cpp
@@ -107,6 +108,8 @@ get_value_eventually().finally(sync_proc);
 
 Future<int> y = get_value_eventually().then(sync_op);
 Future<int> z = get_value_eventually().then(async_op);
+
+Future<int, int> w = get_value_eventually().then([](int x){ return aom::segmented(x+x, x*x); });
 ```
 
 If a chaining callback throws an exception. That exception becomes the error associated with its result future. **Terminating callbacks must not throw exceptions.**
