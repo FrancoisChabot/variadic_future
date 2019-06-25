@@ -126,12 +126,12 @@ The callback can either
 N.B. If the future is already fullfilled by the time a callback is attached in <strong>immediate</strong> mode, the callback will be invoked in the thread attaching the callback as the callback is being attached.
 </aside>
 
-For **deferred** mode, you need to pass your queue (or an adapter) as the first parameter to the method. The queue only needs to be some type that implements `void post(T&&)` where `T` is a `Callable<void()>`.
+For **deferred** mode, you need to pass your queue (or an adapter) as the first parameter to the method. The queue only needs to be some type that implements `void push(T&&)` where `T` is a `Callable<void()>`.
 
 ```cpp
 
 struct Queue {
-  void post(std::function<void()> cb);
+  void push(std::function<void()> cb);
 };
 
 void foo(Queue& queue) {
@@ -233,4 +233,3 @@ Not yet. If someone would use it, it can be added to the library, we just don't 
 **Why is there no terminating+error propagating method?**
 
 We have to admit that it would be nice to just do `fut.finally([](int a, float b){ ... })`, but the problem with that is that errors would have nowhere to go. Having the path of least resistance leading to dropping errors on the ground by default is just a recipe for disaster in the long run.
-
