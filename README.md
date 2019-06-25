@@ -37,7 +37,7 @@ Future<void> foo() {
 
 ## Documentation
 
-You can find the auto-generated API reference [here](https://francoischabot.github.io/variadic_future/annotated.html). User guide is still pending.
+You can find the auto-generated API reference [here](https://francoischabot.github.io/variadic_future/annotated.html).
 
 ## Installation
 
@@ -51,7 +51,6 @@ You can find the auto-generated API reference [here](https://francoischabot.gith
 I am assuming you are already familiar with the [expected<>](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0323r7.html) concept/syntax.
 
 ### Consuming futures
-
 
 Let's say that you are using a function that happens to return a `Future<...>`, and you want to execute a callback when the value becomes available:
 
@@ -127,16 +126,23 @@ The callback can either
 N.B. If the future is already fullfilled by the time a callback is attached in <strong>immediate</strong> mode, the callback will be invoked in the thread attaching the callback as the callback is being attached.
 </aside>
 
-For **deferred** mode, you need to pass your queue (or an adapter) as the first parameter to the method.
+For **deferred** mode, you need to pass your queue (or an adapter) as the first parameter to the method. The queue only needs to be some type that implements `void post(T&&)` where `T` is a `Callable<void()>`.
 
 ```cpp
-get_value_eventually()
-  .then([](int v){ return v * v;})             
-  .finally(queue, [](expected<int> v) {
-    if(v.has_value()) {
-      std::cerr << "final value: " << v << "\n";
-    }
-  });
+
+struct Queue {
+  void post(std::function<void()> cb);
+};
+
+void foo(Queue& queue) {
+  get_value_eventually()
+    .then([](int v){ return v * v;})             
+    .finally(queue, [](expected<int> v) {
+      if(v.has_value()) {
+        std::cerr << "final value: " << v << "\n";
+      }
+    });
+}
 ```
 
 ### Producing futures
@@ -154,7 +160,6 @@ Future<int> fut = prom.get_future();
 std::thread thread([p=std::move(prom)](){ 
   p.set_value(3); 
 });
-thread.detach();
 ```
 
 #### async
@@ -165,8 +170,7 @@ thread.detach();
 aom::Future<double> fut = aom::async(queue, [](){return 12.0;})
 ```
 
-
-#### Tieing futures
+#### Joining futures
 
 You can wait on multiple futures at the same time using the `join()` function.
 
