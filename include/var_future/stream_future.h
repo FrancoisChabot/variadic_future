@@ -25,31 +25,84 @@
 
 namespace aom {
 
+/**
+ * @brief 
+ * 
+ * @tparam Alloc 
+ * @tparam Ts 
+ */
 template <typename Alloc, typename... Ts>
 class Basic_stream_future {
  public:
+  /**
+  * @brief Construct a new Basic_stream_future object
+  * 
+  */
   Basic_stream_future() = default;
+
+  /**
+   * @brief Construct a new Basic_stream_future object
+   * 
+   */
   Basic_stream_future(Basic_stream_future&&) = default;
+
+  /**
+   * @brief 
+   * 
+   * @return Basic_stream_future& 
+   */
   Basic_stream_future& operator=(Basic_stream_future&&) = default;
 
   /// The underlying storage type.
   using storage_type = detail::Stream_storage<Alloc, Ts...>;
 
+  /**
+   * @brief 
+   * 
+   * @tparam CbT 
+   * @param cb 
+   * @return Basic_future<Alloc, void> 
+   */
   template <typename CbT>
   [[nodiscard]] Basic_future<Alloc, void> for_each(CbT&& cb);
 
+  /**
+   * @brief 
+   * 
+   * @tparam QueueT 
+   * @tparam CbT 
+   * @param queue 
+   * @param cb 
+   * @return Basic_future<Alloc, void> 
+   */
   template <typename QueueT, typename CbT>
   [[nodiscard]] Basic_future<Alloc, void> for_each(QueueT& queue, CbT&& cb);
 
+  /**
+   * @brief Construct a new Basic_stream_future object
+   * 
+   * @param s 
+   */
   explicit Basic_stream_future(detail::Storage_ptr<storage_type> s);
 
  private:
   detail::Storage_ptr<storage_type> storage_;
 };
 
+/**
+ * @brief 
+ * 
+ * @tparam Ts 
+ */
 template <typename... Ts>
 using Stream_future = Basic_stream_future<std::allocator<void>, Ts...>;
 
+/**
+ * @brief 
+ * 
+ * @tparam Alloc 
+ * @tparam Ts 
+ */
 template <typename Alloc, typename... Ts>
 class Basic_stream_promise {
  public:
@@ -57,17 +110,57 @@ class Basic_stream_promise {
   using storage_type = typename future_type::storage_type;
   using fail_type = std::exception_ptr;
 
+  /**
+   * @brief Construct a new Basic_stream_promise object
+   * 
+   */
   Basic_stream_promise();
+
+  /**
+   * @brief Construct a new Basic_stream_promise object
+   * 
+   */
   Basic_stream_promise(Basic_stream_promise&&) = default;
+
+  /**
+   * @brief 
+   * 
+   * @return Basic_stream_promise& 
+   */
   Basic_stream_promise& operator=(Basic_stream_promise&&) = default;
+
+  /**
+   * @brief Destroy the Basic_stream_promise object
+   * 
+   */
   ~Basic_stream_promise();
 
+  /**
+   * @brief Get the future object
+   * 
+   * @param alloc 
+   * @return future_type 
+   */
   future_type get_future(const Alloc& alloc = Alloc());
 
+  /**
+   * @brief 
+   * 
+   * @tparam Us 
+   */
   template <typename... Us>
   void push(Us&&...);
+
+  /**
+   * @brief 
+   * 
+   */
   void complete();
 
+  /**
+   * @brief Set the exception object
+   * 
+   */
   void set_exception(fail_type);
 
  private:
@@ -77,6 +170,11 @@ class Basic_stream_promise {
   Basic_stream_promise& operator=(const Basic_stream_promise&) = delete;
 };
 
+/**
+ * @brief 
+ * 
+ * @tparam Ts 
+ */
 template <typename... Ts>
 using Stream_promise = Basic_stream_promise<std::allocator<void>, Ts...>;
 }  // namespace aom
