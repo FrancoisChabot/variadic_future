@@ -49,7 +49,8 @@ void Future_storage<Alloc, Ts...>::fullfill(fullfill_type&& v) {
 
 template <typename Alloc, typename... Ts>
 template <typename... Us>
-void Future_storage<Alloc, Ts...>::fullfill(Segmented_callback_result<Us...>&& f) {
+void Future_storage<Alloc, Ts...>::fullfill(
+    Segmented_callback_result<Us...>&& f) {
   fullfill(std::move(f.values_));
 }
 
@@ -112,8 +113,9 @@ void Future_storage<Alloc, Ts...>::set_handler(QueueT* queue,
           new (ptr) Handler_t(queue, std::forward<Args_t>(args)...);
     } else {
       using alloc_traits = std::allocator_traits<Alloc>;
-      using Real_alloc = typename alloc_traits::template rebind_alloc<Handler_t>;
-    
+      using Real_alloc =
+          typename alloc_traits::template rebind_alloc<Handler_t>;
+
       Real_alloc real_alloc(allocator());
       auto ptr = real_alloc.allocate(1);
       try {
@@ -145,7 +147,8 @@ Future_storage<Alloc, Ts...>::~Future_storage() {
       cb_data_.callback_->~Future_handler_iface<Ts...>();
       {
         using alloc_traits = std::allocator_traits<Alloc>;
-        using Real_alloc = typename alloc_traits::template rebind_alloc<Future_handler_iface<Ts...>>;
+        using Real_alloc = typename alloc_traits::template rebind_alloc<
+            Future_handler_iface<Ts...>>;
 
         Real_alloc real_alloc(allocator());
         real_alloc.deallocate(cb_data_.callback_, 1);

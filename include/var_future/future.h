@@ -47,7 +47,7 @@ class Basic_future {
  public:
   using promise_type = Basic_promise<Alloc, Ts...>;
 
-   /// The underlying storage type.
+  /// The underlying storage type.
   using storage_type = detail::Future_storage<Alloc, Ts...>;
 
   /// Allocator
@@ -202,7 +202,7 @@ class Basic_future {
    */
   explicit Basic_future(detail::Storage_ptr<storage_type> s);
 
-private:
+ private:
   detail::Storage_ptr<storage_type> storage_;
 };
 
@@ -242,12 +242,11 @@ class Basic_promise {
   Basic_promise& operator=(Basic_promise&&) = default;
   ~Basic_promise();
 
-
   /**
    * @brief Get the future object
-   * 
+   *
    * @param alloc The allocator to use when creating the interal state
-   * @return future_type 
+   * @return future_type
    */
   future_type get_future(const Alloc& alloc = Alloc());
 
@@ -276,7 +275,7 @@ class Basic_promise {
    */
   void set_exception(fail_type error);
 
-  // private:
+ private:
   detail::Storage_ptr<storage_type> storage_;
 
   Basic_promise(const Basic_promise&) = delete;
@@ -323,9 +322,8 @@ auto async(QueueT& q, CbT&& callback);
 template <typename Alloc, typename... Ts>
 Basic_future<Alloc, Ts...> flatten(Basic_future<Alloc, std::tuple<Ts...>>& rhs);
 
-template<typename... Ts>
+template <typename... Ts>
 auto segmented(Ts&&... args);
-
 
 }  // namespace aom
 

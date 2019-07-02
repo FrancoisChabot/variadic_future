@@ -27,11 +27,10 @@ namespace aom {
 
 namespace detail {
 
-template<typename... Ts>
+template <typename... Ts>
 struct Segmented_callback_result {
   std::tuple<Ts...> values_;
 };
-
 
 template <typename... Ts>
 class Future_handler_iface {
@@ -199,7 +198,7 @@ struct Storage_ptr {
       if (--(ptr_->ref_count_) == 0) {
         using alloc_traits = std::allocator_traits<typename T::allocator_type>;
         using Alloc = typename alloc_traits::template rebind_alloc<T>;
-    
+
         Alloc real_alloc(ptr_->allocator());
         ptr_->~T();
         real_alloc.deallocate(ptr_, 1);

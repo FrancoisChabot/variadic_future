@@ -76,8 +76,8 @@ class Future_then_handler : public Future_handler_base<QueueT, void, Ts...> {
     if (err) {
       do_fail(q, *err, std::move(dst), std::move(cb));
     } else {
-      
-      fullfill_type cb_args = finish_to_fullfill<std::tuple_size_v<finish_type>-1>(std::move(f));
+      fullfill_type cb_args =
+          finish_to_fullfill<std::tuple_size_v<finish_type> - 1>(std::move(f));
 
       do_fullfill(q, std::move(cb_args), std::move(dst), std::move(cb));
     }

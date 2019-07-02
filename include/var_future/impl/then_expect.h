@@ -53,8 +53,8 @@ class Future_then_expect_handler
   };
 
   static void do_fullfill(QueueT* q, fullfill_type v, dst_type dst, CbT cb) {
-     
-    auto cb_args = fullfill_to_finish<0, 0, std::tuple<expected<Ts>...>>(std::move(v));
+    auto cb_args =
+        fullfill_to_finish<0, 0, std::tuple<expected<Ts>...>>(std::move(v));
 
     do_finish(q, std::move(cb_args), std::move(dst), std::move(cb));
   }

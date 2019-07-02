@@ -20,9 +20,7 @@
 namespace aom {
 
 template <typename Alloc, typename... Ts>
-Basic_promise<Alloc, Ts...>::Basic_promise() {
-  
-}
+Basic_promise<Alloc, Ts...>::Basic_promise() {}
 
 template <typename Alloc, typename... Ts>
 Basic_promise<Alloc, Ts...>::~Basic_promise() {

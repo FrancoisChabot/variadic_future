@@ -83,6 +83,7 @@ if(VAR_FUTURES_BUILD_TESTS)
     tests/int.cpp
     tests/future_of_reference.cpp
     tests/misc.cpp
+    tests/stream.cpp
     tests/void.cpp
     )
 
