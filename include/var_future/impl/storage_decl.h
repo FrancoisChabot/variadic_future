@@ -135,13 +135,12 @@ class Future_storage : public Alloc {
   static bool is_ready_state(Future_storage_state v);
 
   struct Callback_data {
-    // This will either point to sbo_buffer_, or heap-allocated data, depending
-    // on state_.
     Future_handler_iface<Ts...>* callback_;
   };
 
+  Callback_data cb_data_;
+
   union {
-    Callback_data cb_data_;
     fullfill_type fullfilled_;
     finish_type finished_;
     fail_type failure_;

@@ -105,8 +105,6 @@ void Future_storage<Alloc, Ts...>::set_handler(QueueT* queue,
   assert(!is_ready_state(state_));
 
   if (state_ == Future_storage_state::PENDING) {
-    new (&cb_data_) Callback_data();
-
     using alloc_traits = std::allocator_traits<Alloc>;
     using Real_alloc =
         typename alloc_traits::template rebind_alloc<Handler_t>;
@@ -147,7 +145,6 @@ Future_storage<Alloc, Ts...>::~Future_storage() {
         Real_alloc real_alloc(allocator());
         real_alloc.deallocate(cb_data_.callback_, 1);
       }
-      cb_data_.~Callback_data();
       break;
     case Future_storage_state::FINISHED:
       finished_.~finish_type();
