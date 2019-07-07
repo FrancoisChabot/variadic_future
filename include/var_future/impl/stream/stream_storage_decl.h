@@ -62,14 +62,8 @@ class Stream_handler_base<QueueT, std::enable_if_t<has_static_push_v<QueueT>>,
   constexpr static QueueT* get_queue() { return nullptr; }
 };
 
-enum class Stream_storage_state {
-  PENDING,     // The stream has neither value, nor callback.
-  READY,       // The stream has a callback attached to it.
-  READY_SBO,   // The stream has a callback stored in SBO attached to it.
-  FULLFILLED,  // The stream has a value, but no callback.
-  ERROR,       // The stream has an error, but no callback.
-  COMPLETED,   // The stream has closed, either successfully, or with an error.
-};
+constexpr std::uint8_t Stream_storage_state_ready_bit = 1;
+constexpr std::uint8_t Stream_storage_state_fail_bit = 2;
 
 template <typename Alloc, typename... Ts>
 class Stream_storage : public Alloc {
@@ -99,31 +93,23 @@ class Stream_storage : public Alloc {
   }
 
  private:
-  template <typename Handler_t, typename QueueT, typename... Args_t>
-  void install_handler_(QueueT* queue, Args_t&&... args);
-
-  Stream_storage_state state_ = Stream_storage_state::PENDING;
-
-  static constexpr std::size_t sbo_space = 16;
-
   struct Callback_data {
     // This will either point to sbo_buffer_, or heap-allocated data, depending
     // on state_.
     Stream_handler_iface<Ts...>* callback_;
-    typename std::aligned_storage<sbo_space>::type sbo_buffer_;
   };
 
-  union {
-    Callback_data cb_data_;
-    fullfill_buffer_type fullfilled_;
-    fail_type failure_;
-  };
+  Callback_data cb_data_;
+
+  std::mutex mtx_;
+  fullfill_buffer_type fullfilled_;
 
   template <typename T>
   friend struct Storage_ptr;
 
-  std::mutex mtx_;
   Basic_promise<Alloc, void> final_promise_;
+
+  std::atomic<std::uint8_t> state_ = 0;
   std::atomic<std::uint8_t> ref_count_ = 0;
 };
 }  // namespace detail

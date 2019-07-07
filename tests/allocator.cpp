@@ -33,7 +33,7 @@ struct Test_alloc {
     using other = Test_alloc<U>;
   };
 
-  Test_alloc(int* counter, int* total) : counter_(counter), total_(total) {}
+  Test_alloc(std::atomic<int>* counter, std::atomic<int>* total) : counter_(counter), total_(total) {}
 
   T* allocate(std::size_t count) {
     ++*counter_;
@@ -59,8 +59,8 @@ struct Test_alloc {
     return *this;
   }
 
-  int* counter_;
-  int* total_;
+  std::atomic<int>* counter_;
+  std::atomic<int>* total_;
 };
 
 template <>
@@ -72,7 +72,7 @@ struct Test_alloc<void> {
     using other = Test_alloc<U>;
   };
 
-  Test_alloc(int* counter, int* total) : counter_(counter), total_(total) {}
+  Test_alloc(std::atomic<int>* counter, std::atomic<int>* total) : counter_(counter), total_(total) {}
 
   template <typename U>
   explicit Test_alloc(const Test_alloc<U>& rhs) {
@@ -87,15 +87,15 @@ struct Test_alloc<void> {
     return *this;
   }
 
-  int* counter_;
-  int* total_;
+  std::atomic<int>* counter_;
+  std::atomic<int>* total_;
 };
 
 using Future_type = Basic_future<Test_alloc<void>, int>;
 using Promise_type = Basic_promise<Test_alloc<void>, int>;
 
 struct prom_fut {
-  prom_fut(int* counter, int* total)
+  prom_fut(std::atomic<int>* counter, std::atomic<int>* total)
   : p(Test_alloc<void>(counter, total)) {
     f = p.get_future();
   }
@@ -116,8 +116,8 @@ struct pf_set {
     EXPECT_EQ(counter, 0);
   }
 
-  int counter = 0;
-  int total = 0;
+  std::atomic<int> counter = 0;
+  std::atomic<int> total = 0;
   std::array<prom_fut, 4> pf;
 
   prom_fut& operator[](std::size_t i) { return pf[i]; }
@@ -151,8 +151,8 @@ void expected_noop_fail(expected<int>) { throw std::runtime_error("dead"); }
 TEST(Future_alloc, blank) { Future_type fut; }
 
 TEST(Future_alloc, unfilled_promise_failiure) {
-  int counter = 0;
-  int total = 0;
+  std::atomic<int> counter = 0;
+  std::atomic<int> total = 0;
 
   Future_type fut;
   {

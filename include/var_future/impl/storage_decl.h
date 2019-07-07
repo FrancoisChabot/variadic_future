@@ -20,7 +20,6 @@
 #include "var_future/impl/utils.h"
 
 #include <atomic>
-#include <mutex>
 #include <type_traits>
 
 namespace aom {
@@ -80,13 +79,8 @@ class Future_handler_base<QueueT, std::enable_if_t<has_static_push_v<QueueT>>,
   constexpr static QueueT* get_queue() { return nullptr; }
 };
 
-enum class Future_storage_state {
-    PENDING,
-    READY,
-    FINISHED,
-    FULLFILLED,
-    ERROR,
-};
+constexpr std::uint8_t Future_storage_state_ready_bit = 1;
+constexpr std::uint8_t Future_storage_state_finished_bit = 2;
 
 // Holds the shared state associated with a Future<>.
 template <typename Alloc, typename... Ts>
@@ -129,28 +123,23 @@ class Future_storage : public Alloc {
 
   const Alloc& allocator() const { return *static_cast<Alloc*>(this); }
 
-  // private:
-  Future_storage_state state_ = Future_storage_state::PENDING;
-
-  static bool is_ready_state(Future_storage_state v);
-
+private:
   struct Callback_data {
-    Future_handler_iface<Ts...>* callback_;
+    Future_handler_iface<Ts...>* callback_ = nullptr;
   };
 
   Callback_data cb_data_;
-
+    
+  // finished is in an union because it only gets constructed on demand.
   union {
-    fullfill_type fullfilled_;
     finish_type finished_;
-    fail_type failure_;
   };
 
-  std::mutex mtx_;
-
+  // Storage_ptr support
   template <typename T>
   friend struct Storage_ptr;
 
+  std::atomic<std::uint8_t> state_ = 0;
   std::atomic<std::uint8_t> ref_count_ = 0;
 };
 
@@ -163,31 +152,36 @@ struct Storage_ptr {
   Storage_ptr() = default;
   Storage_ptr(T* val) : ptr_(val) {
     assert(val);
-    ++(ptr_->ref_count_);
+    inc();
   }
 
   Storage_ptr(const Storage_ptr& rhs) : ptr_(rhs.ptr_) {
     if (ptr_) {
-      ++(ptr_->ref_count_);
+      inc();
     }
   }
 
   Storage_ptr(Storage_ptr&& rhs) : ptr_(rhs.ptr_) { rhs.ptr_ = nullptr; }
 
-  Storage_ptr& operator=(const Storage_ptr& rhs) = delete;
+  Storage_ptr& operator=(const Storage_ptr& rhs) {
+    ptr_ = rhs.ptr_;
+    if (ptr_) {
+      inc();
+    }
+  }
+
   Storage_ptr& operator=(Storage_ptr&& rhs) {
     clear();
 
     ptr_ = rhs.ptr_;
-    if (ptr_) {
-      ++ptr_->ref_count_;
-    }
+    rhs.ptr_ = nullptr;
+
     return *this;
   }
 
   void clear() {
     if (ptr_) {
-      if (--(ptr_->ref_count_) == 0) {
+      if (ptr_->ref_count_.fetch_add(-1, std::memory_order_acq_rel) == 1) {
         using alloc_traits = std::allocator_traits<typename T::allocator_type>;
         using Alloc = typename alloc_traits::template rebind_alloc<T>;
 
@@ -219,10 +213,15 @@ struct Storage_ptr {
     T* new_ptr = real_alloc.allocate(1);
     try {
       ptr_ = new (new_ptr) T(alloc);
-      ++(ptr_->ref_count_);
+      inc();
     } catch (...) {
       real_alloc.deallocate(new_ptr, 1);
     }
+  }
+
+private:
+  void inc() {
+    ptr_->ref_count_.fetch_add(1, std::memory_order_relaxed);
   }
 
   T* ptr_ = nullptr;
