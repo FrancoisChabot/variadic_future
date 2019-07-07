@@ -83,7 +83,6 @@ class Future_handler_base<QueueT, std::enable_if_t<has_static_push_v<QueueT>>,
 enum class Future_storage_state {
     PENDING,
     READY,
-    READY_SBO,
     FINISHED,
     FULLFILLED,
     ERROR,
@@ -135,18 +134,10 @@ class Future_storage : public Alloc {
 
   static bool is_ready_state(Future_storage_state v);
 
-  // Calculate how much memory we want to reserve for the eventual callback
-  static constexpr std::size_t sbo_space =
-      std::max(std::size_t(var_fut_min_sbo_size),
-               std::max({sizeof(fullfill_type), sizeof(finish_type),
-                         sizeof(fail_type)}) -
-                   sizeof(Future_handler_iface<Ts...>*));
-
   struct Callback_data {
     // This will either point to sbo_buffer_, or heap-allocated data, depending
     // on state_.
     Future_handler_iface<Ts...>* callback_;
-    typename std::aligned_storage<sbo_space>::type sbo_buffer_;
   };
 
   union {

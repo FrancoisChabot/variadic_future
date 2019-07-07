@@ -32,7 +32,7 @@ Future_storage<Alloc, Ts...>::Future_storage(const Alloc& alloc)
 
 template <typename Alloc, typename... Ts>
 bool Future_storage<Alloc, Ts...>::is_ready_state(Future_storage_state v) {
-  return v == Future_storage_state::READY || v == Future_storage_state::READY_SBO;
+  return v == Future_storage_state::READY;
 }
 
 template <typename Alloc, typename... Ts>
@@ -106,26 +106,20 @@ void Future_storage<Alloc, Ts...>::set_handler(QueueT* queue,
 
   if (state_ == Future_storage_state::PENDING) {
     new (&cb_data_) Callback_data();
-    if constexpr (sizeof(Handler_t) <= sbo_space) {
-      state_ = Future_storage_state::READY_SBO;
-      void* ptr = &cb_data_.sbo_buffer_;
+
+    using alloc_traits = std::allocator_traits<Alloc>;
+    using Real_alloc =
+        typename alloc_traits::template rebind_alloc<Handler_t>;
+
+    Real_alloc real_alloc(allocator());
+    auto ptr = real_alloc.allocate(1);
+    try {
       cb_data_.callback_ =
           new (ptr) Handler_t(queue, std::forward<Args_t>(args)...);
-    } else {
-      using alloc_traits = std::allocator_traits<Alloc>;
-      using Real_alloc =
-          typename alloc_traits::template rebind_alloc<Handler_t>;
-
-      Real_alloc real_alloc(allocator());
-      auto ptr = real_alloc.allocate(1);
-      try {
-        cb_data_.callback_ =
-            new (ptr) Handler_t(queue, std::forward<Args_t>(args)...);
-        state_ = Future_storage_state::READY;
-      } catch (...) {
-        real_alloc.deallocate(ptr, 1);
-        throw;
-      }
+      state_ = Future_storage_state::READY;
+    } catch (...) {
+      real_alloc.deallocate(ptr, 1);
+      throw;
     }
   } else if (state_ == Future_storage_state::FULLFILLED) {
     Handler_t::do_fullfill(queue, std::move(fullfilled_),
@@ -153,10 +147,6 @@ Future_storage<Alloc, Ts...>::~Future_storage() {
         Real_alloc real_alloc(allocator());
         real_alloc.deallocate(cb_data_.callback_, 1);
       }
-      cb_data_.~Callback_data();
-      break;
-    case Future_storage_state::READY_SBO:
-      cb_data_.callback_->~Future_handler_iface<Ts...>();
       cb_data_.~Callback_data();
       break;
     case Future_storage_state::FINISHED:
