@@ -95,7 +95,7 @@ class Stream_storage : public Alloc {
   const Alloc& allocator() const { return *static_cast<const Alloc*>(this); }
 
   Basic_future<Alloc, void> get_final_future() {
-    return final_promise_.get_future(allocator());
+    return final_promise_.get_future();
   }
 
  private:

@@ -95,8 +95,9 @@ using Future_type = Basic_future<Test_alloc<void>, int>;
 using Promise_type = Basic_promise<Test_alloc<void>, int>;
 
 struct prom_fut {
-  prom_fut(int* counter, int* total) {
-    f = p.get_future(Test_alloc<void>(counter, total));
+  prom_fut(int* counter, int* total)
+  : p(Test_alloc<void>(counter, total)) {
+    f = p.get_future();
   }
 
   int get() { return f.std_future().get(); }
@@ -155,8 +156,8 @@ TEST(Future_alloc, unfilled_promise_failiure) {
 
   Future_type fut;
   {
-    Promise_type p;
-    fut = p.get_future(Test_alloc<void>(&counter, &total));
+    Promise_type p(Test_alloc<void>(&counter, &total));
+    fut = p.get_future();
   }
 
   EXPECT_THROW(fut.std_future().get(), Unfullfilled_promise);

@@ -60,7 +60,8 @@ Stream_storage<Alloc, Ts...>::~Stream_storage() {
 
 template <typename Alloc, typename... Ts>
 Stream_storage<Alloc, Ts...>::Stream_storage(const Alloc& alloc)
-    : Alloc(alloc) {}
+    : Alloc(alloc)
+    , final_promise_(alloc) {}
 
 template <typename Alloc, typename... Ts>
 void Stream_storage<Alloc, Ts...>::fail(fail_type&& e) {

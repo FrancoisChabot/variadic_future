@@ -34,6 +34,10 @@ namespace aom {
 template <typename Alloc, typename... Ts>
 class Basic_stream_future {
  public:
+  /// The underlying storage type.
+  using storage_type = detail::Stream_storage<Alloc, Ts...>;
+  using fullfill_type = typename storage_type::fullfill_type;
+
   /**
   * @brief Construct a new Basic_stream_future object
   * 
@@ -52,9 +56,6 @@ class Basic_stream_future {
    * @return Basic_stream_future& 
    */
   Basic_stream_future& operator=(Basic_stream_future&&) = default;
-
-  /// The underlying storage type.
-  using storage_type = detail::Stream_storage<Alloc, Ts...>;
 
   /**
    * @brief 
@@ -108,6 +109,7 @@ class Basic_stream_promise {
  public:
   using future_type = Basic_stream_future<Alloc, Ts...>;
   using storage_type = typename future_type::storage_type;
+  using fullfill_type = typename storage_type::fullfill_type;
   using fail_type = std::exception_ptr;
 
   /**

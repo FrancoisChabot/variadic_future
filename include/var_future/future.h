@@ -237,7 +237,7 @@ class Basic_promise {
   using finish_type = detail::finish_type_t<Ts...>;
   using fail_type = detail::fail_type_t<Ts...>;
 
-  Basic_promise();
+  Basic_promise(const Alloc& alloc = Alloc());
   Basic_promise(Basic_promise&&) = default;
   Basic_promise& operator=(Basic_promise&&) = default;
   ~Basic_promise();
@@ -248,7 +248,7 @@ class Basic_promise {
    * @param alloc The allocator to use when creating the interal state
    * @return future_type
    */
-  future_type get_future(const Alloc& alloc = Alloc());
+  future_type get_future();
 
   /**
    * @brief Fullfills the promise
@@ -276,6 +276,9 @@ class Basic_promise {
   void set_exception(fail_type error);
 
  private:
+  bool future_created_ = false;
+  bool value_assigned_ = false;
+   
   detail::Storage_ptr<storage_type> storage_;
 
   Basic_promise(const Basic_promise&) = delete;
