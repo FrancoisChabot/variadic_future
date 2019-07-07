@@ -80,6 +80,15 @@ class Future_handler_base<QueueT, std::enable_if_t<has_static_push_v<QueueT>>,
   constexpr static QueueT* get_queue() { return nullptr; }
 };
 
+enum class Future_storage_state {
+    PENDING,
+    READY,
+    READY_SBO,
+    FINISHED,
+    FULLFILLED,
+    ERROR,
+};
+
 // Holds the shared state associated with a Future<>.
 template <typename Alloc, typename... Ts>
 class Future_storage : public Alloc {
@@ -122,16 +131,9 @@ class Future_storage : public Alloc {
   const Alloc& allocator() const { return *static_cast<Alloc*>(this); }
 
   // private:
-  enum class State {
-    PENDING,
-    READY,
-    READY_SBO,
-    FINISHED,
-    FULLFILLED,
-    ERROR,
-  } state_ = State::PENDING;
+  Future_storage_state state_ = Future_storage_state::PENDING;
 
-  static bool is_ready_state(State v);
+  static bool is_ready_state(Future_storage_state v);
 
   // Calculate how much memory we want to reserve for the eventual callback
   static constexpr std::size_t sbo_space =
