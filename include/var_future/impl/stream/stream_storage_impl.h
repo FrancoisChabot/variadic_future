@@ -100,7 +100,7 @@ void Stream_storage<Alloc, Ts...>::set_handler(QueueT* queue,
     Handler_t::do_push(queue, &args..., std::move(v));
   }
 
-  state_.fetch_add(Stream_storage_state_ready_bit);
+  state_.fetch_or(Stream_storage_state_ready_bit);
 }
 
 }  // namespace detail
