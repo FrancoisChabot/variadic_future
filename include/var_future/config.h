@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/// \file
+/// Configuration
+
 #ifndef AOM_VARIADIC_FUTURE_CONFIG_INCLUDED_H
 #define AOM_VARIADIC_FUTURE_CONFIG_INCLUDED_H
 

@@ -15,6 +15,9 @@
 #ifndef AOM_VARIADIC_FUTURE_INCLUDED_H
 #define AOM_VARIADIC_FUTURE_INCLUDED_H
 
+/// \file
+/// Futures
+
 #include "var_future/config.h"
 #include "var_future/impl/storage_decl.h"
 
