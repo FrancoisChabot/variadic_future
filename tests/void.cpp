@@ -66,13 +66,6 @@ TEST(Future_void, fundamental_expectations) {
   // Base handler should be nothing but a vtable pointer.
   EXPECT_EQ(sizeof(void*),
             sizeof(detail::Future_handler_base<detail::Immediate_queue, void>));
-
-  // The then handler of a function pointer callback should match the
-  // callculations of the minimal sbo buffer size.
-  EXPECT_EQ(sizeof(aom::detail::Future_then_handler<
-                   std::allocator<void>, decltype(&no_op),
-                   aom::detail::Immediate_queue, void>),
-            aom::var_fut_default_min_sbo_size);
 }
 
 TEST(Future_void, blank) { Future<void> fut; }

@@ -190,8 +190,7 @@ void foo() {
 }
 ```
 
-
-## Posting callbacks to an ASIO context.
+#### Posting callbacks to an ASIO context.
 
 This example shows how to use [ASIO](https://think-async.com/Asio/), but the same idea can be applied to other contexts easily.
 
@@ -224,6 +223,17 @@ void foo() {
   });
 }
 ```
+
+## Performance notes
+
+The library assumes that, more often than not, a callback is attached to the
+future before a value or error is, produced and is tuned this way. Everything
+will still work if the value is produced before the callback arrives, but 
+perhaps not as fast as possible.
+
+The library also assumes that it is much more likely that a future will be 
+fullfilled successfully rather than failed.
+
 ## FAQs
 
 **Is there a std::shared_future<> equivalent?**

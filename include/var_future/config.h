@@ -39,23 +39,7 @@ using unexpected = nonstd::unexpected_type<std::exception_ptr>;
 //#define VAR_FUTURE_NO_UB
 
 namespace aom {
-// N.B. 1 vtable + 1 destination storage pointer + 1 function pointer.
-static constexpr std::size_t var_fut_default_min_sbo_size = 3 * sizeof(void*);
 
-// A future's shared state can contain either a value, an error, or
-// callbacks to invoke. When sizeof(value) is large, storing callbacks
-// in small-object-optimization storage is trivial.
-//
-// However, when sizeof(value) is very small, like in a future<void>,
-// most callbacks would end up on the heap, so we make future_storage a
-// bit larger than strictly necessary in those cases to accomodate.
-//
-// This variable thus represents the size handlers guaranteed to be stored
-// in SBO storage, which by default matches Future<void>::then([](){});
-//
-// The default value is used in tests, so it should be left alone.
-static constexpr std::size_t var_fut_min_sbo_size =
-    var_fut_default_min_sbo_size;
 }  // namespace aom
 
 #endif
