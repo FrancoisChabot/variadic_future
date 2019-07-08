@@ -181,7 +181,7 @@ struct Storage_ptr {
 
   void clear() {
     if (ptr_) {
-      if (ptr_->ref_count_.fetch_add(-1, std::memory_order_acq_rel) == 1) {
+      if (ptr_->ref_count_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
         using alloc_traits = std::allocator_traits<typename T::allocator_type>;
         using Alloc = typename alloc_traits::template rebind_alloc<T>;
 

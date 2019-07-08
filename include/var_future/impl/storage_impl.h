@@ -40,7 +40,7 @@ void Future_storage<Alloc, Ts...>::fullfill(fullfill_type&& v) {
   else {
     // This is expected to be fairly rare...
     new (&finished_) finish_type(fullfill_to_finish<0,0, finish_type>(std::move(v)));
-    prev_state = state_.fetch_add(Future_storage_state_finished_bit);
+    prev_state = state_.fetch_or(Future_storage_state_finished_bit);
 
     // Handle the case where a handler was added just in time.
     // This should be extremely rare.
@@ -78,7 +78,7 @@ void Future_storage<Alloc, Ts...>::finish(finish_type&& f) {
   else {
     // This is expected to be fairly rare...
     new (&finished_) finish_type(std::move(f));
-    prev_state = state_.fetch_add(Future_storage_state_finished_bit);
+    prev_state = state_.fetch_or(Future_storage_state_finished_bit);
 
     // Handle the case where a handler was added just in time.
     // This should be extremely rare.
@@ -106,7 +106,7 @@ void Future_storage<Alloc, Ts...>::fail(fail_type&& e) {
   else {
     // This is expected to be fairly rare...
     new (&finished_) finish_type(fail_to_expect<0,finish_type>(e));
-    prev_state = state_.fetch_add(Future_storage_state_finished_bit);
+    prev_state = state_.fetch_or(Future_storage_state_finished_bit);
 
     // Handle the case where a handler was added just in time.
     // This should be extremely rare.
@@ -136,7 +136,7 @@ void Future_storage<Alloc, Ts...>::set_handler(QueueT* queue,
     throw;
   }
 
-  auto prev_state = state_.fetch_add(Future_storage_state_ready_bit);
+  auto prev_state = state_.fetch_or(Future_storage_state_ready_bit);
   if( (prev_state & Future_storage_state_finished_bit) != 0) {
     // This is unlikely... 
     cb_data_.callback_->finish(std::move(finished_));
