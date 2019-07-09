@@ -34,17 +34,17 @@ template <typename Alloc, typename... Ts>
 void Future_storage<Alloc, Ts...>::fullfill(fullfill_type&& v) {
   auto prev_state = state_.load();
 
-  if(prev_state & Future_storage_state_ready_bit) {
+  if (prev_state & Future_storage_state_ready_bit) {
     cb_data_.callback_->fullfill(std::move(v));
-  }
-  else {
+  } else {
     // This is expected to be fairly rare...
-    new (&finished_) finish_type(fullfill_to_finish<0,0, finish_type>(std::move(v)));
+    new (&finished_)
+        finish_type(fullfill_to_finish<0, 0, finish_type>(std::move(v)));
     prev_state = state_.fetch_or(Future_storage_state_finished_bit);
 
     // Handle the case where a handler was added just in time.
     // This should be extremely rare.
-    if(prev_state & Future_storage_state_ready_bit) {
+    if (prev_state & Future_storage_state_ready_bit) {
       cb_data_.callback_->finish(std::move(finished_));
     }
   }
@@ -70,19 +70,18 @@ template <typename Alloc, typename... Ts>
 void Future_storage<Alloc, Ts...>::finish(finish_type&& f) {
   auto prev_state = state_.load();
 
-  if(prev_state & Future_storage_state_ready_bit) {
+  if (prev_state & Future_storage_state_ready_bit) {
     // THis should be the likelyest scenario.
     cb_data_.callback_->finish(std::move(f));
     // No need to set the finished bit.
-  }
-  else {
+  } else {
     // This is expected to be fairly rare...
     new (&finished_) finish_type(std::move(f));
     prev_state = state_.fetch_or(Future_storage_state_finished_bit);
 
     // Handle the case where a handler was added just in time.
     // This should be extremely rare.
-    if(prev_state & Future_storage_state_ready_bit) {
+    if (prev_state & Future_storage_state_ready_bit) {
       cb_data_.callback_->finish(std::move(finished_));
     }
   }
@@ -100,18 +99,19 @@ template <typename Alloc, typename... Ts>
 void Future_storage<Alloc, Ts...>::fail(fail_type&& e) {
   auto prev_state = state_.load();
 
-  if(prev_state & Future_storage_state_ready_bit) {
-    cb_data_.callback_->finish(fail_to_expect<0, std::tuple<expected<Ts>...>>(e));
-  }
-  else {
+  if (prev_state & Future_storage_state_ready_bit) {
+    cb_data_.callback_->finish(
+        fail_to_expect<0, std::tuple<expected<Ts>...>>(e));
+  } else {
     // This is expected to be fairly rare...
-    new (&finished_) finish_type(fail_to_expect<0,finish_type>(e));
+    new (&finished_) finish_type(fail_to_expect<0, finish_type>(e));
     prev_state = state_.fetch_or(Future_storage_state_finished_bit);
 
     // Handle the case where a handler was added just in time.
     // This should be extremely rare.
-    if(prev_state & Future_storage_state_ready_bit) {
-      cb_data_.callback_->finish(fail_to_expect<0, std::tuple<expected<Ts>...>>(e));
+    if (prev_state & Future_storage_state_ready_bit) {
+      cb_data_.callback_->finish(
+          fail_to_expect<0, std::tuple<expected<Ts>...>>(e));
     }
   }
 }
@@ -123,8 +123,7 @@ void Future_storage<Alloc, Ts...>::set_handler(QueueT* queue,
   assert(cb_data_.callback_ == nullptr);
 
   using alloc_traits = std::allocator_traits<Alloc>;
-  using Real_alloc =
-      typename alloc_traits::template rebind_alloc<Handler_t>;
+  using Real_alloc = typename alloc_traits::template rebind_alloc<Handler_t>;
 
   Real_alloc real_alloc(allocator());
   auto ptr = real_alloc.allocate(1);
@@ -137,8 +136,8 @@ void Future_storage<Alloc, Ts...>::set_handler(QueueT* queue,
   }
 
   auto prev_state = state_.fetch_or(Future_storage_state_ready_bit);
-  if( (prev_state & Future_storage_state_finished_bit) != 0) {
-    // This is unlikely... 
+  if ((prev_state & Future_storage_state_finished_bit) != 0) {
+    // This is unlikely...
     cb_data_.callback_->finish(std::move(finished_));
   }
 }
@@ -147,9 +146,9 @@ template <typename Alloc, typename... Ts>
 Future_storage<Alloc, Ts...>::~Future_storage() {
   auto state = state_.load();
 
-  if(state & Future_storage_state_ready_bit) {
+  if (state & Future_storage_state_ready_bit) {
     assert(cb_data_.callback_ != nullptr);
-    
+
     cb_data_.callback_->~Future_handler_iface<Ts...>();
     using alloc_traits = std::allocator_traits<Alloc>;
     using Real_alloc = typename alloc_traits::template rebind_alloc<
@@ -159,7 +158,7 @@ Future_storage<Alloc, Ts...>::~Future_storage() {
     real_alloc.deallocate(cb_data_.callback_, 1);
   }
 
-  if(state & Future_storage_state_finished_bit) {
+  if (state & Future_storage_state_finished_bit) {
     finished_.~finish_type();
   }
 }

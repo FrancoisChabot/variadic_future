@@ -123,13 +123,13 @@ class Future_storage : public Alloc {
 
   const Alloc& allocator() const { return *static_cast<Alloc*>(this); }
 
-private:
+ private:
   struct Callback_data {
     Future_handler_iface<Ts...>* callback_ = nullptr;
   };
 
   Callback_data cb_data_;
-    
+
   // finished is in an union because it only gets constructed on demand.
   union {
     finish_type finished_;
@@ -219,10 +219,8 @@ struct Storage_ptr {
     }
   }
 
-private:
-  void inc() {
-    ptr_->ref_count_.fetch_add(1, std::memory_order_relaxed);
-  }
+ private:
+  void inc() { ptr_->ref_count_.fetch_add(1, std::memory_order_relaxed); }
 
   T* ptr_ = nullptr;
 };
