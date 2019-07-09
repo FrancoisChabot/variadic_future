@@ -217,5 +217,16 @@ auto segmented(Ts&&... args) {
       std::make_tuple(std::forward<Ts>(args)...)};
 }
 
+/**
+ * @brief Get the version of the library.
+ * 
+ * @return std::string 
+ */
+inline std::string varfut_lib_version_string() {
+  return std::to_string(AOM_VARFUT_VERSION_MAJOR) + "."  
+       + std::to_string(AOM_VARFUT_VERSION_MINOR) + "." 
+       + std::to_string(AOM_VARFUT_VERSION_PATCH);
+}
+
 }  // namespace aom
 #endif

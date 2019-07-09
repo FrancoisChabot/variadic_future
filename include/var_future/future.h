@@ -331,6 +331,7 @@ Basic_future<Alloc, Ts...> flatten(Basic_future<Alloc, std::tuple<Ts...>>& rhs);
 template <typename... Ts>
 auto segmented(Ts&&... args);
 
+inline std::string varfut_lib_version_string();
 }  // namespace aom
 
 #include "var_future/impl/async.h"

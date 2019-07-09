@@ -18,7 +18,10 @@
 #ifndef AOM_VARIADIC_FUTURE_CONFIG_INCLUDED_H
 #define AOM_VARIADIC_FUTURE_CONFIG_INCLUDED_H
 
-#include <memory>
+#define AOM_VARFUT_VERSION_MAJOR 0
+#define AOM_VARFUT_VERSION_MINOR 3
+#define AOM_VARFUT_VERSION_PATCH 1
+
 // **************************** std::expected ***************************//
 
 // Change this if you want to use some other expected type.
