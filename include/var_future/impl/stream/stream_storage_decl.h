@@ -37,6 +37,8 @@ class Stream_handler_iface {
 
   // The future has been completed
   virtual void push(Ts...) = 0;
+  virtual void complete() = 0;
+  virtual void fail(fail_type) = 0;
 };
 
 template <typename QueueT, typename Enable = void, typename... Ts>
@@ -64,6 +66,7 @@ class Stream_handler_base<QueueT, std::enable_if_t<has_static_push_v<QueueT>>,
 
 constexpr std::uint8_t Stream_storage_state_ready_bit = 1;
 constexpr std::uint8_t Stream_storage_state_fail_bit = 2;
+constexpr std::uint8_t Stream_storage_state_complete_bit = 4;
 
 template <typename Alloc, typename... Ts>
 class Stream_storage : public Alloc {
@@ -89,7 +92,7 @@ class Stream_storage : public Alloc {
   const Alloc& allocator() const { return *static_cast<const Alloc*>(this); }
 
   Basic_future<Alloc, void> get_final_future() {
-    return final_promise_.get_future();
+    return Basic_future<Alloc, void>{final_promise_};
   }
 
  private:
@@ -103,11 +106,12 @@ class Stream_storage : public Alloc {
 
   std::mutex mtx_;
   fullfill_buffer_type fullfilled_;
-
+  std::exception_ptr error_;
+  
   template <typename T>
   friend struct Storage_ptr;
 
-  Basic_promise<Alloc, void> final_promise_;
+  Storage_ptr<Future_storage<Alloc, void>> final_promise_;
 
   std::atomic<std::uint8_t> state_ = 0;
   std::atomic<std::uint8_t> ref_count_ = 0;
