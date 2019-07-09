@@ -224,6 +224,41 @@ void foo() {
 }
 ```
 
+### Future Streams
+
+#### Producing Future streams
+```cpp
+aom::Stream_future<int> get_stream() {
+   aom::Stream_promise<int> prom;
+   auto result = prom.get_future();
+   
+   std::thread worker([p = std::move(prom)]() mutable {
+     p.push(1);
+     p.push(2);
+     p.push(3);
+     p.push(4);
+     
+     // If p is destroyed, the stream is implicitely failed.
+     p.complete();
+   });
+
+   worker.detach();
+
+   return result;
+}
+```
+
+#### Consuming Future streams
+```cpp
+ auto all_done = get_stream().for_each([](int v) {
+   std::cout << v << "\n";
+ }).then([](){
+   std::cout << "all done!\n";
+ });
+ 
+ all_done.get();
+```
+
 ## Performance notes
 
 The library assumes that, more often than not, a callback is attached to the

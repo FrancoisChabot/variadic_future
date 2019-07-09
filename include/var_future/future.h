@@ -22,6 +22,7 @@
 #include "var_future/impl/storage_decl.h"
 
 #include <memory>
+#include <string>
 
 namespace aom {
 
