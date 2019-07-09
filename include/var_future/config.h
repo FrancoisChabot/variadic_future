@@ -41,8 +41,6 @@ using unexpected = nonstd::unexpected_type<std::exception_ptr>;
 
 //#define VAR_FUTURE_NO_UB
 
-namespace aom {
-
-}  // namespace aom
+namespace aom {}  // namespace aom
 
 #endif

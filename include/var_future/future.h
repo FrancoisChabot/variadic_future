@@ -281,7 +281,7 @@ class Basic_promise {
  private:
   bool future_created_ = false;
   bool value_assigned_ = false;
-   
+
   detail::Storage_ptr<storage_type> storage_;
 
   Basic_promise(const Basic_promise&) = delete;

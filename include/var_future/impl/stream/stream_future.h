@@ -45,7 +45,7 @@ Basic_stream_future<Alloc, Ts...>::for_each(QueueT& queue, CbT&& cb) {
                 "for_each should be accepting the correct arguments");
 
   using handler_t =
-      detail::Future_stream_foreach_handler<std::decay_t<CbT>, QueueT, Ts...>;
+      detail::Future_stream_foreach_handler<Alloc, std::decay_t<CbT>, QueueT, Ts...>;
 
   // This must be done BEFORE set_handler
   auto result_fut = storage_->get_final_future();
