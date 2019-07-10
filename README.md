@@ -6,7 +6,7 @@
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://francoischabot.github.io/variadic_future/annotated.html)
 # Variadic futures
 
-Variadic, completion-based futures for C++17.
+High-performance variadic completion-based futures for C++17.
 
 ## Why?
 
