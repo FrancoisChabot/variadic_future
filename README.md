@@ -80,13 +80,22 @@ The **arguments** of a callback for a `Future<T, U, V>` will be:
 * In error-propagating mode: `cb(T, U, V)` where void arguments are ommited.
 
 ```cpp
-  Future<void, int, void, float> f1;
-  Future<void, int, void, float> f2;
-  Future<void, int, void, float> f3;
+  Future<void> f1;
 
-  auto f11 = f1.then([](int, float){});
-  auto f22 = f2.then_expect([](expected<void>, expected<int>, expected<void>, expected<float>){});
-  f3.finally([](expected<void>, expected<int>, expected<void>, expected<float>){});
+  auto f11 = f1.then([](){});
+  f1.finally([](expected<void>){});
+
+
+  Future<int, float> f2;
+
+  auto f22 = f2.then([](int, float){});
+  f.finally([](expected<int>, expected<int>){});
+
+
+  Future<void, int> f3;
+
+  auto f33 = f3.then([](int){});
+  f3.finally([](expected<void>, expected<int>){});
 ```
 
 * The **return value** of a chaining callback will become a future of the matching type. 
