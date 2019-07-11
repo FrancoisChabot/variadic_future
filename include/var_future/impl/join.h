@@ -40,26 +40,18 @@ struct Landing {
 
 // Used by join to listen to the individual futures.
 template <std::size_t id, typename LandingT, typename... FutTs>
-void bind_landing(const std::shared_ptr<LandingT>&, FutTs&&...) {}
+void bind_landing(const std::shared_ptr<LandingT>&, FutTs&&...) {
+  static_assert(sizeof...(FutTs) == 0) ;
+}
 
 template <std::size_t id, typename LandingT, typename Front, typename... FutTs>
-void bind_landing(const std::shared_ptr<LandingT>& l, Future<Front>&& front,
+void bind_landing(const std::shared_ptr<LandingT>& l, Front&& front,
                   FutTs&&... futs) {
-// This is technically UB by omission in the standard,
-// but is 100% fine in all known compilers right now.
-// See: https://stackoverflow.com/questions/56497862/
-#ifndef VAR_FUTURE_NO_UB
-  front.finally([l](expected<Front>&& e) {
-    std::get<id>(l->landing_) = std::move(e);
-    l->ping();
-  });
-#else
   auto value_landing = &std::get<id>(l->landing_);
-  front.finally([=](expected<Front>&& e) {
+  front.finally([=](expected<typename Front::value_type>&& e) {
     *value_landing = std::move(e);
     l->ping();
   });
-#endif
 
   bind_landing<id + 1>(l, std::forward<FutTs>(futs)...);
 }

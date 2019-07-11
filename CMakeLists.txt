@@ -73,7 +73,7 @@ if(${VAR_FUTURES_BUILD_BENCHMARKS})
   add_subdirectory(benchmarks)
 endif()
 
-if(VAR_FUTURES_BUILD_TESTS)
+if(${VAR_FUTURES_BUILD_TESTS})
 
   include(CTest)
   include(GoogleTest)
@@ -86,6 +86,7 @@ if(VAR_FUTURES_BUILD_TESTS)
     tests/allocator.cpp
     tests/async.cpp
     tests/int.cpp
+    tests/join.cpp
     tests/future_of_reference.cpp
     tests/misc.cpp
     tests/stream.cpp
@@ -104,7 +105,7 @@ if(VAR_FUTURES_BUILD_TESTS)
   include(ProcessorCount)
   ProcessorCount(PROCESSOR_COUNT)
 
-  if(VAR_FUTURES_TEST_COVERAGE) 
+  if(${VAR_FUTURES_TEST_COVERAGE}) 
     if(CMAKE_COMPILER_IS_GNUCXX)
       setup_target_for_coverage_lcov(
         NAME coverage
@@ -116,7 +117,7 @@ if(VAR_FUTURES_BUILD_TESTS)
   gtest_discover_tests(futures_test)
 endif()
 
-if(VAR_FUTURES_BUILD_EXAMPLES)
+if(${VAR_FUTURES_BUILD_EXAMPLES})
   add_subdirectory(examples)
 endif()
 
