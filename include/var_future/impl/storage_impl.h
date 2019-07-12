@@ -61,8 +61,9 @@ template <typename Alloc, typename... Ts>
 template <typename Arg_alloc>
 void Future_storage<Alloc, Ts...>::fullfill(
     Basic_future<Arg_alloc, Ts...>&& f) {
-  f.finally([this](expected<Ts>... f) {
-    this->finish(std::make_tuple(std::move(f)...));
+  Storage_ptr<Future_storage<Alloc, Ts...>> self(this);
+  f.finally([self](expected<Ts>... f) {
+    self->finish(std::make_tuple(std::move(f)...));
   });
 }
 

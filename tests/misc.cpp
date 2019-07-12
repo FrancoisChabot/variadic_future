@@ -332,3 +332,22 @@ TEST(Future, segmented_callback) {
 
   EXPECT_EQ(24, f.get());
 }
+
+TEST(Future, defered_returned_future) {
+  Promise<int> p;
+
+  auto f = p.get_future().then([](int){
+    Promise<int> final_p;
+
+    auto result = final_p.get_future();
+    std::thread w([final_p = std::move(final_p)]() mutable{
+      final_p.set_value(15);
+    });
+    w.detach();
+    return result;
+  });
+
+  p.set_value(1);
+  EXPECT_EQ(f.get(), 15);
+
+}
