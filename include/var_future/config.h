@@ -20,7 +20,7 @@
 
 #define AOM_VARFUT_VERSION_MAJOR 0
 #define AOM_VARFUT_VERSION_MINOR 3
-#define AOM_VARFUT_VERSION_PATCH 1
+#define AOM_VARFUT_VERSION_PATCH 2
 
 // **************************** std::expected ***************************//
 
