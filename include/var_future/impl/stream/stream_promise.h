@@ -59,5 +59,10 @@ void Basic_stream_promise<Alloc, Ts...>::set_exception(fail_type e) {
   storage_->fail(std::move(e));
   storage_.reset();
 }
+
+template <typename Alloc, typename... Ts>
+Basic_stream_promise<Alloc, Ts...>::operator bool() const {
+  return storage_;
+}
 }  // namespace aom
 #endif

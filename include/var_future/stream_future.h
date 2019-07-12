@@ -172,6 +172,14 @@ class Basic_stream_promise {
    */
   void set_exception(fail_type);
 
+  /**
+  * @brief returns wether the promise still refers to an uncompleted future 
+  * 
+  * @return true 
+  * @return false 
+  */
+  operator bool() const;
+  
  private:
   detail::Storage_ptr<storage_type> storage_;
 
