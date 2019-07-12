@@ -48,7 +48,7 @@ template <std::size_t id, typename LandingT, typename Front, typename... FutTs>
 void bind_landing(const std::shared_ptr<LandingT>& l, Front&& front,
                   FutTs&&... futs) {
   auto value_landing = &std::get<id>(l->landing_);
-  front.finally([=](expected<typename Front::value_type>&& e) {
+  front.finally([=](expected<typename std::decay_t<Front>::value_type>&& e) {
     *value_landing = std::move(e);
     l->ping();
   });
@@ -66,7 +66,7 @@ auto join(FirstT&& first, FutTs&&... futs) {
                 "trying to join a non-future");
 
   using landing_type =
-      detail::Landing<typename FirstT::allocator_type, std::decay_t<FirstT>,
+      detail::Landing<typename std::decay_t<FirstT>::allocator_type, std::decay_t<FirstT>,
                       std::decay_t<FutTs>...>;
   using fut_type = typename landing_type::storage_type::future_type;
 
