@@ -70,5 +70,10 @@ void Basic_promise<Alloc, Ts...>::set_exception(fail_type e) {
 
   if (future_created_) storage_.reset();
 }
+
+template <typename Alloc, typename... Ts>
+Basic_promise<Alloc, Ts...>::operator bool() const {
+  return storage_;
+}
 }  // namespace aom
 #endif

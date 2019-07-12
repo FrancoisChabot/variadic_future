@@ -279,6 +279,13 @@ class Basic_promise {
    */
   void set_exception(fail_type error);
 
+  /**
+  * @brief returns wether the promise still refers to an uncompleted future 
+  * 
+  * @return true 
+  * @return false 
+  */
+  operator bool() const;
  private:
   bool future_created_ = false;
   bool value_assigned_ = false;
