@@ -117,6 +117,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aabc6fccfc7171b487aaf3e11f0d24708"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__stream__promise.html#aabc6fccfc7171b487aaf3e11f0d24708">set_exception</a> (fail_type)</td></tr>
 <tr class="memdesc:aabc6fccfc7171b487aaf3e11f0d24708"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notify failure of the stream.  <a href="#aabc6fccfc7171b487aaf3e11f0d24708">More...</a><br /></td></tr>
 <tr class="separator:aabc6fccfc7171b487aaf3e11f0d24708"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa5edd55db3aaa50f2839885f6a4cf93b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__stream__promise.html#aa5edd55db3aaa50f2839885f6a4cf93b">operator bool</a> () const</td></tr>
+<tr class="memdesc:aa5edd55db3aaa50f2839885f6a4cf93b"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns wether the promise still refers to an uncompleted future  <a href="#aa5edd55db3aaa50f2839885f6a4cf93b">More...</a><br /></td></tr>
+<tr class="separator:aa5edd55db3aaa50f2839885f6a4cf93b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;typename Alloc, typename... Ts&gt;<br />
@@ -250,6 +253,30 @@ template&lt;typename Alloc , typename... Ts&gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>future_type </dd></dl>
+
+</div>
+</div>
+<a id="aa5edd55db3aaa50f2839885f6a4cf93b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa5edd55db3aaa50f2839885f6a4cf93b">&#9670;&nbsp;</a></span>operator bool()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Alloc , typename... Ts&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classaom_1_1Basic__stream__promise.html">aom::Basic_stream_promise</a>&lt; Alloc, Ts &gt;::operator bool </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>returns wether the promise still refers to an uncompleted future </p>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
 
 </div>
 </div>
