@@ -61,8 +61,8 @@ void bind_landing(const std::shared_ptr<LandingT>& l, Front&& front,
 template <typename FirstT, typename... FutTs>
 auto join(FirstT&& first, FutTs&&... futs) {
   static_assert(sizeof...(FutTs) >= 1, "Trying to join less than two futures?");
-  static_assert(is_future_v<FirstT>);
-  static_assert(std::conjunction_v<is_future<FutTs>...>,
+  static_assert(is_future_v<std::decay_t<FirstT>>);
+  static_assert(std::conjunction_v<is_future<std::decay_t<FutTs>>...>,
                 "trying to join a non-future");
 
   using landing_type =
