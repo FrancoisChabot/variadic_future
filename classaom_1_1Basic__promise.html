@@ -125,6 +125,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aed6305b263a202b3f95b191845ea8b6f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__promise.html#aed6305b263a202b3f95b191845ea8b6f">set_exception</a> (fail_type error)</td></tr>
 <tr class="memdesc:aed6305b263a202b3f95b191845ea8b6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fails the promise.  <a href="#aed6305b263a202b3f95b191845ea8b6f">More...</a><br /></td></tr>
 <tr class="separator:aed6305b263a202b3f95b191845ea8b6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8db4e898fc1446a915fd89aea19e8a1c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaom_1_1Basic__promise.html#a8db4e898fc1446a915fd89aea19e8a1c">operator bool</a> () const</td></tr>
+<tr class="memdesc:a8db4e898fc1446a915fd89aea19e8a1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns wether the promise still refers to an uncompleted future  <a href="#a8db4e898fc1446a915fd89aea19e8a1c">More...</a><br /></td></tr>
+<tr class="separator:a8db4e898fc1446a915fd89aea19e8a1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;typename Alloc, typename... Ts&gt;<br />
@@ -199,6 +202,30 @@ template&lt;typename Alloc , typename... Ts&gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>future_type </dd></dl>
+
+</div>
+</div>
+<a id="a8db4e898fc1446a915fd89aea19e8a1c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8db4e898fc1446a915fd89aea19e8a1c">&#9670;&nbsp;</a></span>operator bool()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Alloc , typename... Ts&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classaom_1_1Basic__promise.html">aom::Basic_promise</a>&lt; Alloc, Ts &gt;::operator bool </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>returns wether the promise still refers to an uncompleted future </p>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
 
 </div>
 </div>
