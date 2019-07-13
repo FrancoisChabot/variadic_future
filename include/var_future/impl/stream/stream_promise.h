@@ -55,7 +55,7 @@ void Basic_stream_promise<Alloc, Ts...>::complete() {
 template <typename Alloc, typename... Ts>
 void Basic_stream_promise<Alloc, Ts...>::set_exception(fail_type e) {
   assert(storage_);
-  
+
   storage_->fail(std::move(e));
   storage_.reset();
 }

@@ -37,16 +37,13 @@ struct Test_alloc {
     return reinterpret_cast<T*>(std::malloc(count * sizeof(T)));
   }
 
-  void deallocate(T* ptr, std::size_t) {
-    std::free(ptr);
-  }
-
+  void deallocate(T* ptr, std::size_t) { std::free(ptr); }
 };
 
 template <>
 struct Test_alloc<void> {
   using value_type = void;
-  
+
   template <typename U>
   struct rebind {
     using other = Test_alloc<U>;
@@ -65,11 +62,9 @@ TEST(Join, simple_join) {
   p1.set_value(1);
   p2.set_value(2);
 
-
   std::cout << "bb\n";
   EXPECT_EQ(3, f.get());
 }
-
 
 TEST(Join, simple_join_with_allocator) {
   Basic_promise<Test_alloc<void>, int> p1;
@@ -79,10 +74,8 @@ TEST(Join, simple_join_with_allocator) {
     return x + y;
   });
 
-
   p1.set_value(1);
   p2.set_value(2);
-
 
   EXPECT_EQ(3, f.get());
 }

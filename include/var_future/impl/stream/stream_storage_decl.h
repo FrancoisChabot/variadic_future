@@ -107,7 +107,7 @@ class Stream_storage : public Alloc {
   std::mutex mtx_;
   fullfill_buffer_type fullfilled_;
   std::exception_ptr error_;
-  
+
   template <typename T>
   friend struct Storage_ptr;
 

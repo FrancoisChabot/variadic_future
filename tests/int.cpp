@@ -17,8 +17,8 @@
 
 #include "gtest/gtest.h"
 
-#include <random>
 #include <queue>
+#include <random>
 
 using namespace aom;
 
@@ -409,23 +409,23 @@ TEST(Future_int, promote_tuple_to_variadic) {
 }
 
 TEST(Future_int, random_timing) {
-
   std::random_device rd;
   std::mt19937 e2(rd());
 
   std::uniform_real_distribution<> dist(0, 0.002);
 
-  for(int i = 0 ; i < 10000; ++i) {
-
+  for (int i = 0; i < 10000; ++i) {
     Promise<int> prom;
-    Future<int> fut = prom.get_future(); 
-    std::thread writer_thread([&](){
-      std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(dist(e2)));
+    Future<int> fut = prom.get_future();
+    std::thread writer_thread([&]() {
+      std::this_thread::sleep_for(
+          std::chrono::duration<double, std::milli>(dist(e2)));
 
       prom.set_value(12);
     });
 
-    std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(dist(e2)));
+    std::this_thread::sleep_for(
+        std::chrono::duration<double, std::milli>(dist(e2)));
 
     EXPECT_EQ(12, fut.get());
     writer_thread.join();

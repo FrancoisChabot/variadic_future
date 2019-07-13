@@ -4,6 +4,7 @@ project(var_future VERSION 0.1.0)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
+find_package(Threads REQUIRED)
 include(GNUInstallDirs)
 
 # Check if var_futures is being used directly or via add_subdirectory, but allow overriding
@@ -21,9 +22,44 @@ option(VAR_FUTURES_BUILD_TESTS "var_futures tests" ON)
 option(VAR_FUTURES_TEST_COVERAGE "var_futures Coverage" OFF)
 option(VAR_FUTURES_INSTALL "Generate the install target" ${VAR_FUTURES_MASTER_PROJECT})
 
-find_package(Threads REQUIRED)
+############################ code format ############################
+if(${VAR_FUTURES_MASTER_PROJECT})
+  if(NOT DEFINED CLANG_FORMAT_BIN)
+    find_program(CLANG_FORMAT_BIN NAMES clang-format)
+  endif()
 
-if(VAR_FUTURES_TEST_COVERAGE) 
+  file(GLOB_RECURSE ALL_SOURCE_FILES *.cpp *.h *.cxx *.hxx *.hpp *.cc *.ipp)
+
+  set(CLANG_FORMAT_EXCLUDE_PATTERNS ${CLANG_FORMAT_EXCLUDE_PATTERNS} 
+    "/CMakeFiles/" 
+    "cmake" 
+    "nonstd" 
+    "include/asio"
+  )
+
+  foreach (SOURCE_FILE ${ALL_SOURCE_FILES})
+      foreach (EXCLUDE_PATTERN ${CLANG_FORMAT_EXCLUDE_PATTERNS})
+          string(FIND ${SOURCE_FILE} ${EXCLUDE_PATTERN} EXCLUDE_FOUND)
+          if (NOT ${EXCLUDE_FOUND} EQUAL -1)
+              list(REMOVE_ITEM ALL_SOURCE_FILES ${SOURCE_FILE})
+          endif ()
+      endforeach ()
+  endforeach ()
+
+
+  add_custom_target(format
+      COMMENT "Running clang-format to change files"
+      COMMAND ${CLANG_FORMAT_BIN}
+      -style=file
+      -i
+      ${ALL_SOURCE_FILES}
+  )
+endif()
+#############################################################
+
+
+
+if(${VAR_FUTURES_TEST_COVERAGE}) 
   set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
   if(CMAKE_COMPILER_IS_GNUCXX)
       include(CodeCoverage)
@@ -91,7 +127,7 @@ if(${VAR_FUTURES_BUILD_TESTS})
     tests/misc.cpp
     tests/stream.cpp
     tests/void.cpp
-    )
+  )
 
   if(MSVC)
     target_compile_options(futures_test PUBLIC /W4 /WX)

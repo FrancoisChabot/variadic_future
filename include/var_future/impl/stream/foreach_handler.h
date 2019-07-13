@@ -30,14 +30,15 @@ class Future_stream_foreach_handler
     : public Stream_handler_base<QueueT, void, Ts...> {
   using parent_type = Stream_handler_base<QueueT, void, Ts...>;
   using fail_type = typename parent_type::fail_type;
- public:
 
+ public:
   CbT cb_;
   Storage_ptr<Future_storage<Alloc, void>> finalizer_;
- 
-  CbT& get_cb() { return &cb_;}
 
-  Future_stream_foreach_handler(Storage_ptr<Future_storage<Alloc, void>> fin, QueueT* q, CbT cb)
+  CbT& get_cb() { return &cb_; }
+
+  Future_stream_foreach_handler(Storage_ptr<Future_storage<Alloc, void>> fin,
+                                QueueT* q, CbT cb)
       : parent_type(q), cb_(std::move(cb)), finalizer_(std::move(fin)) {}
 
   void push(Ts... args) override {
@@ -45,19 +46,22 @@ class Future_stream_foreach_handler
   }
 
   static void do_push(QueueT* q, CbT cb, std::tuple<Ts...> args) {
-    enqueue(q, [cb=std::move(cb), args = (std::move(args))]() mutable { std::apply(cb, std::move(args)); });
+    enqueue(q, [cb = std::move(cb), args = (std::move(args))]() mutable {
+      std::apply(cb, std::move(args));
+    });
   }
 
   void complete() override {
-    enqueue(this->get_queue(), [fin = std::move(finalizer_)](){
+    enqueue(this->get_queue(), [fin = std::move(finalizer_)]() {
       fin->fullfill(fullfill_type_t<void>());
     });
   }
 
   void fail(fail_type f) override {
-    enqueue(this->get_queue(), [f=std::move(f), fin = std::move(finalizer_)]() mutable {
-      fin->fail(std::move(f));
-    });
+    enqueue(this->get_queue(),
+            [f = std::move(f), fin = std::move(finalizer_)]() mutable {
+              fin->fail(std::move(f));
+            });
   }
 };
 }  // namespace detail

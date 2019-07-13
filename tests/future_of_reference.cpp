@@ -22,7 +22,6 @@
 using namespace aom;
 
 TEST(Ref_Future, simple_case) {
-
   Promise<std::reference_wrapper<int>> p;
   Future<std::reference_wrapper<int>> f = p.get_future();
 
@@ -30,9 +29,8 @@ TEST(Ref_Future, simple_case) {
 
   p.set_value(var);
 
-  f.finally([](expected<std::reference_wrapper<int>> dst) {
-    (*dst).get() = 4;
-  });
+  f.finally(
+      [](expected<std::reference_wrapper<int>> dst) { (*dst).get() = 4; });
 
   EXPECT_EQ(var, 4);
 }

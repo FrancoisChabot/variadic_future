@@ -20,7 +20,6 @@
 #include <array>
 #include <queue>
 
-
 using namespace aom;
 
 namespace {
@@ -33,7 +32,8 @@ struct Test_alloc {
     using other = Test_alloc<U>;
   };
 
-  Test_alloc(std::atomic<int>* counter, std::atomic<int>* total) : counter_(counter), total_(total) {}
+  Test_alloc(std::atomic<int>* counter, std::atomic<int>* total)
+      : counter_(counter), total_(total) {}
 
   T* allocate(std::size_t count) {
     ++*counter_;
@@ -66,13 +66,14 @@ struct Test_alloc {
 template <>
 struct Test_alloc<void> {
   using value_type = void;
-  
+
   template <typename U>
   struct rebind {
     using other = Test_alloc<U>;
   };
 
-  Test_alloc(std::atomic<int>* counter, std::atomic<int>* total) : counter_(counter), total_(total) {}
+  Test_alloc(std::atomic<int>* counter, std::atomic<int>* total)
+      : counter_(counter), total_(total) {}
 
   template <typename U>
   explicit Test_alloc(const Test_alloc<U>& rhs) {
@@ -96,7 +97,7 @@ using Promise_type = Basic_promise<Test_alloc<void>, int>;
 
 struct prom_fut {
   prom_fut(std::atomic<int>* counter, std::atomic<int>* total)
-  : p(Test_alloc<void>(counter, total)) {
+      : p(Test_alloc<void>(counter, total)) {
     f = p.get_future();
   }
 

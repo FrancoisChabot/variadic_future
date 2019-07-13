@@ -41,7 +41,7 @@ struct Landing {
 // Used by join to listen to the individual futures.
 template <std::size_t id, typename LandingT, typename... FutTs>
 void bind_landing(const std::shared_ptr<LandingT>&, FutTs&&...) {
-  static_assert(sizeof...(FutTs) == 0) ;
+  static_assert(sizeof...(FutTs) == 0);
 }
 
 template <std::size_t id, typename LandingT, typename Front, typename... FutTs>
@@ -66,8 +66,8 @@ auto join(FirstT&& first, FutTs&&... futs) {
                 "trying to join a non-future");
 
   using landing_type =
-      detail::Landing<typename std::decay_t<FirstT>::allocator_type, std::decay_t<FirstT>,
-                      std::decay_t<FutTs>...>;
+      detail::Landing<typename std::decay_t<FirstT>::allocator_type,
+                      std::decay_t<FirstT>, std::decay_t<FutTs>...>;
   using fut_type = typename landing_type::storage_type::future_type;
 
   auto landing = std::make_shared<landing_type>();

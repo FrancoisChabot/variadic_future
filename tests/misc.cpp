@@ -297,16 +297,17 @@ TEST(Future, void_promise) {
   EXPECT_EQ(4, dst);
 }
 
-
 TEST(Future, variadic_get) {
   static_assert(std::is_same_v<Future<void>::value_type, void>);
   static_assert(std::is_same_v<Future<int>::value_type, int>);
   static_assert(std::is_same_v<Future<void, void>::value_type, void>);
-  static_assert(std::is_same_v<Future<int, int>::value_type, std::tuple<int, int>>);
+  static_assert(
+      std::is_same_v<Future<int, int>::value_type, std::tuple<int, int>>);
   static_assert(std::is_same_v<Future<int, void>::value_type, int>);
   static_assert(std::is_same_v<Future<void, int>::value_type, int>);
   static_assert(std::is_same_v<Future<void, int, void>::value_type, int>);
-  static_assert(std::is_same_v<Future<int, void, int>::value_type, std::tuple<int, int>>);
+  static_assert(
+      std::is_same_v<Future<int, void, int>::value_type, std::tuple<int, int>>);
 }
 
 TEST(Future, variadic_get_failure) {
@@ -321,12 +322,9 @@ TEST(Future, variadic_get_failure) {
 TEST(Future, segmented_callback) {
   Promise<void> p;
 
-  auto f = p.get_future().then([](){
-    return segmented(12, 12);
-  })
-  .then([](int a, int b) {
-    return a + b;
-  });
+  auto f = p.get_future()
+               .then([]() { return segmented(12, 12); })
+               .then([](int a, int b) { return a + b; });
 
   p.set_value();
 
@@ -336,18 +334,16 @@ TEST(Future, segmented_callback) {
 TEST(Future, defered_returned_future) {
   Promise<int> p;
 
-  auto f = p.get_future().then([](int){
+  auto f = p.get_future().then([](int) {
     Promise<int> final_p;
 
     auto result = final_p.get_future();
-    std::thread w([final_p = std::move(final_p)]() mutable{
-      final_p.set_value(15);
-    });
+    std::thread w(
+        [final_p = std::move(final_p)]() mutable { final_p.set_value(15); });
     w.detach();
     return result;
   });
 
   p.set_value(1);
   EXPECT_EQ(f.get(), 15);
-
 }
