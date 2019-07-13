@@ -336,9 +336,21 @@ auto async(QueueT& q, CbT&& callback);
 template <typename Alloc, typename... Ts>
 Basic_future<Alloc, Ts...> flatten(Basic_future<Alloc, std::tuple<Ts...>>& rhs);
 
+/**
+ * @brief Used to let a callback return a higher-order future.
+ * 
+ * @tparam Ts 
+ * @param args 
+ * @return auto 
+ */
 template <typename... Ts>
 auto segmented(Ts&&... args);
 
+/**
+ * @brief Obtains the current version of the library.
+ * 
+ * @return std::string 
+ */
 inline std::string varfut_lib_version_string();
 }  // namespace aom
 
