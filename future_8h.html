@@ -125,12 +125,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a73fc35161a651177ec1d508cbacaf8e9"><td class="memTemplItemLeft" align="right" valign="top">Basic_future&lt; Alloc, Ts... &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="future_8h.html#a73fc35161a651177ec1d508cbacaf8e9">aom::flatten</a> (Basic_future&lt; Alloc, std::tuple&lt; Ts... &gt;&gt; &amp;rhs)</td></tr>
 <tr class="memdesc:a73fc35161a651177ec1d508cbacaf8e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a higher-order Future from a <code>future&lt;tuple&gt;</code>  <a href="future_8h.html#a73fc35161a651177ec1d508cbacaf8e9">More...</a><br /></td></tr>
 <tr class="separator:a73fc35161a651177ec1d508cbacaf8e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4c5384aebfbf559d3fc3ab9611c9e06a"><td class="memTemplParams" colspan="2"><a id="a4c5384aebfbf559d3fc3ab9611c9e06a"></a>
-template&lt;typename... Ts&gt; </td></tr>
-<tr class="memitem:a4c5384aebfbf559d3fc3ab9611c9e06a"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>aom::segmented</b> (Ts &amp;&amp;... args)</td></tr>
+<tr class="memitem:a4c5384aebfbf559d3fc3ab9611c9e06a"><td class="memTemplParams" colspan="2">template&lt;typename... Ts&gt; </td></tr>
+<tr class="memitem:a4c5384aebfbf559d3fc3ab9611c9e06a"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="future_8h.html#a4c5384aebfbf559d3fc3ab9611c9e06a">aom::segmented</a> (Ts &amp;&amp;... args)</td></tr>
+<tr class="memdesc:a4c5384aebfbf559d3fc3ab9611c9e06a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Used to let a callback return a higher-order future.  <a href="future_8h.html#a4c5384aebfbf559d3fc3ab9611c9e06a">More...</a><br /></td></tr>
 <tr class="separator:a4c5384aebfbf559d3fc3ab9611c9e06a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a27c75c346936cdc67593803c00c5eb77"><td class="memItemLeft" align="right" valign="top"><a id="a27c75c346936cdc67593803c00c5eb77"></a>
-std::string&#160;</td><td class="memItemRight" valign="bottom"><b>aom::varfut_lib_version_string</b> ()</td></tr>
+<tr class="memitem:a27c75c346936cdc67593803c00c5eb77"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="future_8h.html#a27c75c346936cdc67593803c00c5eb77">aom::varfut_lib_version_string</a> ()</td></tr>
+<tr class="memdesc:a27c75c346936cdc67593803c00c5eb77"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtains the current version of the library.  <a href="future_8h.html#a27c75c346936cdc67593803c00c5eb77">More...</a><br /></td></tr>
 <tr class="separator:a27c75c346936cdc67593803c00c5eb77"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -246,6 +246,69 @@ template&lt;typename... FutTs&gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>auto </dd></dl>
+
+</div>
+</div>
+<a id="file_a4c5384aebfbf559d3fc3ab9611c9e06a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#file_a4c5384aebfbf559d3fc3ab9611c9e06a">&#9670;&nbsp;</a></span>segmented()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename... Ts&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">auto aom::segmented </td>
+          <td>(</td>
+          <td class="paramtype">Ts &amp;&amp;...&#160;</td>
+          <td class="paramname"><em>args</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Used to let a callback return a higher-order future. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Ts</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">args</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>auto </dd></dl>
+
+</div>
+</div>
+<a id="file_a27c75c346936cdc67593803c00c5eb77"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#file_a27c75c346936cdc67593803c00c5eb77">&#9670;&nbsp;</a></span>varfut_lib_version_string()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string aom::varfut_lib_version_string </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Obtains the current version of the library. </p>
+<dl class="section return"><dt>Returns</dt><dd>std::string </dd></dl>
 
 </div>
 </div>

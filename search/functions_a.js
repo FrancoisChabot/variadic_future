@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['_7ebasic_5fstream_5fpromise',['~Basic_stream_promise',['../classaom_1_1Basic__stream__promise.html#ad5c03bc49bbf1d545c1d26420670c827',1,'aom::Basic_stream_promise']]]
+  ['varfut_5flib_5fversion_5fstring',['varfut_lib_version_string',['../future_8h.html#a27c75c346936cdc67593803c00c5eb77',1,'aom']]]
 ];
