@@ -24,7 +24,7 @@ jobs:
           name: Test
           command: |
             cd _bld 
-            ctest -j $(nproc) -T memcheck
+            ctest -j $(nproc)
   
   release_build:
     docker:
@@ -50,7 +50,7 @@ jobs:
           name: Test
           command: |
             cd _bld 
-            ctest -j $(nproc) -T memcheck
+            ctest -j $(nproc)
 
   rebuild_doc:
     docker:
