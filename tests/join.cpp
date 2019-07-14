@@ -15,7 +15,7 @@
 #include <iostream>
 #include "var_future/future.h"
 
-#include "gtest/gtest.h"
+#include "doctest.h"
 
 #include <queue>
 
@@ -50,7 +50,8 @@ struct Test_alloc<void> {
   };
 };
 
-TEST(Join, simple_join) {
+TEST_CASE("joining futures") {
+SUBCASE("simple_join") {
   Promise<int> p1;
   Promise<int> p2;
 
@@ -63,10 +64,10 @@ TEST(Join, simple_join) {
   p2.set_value(2);
 
   std::cout << "bb\n";
-  EXPECT_EQ(3, f.get());
+  REQUIRE_EQ(3, f.get());
 }
 
-TEST(Join, simple_join_with_allocator) {
+SUBCASE("simple_join_with_allocator") {
   Basic_promise<Test_alloc<void>, int> p1;
   Basic_promise<Test_alloc<void>, int> p2;
 
@@ -77,5 +78,6 @@ TEST(Join, simple_join_with_allocator) {
   p1.set_value(1);
   p2.set_value(2);
 
-  EXPECT_EQ(3, f.get());
+  REQUIRE_EQ(3, f.get());
+}
 }

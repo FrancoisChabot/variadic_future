@@ -15,7 +15,7 @@
 #include <iostream>
 #include "var_future/future.h"
 
-#include "gtest/gtest.h"
+#include "doctest.h"
 
 #include <queue>
 
@@ -53,45 +53,56 @@ void expected_noop_fail(expected<void>) { throw std::runtime_error("dead"); }
 void no_op() {}
 
 void failure() { throw std::runtime_error("dead"); }
+
+int return_int() { return 1; }
+
+int return_int_fail() { throw std::runtime_error(""); }
+
+
+expected<void> expected_cb() { return {}; }
+expected<void> expected_cb_fail() {
+  return aom::unexpected{std::make_exception_ptr(std::runtime_error("yikes"))};
+}
 }  // namespace
 
-TEST(Future_void, fundamental_expectations) {
+TEST_CASE("future pf void") {
+SUBCASE("fundamental_expectations") {
   // These tests failing do not mean that the library doesn't work.
   // It's just that some architecture-related assumptions made are not being
   // met, so performance might be sub-optimal.
 
   // The special immediate queue type qualifies as having static push.
-  EXPECT_TRUE(detail::has_static_push_v<detail::Immediate_queue>);
+  REQUIRE(detail::has_static_push_v<detail::Immediate_queue>);
 
   // Base handler should be nothing but a vtable pointer.
-  EXPECT_EQ(sizeof(void*),
+  REQUIRE_EQ(sizeof(void*),
             sizeof(detail::Future_handler_base<detail::Immediate_queue, void>));
 }
 
-TEST(Future_void, blank) { Future<void> fut; }
+SUBCASE("blank") { Future<void> fut; }
 
-TEST(Future_void, unfilled_promise_failiure) {
+SUBCASE("unfilled_promise_failiure") {
   Future<void> fut;
   {
     Promise<void> p;
     fut = p.get_future();
   }
 
-  EXPECT_THROW(fut.std_future().get(), Unfullfilled_promise);
+  REQUIRE_THROWS_AS(fut.std_future().get(), Unfullfilled_promise);
 }
 
-TEST(Future_void, preloaded_std_get) {
+SUBCASE("preloaded_std_get") {
   pf_set pf;
 
   pf.complete();
 
-  EXPECT_NO_THROW(pf[0].get());
-  EXPECT_THROW(pf[1].get(), std::logic_error);
-  EXPECT_NO_THROW(pf[2].get());
-  EXPECT_THROW(pf[3].get(), std::logic_error);
+  REQUIRE_NOTHROW(pf[0].get());
+  REQUIRE_THROWS_AS(pf[1].get(), std::logic_error);
+  REQUIRE_NOTHROW(pf[2].get());
+  REQUIRE_THROWS_AS(pf[3].get(), std::logic_error);
 }
 
-TEST(Future_void, delayed_std_get) {
+SUBCASE("delayed_std_get") {
   pf_set pf;
 
   std::mutex mtx;
@@ -108,15 +119,15 @@ TEST(Future_void, delayed_std_get) {
 
   l.unlock();
 
-  EXPECT_NO_THROW(std_f1.get());
-  EXPECT_THROW(std_f2.get(), std::logic_error);
-  EXPECT_NO_THROW(std_f3.get());
-  EXPECT_THROW(std_f4.get(), std::logic_error);
+  REQUIRE_NOTHROW(std_f1.get());
+  REQUIRE_THROWS_AS(std_f2.get(), std::logic_error);
+  REQUIRE_NOTHROW(std_f3.get());
+  REQUIRE_THROWS_AS(std_f4.get(), std::logic_error);
 
   thread.join();
 }
 
-TEST(Future_void, then_noop_pre) {
+SUBCASE("then_noop_pre") {
   pf_set pf;
 
   auto f1 = pf[0].f.then(no_op);
@@ -126,13 +137,13 @@ TEST(Future_void, then_noop_pre) {
 
   pf.complete();
 
-  EXPECT_NO_THROW(f1.std_future().get());
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_NO_THROW(f3.std_future().get());
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_NOTHROW(f1.std_future().get());
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_NOTHROW(f3.std_future().get());
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_void, then_noop_post) {
+SUBCASE("then_noop_post") {
   pf_set pf;
 
   pf.complete();
@@ -142,13 +153,13 @@ TEST(Future_void, then_noop_post) {
   auto f3 = pf[2].f.then(no_op);
   auto f4 = pf[3].f.then(no_op);
 
-  EXPECT_NO_THROW(f1.std_future().get());
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_NO_THROW(f3.std_future().get());
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_NOTHROW(f1.std_future().get());
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_NOTHROW(f3.std_future().get());
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_void, then_failure_pre) {
+SUBCASE("then_failure_pre") {
   pf_set pf;
 
   auto f1 = pf[0].f.then(failure);
@@ -158,13 +169,13 @@ TEST(Future_void, then_failure_pre) {
 
   pf.complete();
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_void, then_failure_post) {
+SUBCASE("then_failure_post") {
   pf_set pf;
 
   pf.complete();
@@ -174,13 +185,13 @@ TEST(Future_void, then_failure_post) {
   auto f3 = pf[2].f.then(failure);
   auto f4 = pf[3].f.then(failure);
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_void, then_expect_success_pre) {
+SUBCASE("then_expect_success_pre") {
   pf_set pf;
 
   auto f1 = pf[0].f.then_expect(expected_noop);
@@ -190,13 +201,13 @@ TEST(Future_void, then_expect_success_pre) {
 
   pf.complete();
 
-  EXPECT_NO_THROW(f1.std_future().get());
-  EXPECT_NO_THROW(f2.std_future().get());
-  EXPECT_NO_THROW(f3.std_future().get());
-  EXPECT_NO_THROW(f4.std_future().get());
+  REQUIRE_NOTHROW(f1.std_future().get());
+  REQUIRE_NOTHROW(f2.std_future().get());
+  REQUIRE_NOTHROW(f3.std_future().get());
+  REQUIRE_NOTHROW(f4.std_future().get());
 }
 
-TEST(Future_void, then_expect_success_post) {
+SUBCASE("then_expect_success_post") {
   pf_set pf;
 
   auto f1 = pf[0].f.then_expect(expected_noop);
@@ -206,13 +217,13 @@ TEST(Future_void, then_expect_success_post) {
 
   pf.complete();
 
-  EXPECT_NO_THROW(f1.std_future().get());
-  EXPECT_NO_THROW(f2.std_future().get());
-  EXPECT_NO_THROW(f3.std_future().get());
-  EXPECT_NO_THROW(f4.std_future().get());
+  REQUIRE_NOTHROW(f1.std_future().get());
+  REQUIRE_NOTHROW(f2.std_future().get());
+  REQUIRE_NOTHROW(f3.std_future().get());
+  REQUIRE_NOTHROW(f4.std_future().get());
 }
 
-TEST(Future_void, then_expect_failure_pre) {
+SUBCASE("then_expect_failure_pre") {
   pf_set pf;
 
   pf.complete();
@@ -222,13 +233,13 @@ TEST(Future_void, then_expect_failure_pre) {
   auto f3 = pf[2].f.then_expect(expected_noop_fail);
   auto f4 = pf[3].f.then_expect(expected_noop_fail);
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::runtime_error);
 }
 
-TEST(Future_void, then_expect_failure_post) {
+SUBCASE("then_expect_failure_post") {
   pf_set pf;
 
   auto f1 = pf[0].f.then_expect(expected_noop_fail);
@@ -238,13 +249,13 @@ TEST(Future_void, then_expect_failure_post) {
 
   pf.complete();
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::runtime_error);
 }
 
-TEST(Future_void, then_expect_finally_success_pre) {
+SUBCASE("then_expect_finally_success_pre") {
   pf_set pf;
 
   auto ref = expect_noop_count;
@@ -256,10 +267,10 @@ TEST(Future_void, then_expect_finally_success_pre) {
 
   pf.complete();
 
-  EXPECT_EQ(4 + ref, expect_noop_count);
+  REQUIRE_EQ(4 + ref, expect_noop_count);
 }
 
-TEST(Future_void, then_expect_finally_success_post) {
+SUBCASE("then_expect_finally_success_post") {
   pf_set pf;
 
   auto ref = expect_noop_count;
@@ -271,16 +282,10 @@ TEST(Future_void, then_expect_finally_success_post) {
   pf[2].f.finally(expected_noop);
   pf[3].f.finally(expected_noop);
 
-  EXPECT_EQ(4 + ref, expect_noop_count);
+  REQUIRE_EQ(4 + ref, expect_noop_count);
 }
 
-namespace {
-int return_int() { return 1; }
-
-int return_int_fail() { throw std::runtime_error(""); }
-}  // namespace
-
-TEST(Future_void, chain_to_int) {
+SUBCASE("chain_to_int") {
   pf_set pf;
 
   pf.complete();
@@ -290,13 +295,13 @@ TEST(Future_void, chain_to_int) {
   auto f3 = pf[2].f.then(return_int);
   auto f4 = pf[3].f.then(return_int);
 
-  EXPECT_EQ(1, f1.std_future().get());
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_EQ(1, f3.std_future().get());
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_EQ(1, f1.std_future().get());
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_EQ(1, f3.std_future().get());
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_void, chain_to_int_fail) {
+SUBCASE("chain_to_int_fail") {
   pf_set pf;
 
   pf.complete();
@@ -306,18 +311,13 @@ TEST(Future_void, chain_to_int_fail) {
   auto f3 = pf[2].f.then(return_int_fail);
   auto f4 = pf[3].f.then(return_int_fail);
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-expected<void> expected_cb() { return {}; }
-expected<void> expected_cb_fail() {
-  return aom::unexpected{std::make_exception_ptr(std::runtime_error("yikes"))};
-}
-
-TEST(Future_void, expected_returning_callback) {
+SUBCASE("expected_returning_callback") {
   pf_set pf;
 
   pf.complete();
@@ -327,13 +327,13 @@ TEST(Future_void, expected_returning_callback) {
   auto f3 = pf[2].f.then(expected_cb);
   auto f4 = pf[3].f.then(expected_cb);
 
-  EXPECT_NO_THROW(f1.std_future().get());
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_NO_THROW(f3.std_future().get());
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_NOTHROW(f1.std_future().get());
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_NOTHROW(f3.std_future().get());
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_void, expected_returning_callback_fail) {
+SUBCASE("expected_returning_callback_fail") {
   pf_set pf;
 
   pf.complete();
@@ -343,8 +343,9 @@ TEST(Future_void, expected_returning_callback_fail) {
   auto f3 = pf[2].f.then(expected_cb_fail);
   auto f4 = pf[3].f.then(expected_cb_fail);
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
+}
 }

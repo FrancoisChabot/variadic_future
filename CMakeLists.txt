@@ -16,11 +16,10 @@ if (NOT DEFINED VAR_FUTURES_MASTER_PROJECT)
     endif()
 endif ()
 
-option(VAR_FUTURES_BUILD_EXAMPLES "var_futures examples" OFF)
 option(VAR_FUTURES_BUILD_BENCHMARKS "var_futures benchmarks (requires google bench)" OFF)
+option(VAR_FUTURES_BUILD_EXAMPLES "var_futures examples" ${VAR_FUTURES_MASTER_PROJECT})
 option(VAR_FUTURES_BUILD_TESTS "var_futures tests" ON)
-option(VAR_FUTURES_TEST_COVERAGE "var_futures Coverage" OFF)
-option(VAR_FUTURES_INSTALL "Generate the install target" ${VAR_FUTURES_MASTER_PROJECT})
+option(VAR_FUTURES_INSTALL "Generate the install target" ON)
 
 ############################ code format ############################
 if(${VAR_FUTURES_MASTER_PROJECT})
@@ -57,27 +56,6 @@ if(${VAR_FUTURES_MASTER_PROJECT})
 endif()
 #############################################################
 
-
-
-if(${VAR_FUTURES_TEST_COVERAGE}) 
-  set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-  if(CMAKE_COMPILER_IS_GNUCXX)
-      include(CodeCoverage)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
-      set(COVERAGE_LCOV_EXCLUDES 
-        '/usr/*'
-      )
-      APPEND_COVERAGE_COMPILER_FLAGS()
-  endif()
-endif()
-
-
-if(WIN32)
-  add_definitions(-D_WIN32_WINNT=0x0601 -D_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING)
-endif()
-
-
 add_library(var_futures INTERFACE)
 target_include_directories(var_futures INTERFACE 
   $<BUILD_INTERFACE:. include>
@@ -110,47 +88,8 @@ if(${VAR_FUTURES_BUILD_BENCHMARKS})
 endif()
 
 if(${VAR_FUTURES_BUILD_TESTS})
-
-  include(CTest)
-  include(GoogleTest)
-  find_package(GTest CONFIG)
-  if( NOT GTest_FOUND)
-    add_subdirectory(gtest)
-  endif()
-
-  add_executable(futures_test 
-    tests/allocator.cpp
-    tests/async.cpp
-    tests/int.cpp
-    tests/join.cpp
-    tests/future_of_reference.cpp
-    tests/misc.cpp
-    tests/stream.cpp
-    tests/void.cpp
-  )
-
-  if(MSVC)
-    target_compile_options(futures_test PUBLIC /W4 /WX)
-  else()
-    target_compile_options(futures_test PUBLIC -Wall -Wextra -pedantic -Werror -ftemplate-backtrace-limit=0 )
-  endif()
-
-  target_include_directories(futures_test PRIVATE gtest/include)
-  target_link_libraries(futures_test var_futures gtest_main gtest Threads::Threads)
-
-  include(ProcessorCount)
-  ProcessorCount(PROCESSOR_COUNT)
-
-  if(${VAR_FUTURES_TEST_COVERAGE}) 
-    if(CMAKE_COMPILER_IS_GNUCXX)
-      setup_target_for_coverage_lcov(
-        NAME coverage
-        EXECUTABLE ctest -j ${PROCESSOR_COUNT}
-        DEPENDENCIES futures_test)
-    endif()
-  endif()
-
-  gtest_discover_tests(futures_test)
+  enable_testing()
+  add_subdirectory(tests)
 endif()
 
 if(${VAR_FUTURES_BUILD_EXAMPLES})

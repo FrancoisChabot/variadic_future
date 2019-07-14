@@ -15,7 +15,7 @@
 #include <iostream>
 #include "var_future/future.h"
 
-#include "gtest/gtest.h"
+#include "doctest.h"
 
 #include <queue>
 #include <random>
@@ -47,10 +47,10 @@ struct pf_set {
   }
 };
 
-void no_op(int i) { EXPECT_EQ(i, 1); }
+void no_op(int i) { REQUIRE_EQ(i, 1); }
 
 void failure(int i) {
-  EXPECT_EQ(i, 1);
+  REQUIRE_EQ(i, 1);
   throw std::runtime_error("dead");
 }
 
@@ -62,32 +62,58 @@ int expected_noop(expected<int>) {
 
 void expected_noop_fail(expected<int>) { throw std::runtime_error("dead"); }
 
+
+expected<int> generate_expected_value(int) { return 3; }
+
+expected<int> generate_expected_value_fail(int) {
+  return aom::unexpected{std::make_exception_ptr(std::runtime_error("yo"))};
+}
+
+expected<int> generate_expected_value_throw(int) {
+  throw std::runtime_error("yo");
+}
+
+
+expected<int> te_generate_expected_value(expected<int>) { return 3; }
+
+expected<int> te_generate_expected_value_fail(expected<int>) {
+  return aom::unexpected{std::make_exception_ptr(std::runtime_error("yo"))};
+}
+
+expected<int> te_generate_expected_value_throw(expected<int>) {
+  throw std::runtime_error("yo");
+}
+
 }  // namespace
 
-TEST(Future_int, blank) { Future<int> fut; }
 
-TEST(Future_int, unfilled_promise_failiure) {
+TEST_CASE("Future of int") {
+
+
+SUBCASE("blank") { Future<int> fut; }
+
+SUBCASE("unfilled_promise_failiure") {
   Future<int> fut;
   {
     Promise<int> p;
     fut = p.get_future();
   }
 
-  EXPECT_THROW(fut.std_future().get(), Unfullfilled_promise);
+  REQUIRE_THROWS_AS(fut.std_future().get(), Unfullfilled_promise);
 }
 
-TEST(Future_int, preloaded_std_get) {
+SUBCASE("preloaded_std_get") {
   pf_set pf;
 
   pf.complete();
 
-  EXPECT_EQ(1, pf[0].get());
-  EXPECT_THROW(pf[1].get(), std::logic_error);
-  EXPECT_EQ(1, pf[2].get());
-  EXPECT_THROW(pf[3].get(), std::logic_error);
+  REQUIRE_EQ(1, pf[0].get());
+  REQUIRE_THROWS_AS(pf[1].get(), std::logic_error);
+  REQUIRE_EQ(1, pf[2].get());
+  REQUIRE_THROWS_AS(pf[3].get(), std::logic_error);
 }
 
-TEST(Future_int, delayed_std_get) {
+SUBCASE("delayed_std_get") {
   pf_set pf;
 
   std::mutex mtx;
@@ -104,15 +130,15 @@ TEST(Future_int, delayed_std_get) {
 
   l.unlock();
 
-  EXPECT_EQ(1, std_f1.get());
-  EXPECT_THROW(std_f2.get(), std::logic_error);
-  EXPECT_EQ(1, std_f3.get());
-  EXPECT_THROW(std_f4.get(), std::logic_error);
+  REQUIRE_EQ(1, std_f1.get());
+  REQUIRE_THROWS_AS(std_f2.get(), std::logic_error);
+  REQUIRE_EQ(1, std_f3.get());
+  REQUIRE_THROWS_AS(std_f4.get(), std::logic_error);
 
   thread.join();
 }
 
-TEST(Future_int, then_noop_pre) {
+SUBCASE("then_noop_pre") {
   pf_set pf;
 
   auto f1 = pf[0].f.then(no_op);
@@ -122,13 +148,13 @@ TEST(Future_int, then_noop_pre) {
 
   pf.complete();
 
-  EXPECT_NO_THROW(f1.std_future().get());
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_NO_THROW(f3.std_future().get());
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_NOTHROW(f1.std_future().get());
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_NOTHROW(f3.std_future().get());
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_int, then_noop_post) {
+SUBCASE("then_noop_post") {
   pf_set pf;
 
   pf.complete();
@@ -138,13 +164,13 @@ TEST(Future_int, then_noop_post) {
   auto f3 = pf[2].f.then(no_op);
   auto f4 = pf[3].f.then(no_op);
 
-  EXPECT_NO_THROW(f1.std_future().get());
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_NO_THROW(f3.std_future().get());
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_NOTHROW(f1.std_future().get());
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_NOTHROW(f3.std_future().get());
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_int, then_failure_pre) {
+SUBCASE("then_failure_pre") {
   pf_set pf;
 
   auto f1 = pf[0].f.then(failure);
@@ -154,13 +180,13 @@ TEST(Future_int, then_failure_pre) {
 
   pf.complete();
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_int, then_failure_post) {
+SUBCASE("then_failure_post") {
   pf_set pf;
 
   pf.complete();
@@ -170,13 +196,13 @@ TEST(Future_int, then_failure_post) {
   auto f3 = pf[2].f.then(failure);
   auto f4 = pf[3].f.then(failure);
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_int, then_expect_success_pre) {
+SUBCASE("then_expect_success_pre") {
   pf_set pf;
 
   auto f1 = pf[0].f.then_expect(expected_noop);
@@ -186,13 +212,13 @@ TEST(Future_int, then_expect_success_pre) {
 
   pf.complete();
 
-  EXPECT_EQ(1, f1.std_future().get());
-  EXPECT_EQ(1, f2.std_future().get());
-  EXPECT_EQ(1, f3.std_future().get());
-  EXPECT_EQ(1, f4.std_future().get());
+  REQUIRE_EQ(1, f1.std_future().get());
+  REQUIRE_EQ(1, f2.std_future().get());
+  REQUIRE_EQ(1, f3.std_future().get());
+  REQUIRE_EQ(1, f4.std_future().get());
 }
 
-TEST(Future_int, then_expect_success_post) {
+SUBCASE("then_expect_success_post") {
   pf_set pf;
 
   auto f1 = pf[0].f.then_expect(expected_noop);
@@ -202,13 +228,13 @@ TEST(Future_int, then_expect_success_post) {
 
   pf.complete();
 
-  EXPECT_EQ(1, f1.std_future().get());
-  EXPECT_EQ(1, f2.std_future().get());
-  EXPECT_EQ(1, f3.std_future().get());
-  EXPECT_EQ(1, f4.std_future().get());
+  REQUIRE_EQ(1, f1.std_future().get());
+  REQUIRE_EQ(1, f2.std_future().get());
+  REQUIRE_EQ(1, f3.std_future().get());
+  REQUIRE_EQ(1, f4.std_future().get());
 }
 
-TEST(Future_int, then_expect_failure_pre) {
+SUBCASE("then_expect_failure_pre") {
   pf_set pf;
 
   pf.complete();
@@ -218,13 +244,13 @@ TEST(Future_int, then_expect_failure_pre) {
   auto f3 = pf[2].f.then_expect(expected_noop_fail);
   auto f4 = pf[3].f.then_expect(expected_noop_fail);
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::runtime_error);
 }
 
-TEST(Future_int, then_expect_failure_post) {
+SUBCASE("then_expect_failure_post") {
   pf_set pf;
 
   auto f1 = pf[0].f.then_expect(expected_noop_fail);
@@ -234,13 +260,13 @@ TEST(Future_int, then_expect_failure_post) {
 
   pf.complete();
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::runtime_error);
 }
 
-TEST(Future_int, then_expect_finally_success_pre) {
+SUBCASE("then_expect_finally_success_pre") {
   pf_set pf;
 
   auto ref = expect_noop_count;
@@ -252,10 +278,10 @@ TEST(Future_int, then_expect_finally_success_pre) {
 
   pf.complete();
 
-  EXPECT_EQ(4 + ref, expect_noop_count);
+  REQUIRE_EQ(4 + ref, expect_noop_count);
 }
 
-TEST(Future_int, then_expect_finally_success_post) {
+SUBCASE("then_expect_finally_success_post") {
   pf_set pf;
 
   auto ref = expect_noop_count;
@@ -267,20 +293,11 @@ TEST(Future_int, then_expect_finally_success_post) {
   pf[2].f.finally(expected_noop);
   pf[3].f.finally(expected_noop);
 
-  EXPECT_EQ(4 + ref, expect_noop_count);
+  REQUIRE_EQ(4 + ref, expect_noop_count);
 }
 
-expected<int> generate_expected_value(int) { return 3; }
 
-expected<int> generate_expected_value_fail(int) {
-  return aom::unexpected{std::make_exception_ptr(std::runtime_error("yo"))};
-}
-
-expected<int> generate_expected_value_throw(int) {
-  throw std::runtime_error("yo");
-}
-
-TEST(Future_int, expected_returning_callback) {
+SUBCASE("expected_returning_callback") {
   pf_set pf;
 
   pf.complete();
@@ -290,13 +307,13 @@ TEST(Future_int, expected_returning_callback) {
   auto f3 = pf[2].f.then(generate_expected_value);
   auto f4 = pf[3].f.then(generate_expected_value);
 
-  EXPECT_EQ(3, f1.get());
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_EQ(3, f3.get());
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_EQ(3, f1.get());
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_EQ(3, f3.get());
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_int, expected_returning_callback_fail) {
+SUBCASE("expected_returning_callback_fail") {
   pf_set pf;
 
   pf.complete();
@@ -306,13 +323,13 @@ TEST(Future_int, expected_returning_callback_fail) {
   auto f3 = pf[2].f.then(generate_expected_value_fail);
   auto f4 = pf[3].f.then(generate_expected_value_fail);
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-TEST(Future_int, expected_returning_callback_throw) {
+SUBCASE("expected_returning_callback_throw") {
   pf_set pf;
 
   pf.complete();
@@ -322,23 +339,14 @@ TEST(Future_int, expected_returning_callback_throw) {
   auto f3 = pf[2].f.then(generate_expected_value_throw);
   auto f4 = pf[3].f.then(generate_expected_value_throw);
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::logic_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::logic_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::logic_error);
 }
 
-expected<int> te_generate_expected_value(expected<int>) { return 3; }
 
-expected<int> te_generate_expected_value_fail(expected<int>) {
-  return aom::unexpected{std::make_exception_ptr(std::runtime_error("yo"))};
-}
-
-expected<int> te_generate_expected_value_throw(expected<int>) {
-  throw std::runtime_error("yo");
-}
-
-TEST(Future_int, te_expected_returning_callback) {
+SUBCASE("te_expected_returning_callback") {
   pf_set pf;
 
   pf.complete();
@@ -348,13 +356,13 @@ TEST(Future_int, te_expected_returning_callback) {
   auto f3 = pf[2].f.then_expect(te_generate_expected_value);
   auto f4 = pf[3].f.then_expect(te_generate_expected_value);
 
-  EXPECT_EQ(3, f1.get());
-  EXPECT_EQ(3, f2.get());
-  EXPECT_EQ(3, f3.get());
-  EXPECT_EQ(3, f4.get());
+  REQUIRE_EQ(3, f1.get());
+  REQUIRE_EQ(3, f2.get());
+  REQUIRE_EQ(3, f3.get());
+  REQUIRE_EQ(3, f4.get());
 }
 
-TEST(Future_int, te_expected_returning_callback_fail) {
+SUBCASE("te_expected_returning_callback_fail") {
   pf_set pf;
 
   pf.complete();
@@ -364,13 +372,13 @@ TEST(Future_int, te_expected_returning_callback_fail) {
   auto f3 = pf[2].f.then_expect(te_generate_expected_value_fail);
   auto f4 = pf[3].f.then_expect(te_generate_expected_value_fail);
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::runtime_error);
 }
 
-TEST(Future_int, te_expected_returning_callback_throw) {
+SUBCASE("te_expected_returning_callback_throw") {
   pf_set pf;
 
   pf.complete();
@@ -380,13 +388,13 @@ TEST(Future_int, te_expected_returning_callback_throw) {
   auto f3 = pf[2].f.then_expect(te_generate_expected_value_throw);
   auto f4 = pf[3].f.then_expect(te_generate_expected_value_throw);
 
-  EXPECT_THROW(f1.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f2.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f3.std_future().get(), std::runtime_error);
-  EXPECT_THROW(f4.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f1.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f2.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f3.std_future().get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f4.std_future().get(), std::runtime_error);
 }
 
-TEST(Future_int, promote_tuple_to_variadic) {
+SUBCASE("promote_tuple_to_variadic") {
   Promise<std::tuple<int, int>> p_t;
   auto f_t = p_t.get_future();
 
@@ -400,15 +408,15 @@ TEST(Future_int, promote_tuple_to_variadic) {
     b = *ib;
   });
 
-  EXPECT_EQ(0, a);
-  EXPECT_EQ(0, b);
+  REQUIRE_EQ(0, a);
+  REQUIRE_EQ(0, b);
 
   p_t.set_value(std::make_tuple(2, 3));
-  EXPECT_EQ(2, a);
-  EXPECT_EQ(3, b);
+  REQUIRE_EQ(2, a);
+  REQUIRE_EQ(3, b);
 }
 
-TEST(Future_int, random_timing) {
+SUBCASE("random_timing") {
   std::random_device rd;
   std::mt19937 e2(rd());
 
@@ -427,7 +435,8 @@ TEST(Future_int, random_timing) {
     std::this_thread::sleep_for(
         std::chrono::duration<double, std::milli>(dist(e2)));
 
-    EXPECT_EQ(12, fut.get());
+    REQUIRE_EQ(12, fut.get());
     writer_thread.join();
   }
+}
 }

@@ -15,13 +15,13 @@
 #include <iostream>
 #include "var_future/future.h"
 
-#include "gtest/gtest.h"
+#include "doctest.h"
 
 #include <queue>
 
 using namespace aom;
 
-TEST(Ref_Future, simple_case) {
+TEST_CASE("future of reference") {
   Promise<std::reference_wrapper<int>> p;
   Future<std::reference_wrapper<int>> f = p.get_future();
 
@@ -32,5 +32,5 @@ TEST(Ref_Future, simple_case) {
   f.finally(
       [](expected<std::reference_wrapper<int>> dst) { (*dst).get() = 4; });
 
-  EXPECT_EQ(var, 4);
+  REQUIRE_EQ(var, 4);
 }

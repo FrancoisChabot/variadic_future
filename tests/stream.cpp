@@ -15,26 +15,27 @@
 #include <iostream>
 #include "var_future/stream_future.h"
 
-#include "gtest/gtest.h"
+#include "doctest.h"
 
 #include <queue>
 #include <random>
 
 using namespace aom;
 
-TEST(Stream, ignored_promise) {
+TEST_CASE("Stream of futures") {
+SUBCASE("ignored_promise") {
   Stream_promise<int> prom;
 
   (void)prom;
 }
 
-TEST(Stream, ignored_future) {
+SUBCASE("ignored_future") {
   Stream_future<int> prom;
 
   (void)prom;
 }
 
-TEST(Stream, forgotten_promise) {
+SUBCASE("forgotten_promise") {
   Stream_promise<int> prom;
 
   auto fut = prom.get_future();
@@ -43,10 +44,10 @@ TEST(Stream, forgotten_promise) {
 
   auto all_done = fut.for_each([](int) {});
 
-  EXPECT_THROW(all_done.get(), Unfullfilled_promise);
+  REQUIRE_THROWS_AS(all_done.get(), Unfullfilled_promise);
 }
 
-TEST(Stream, forgotten_promise_post_bind) {
+SUBCASE("forgotten_promise_post_bind") {
   Stream_promise<int> prom;
 
   auto fut = prom.get_future();
@@ -54,10 +55,10 @@ TEST(Stream, forgotten_promise_post_bind) {
 
   { auto killer = std::move(prom); }
 
-  EXPECT_THROW(all_done.get(), Unfullfilled_promise);
+  REQUIRE_THROWS_AS(all_done.get(), Unfullfilled_promise);
 }
 
-TEST(Stream, forgotten_promise_async) {
+SUBCASE("forgotten_promise_async") {
   Stream_promise<int> prom;
 
   auto fut = prom.get_future();
@@ -68,12 +69,12 @@ TEST(Stream, forgotten_promise_async) {
         std::chrono::duration<double, std::milli>(10.0));
   });
 
-  EXPECT_THROW(all_done.get(), Unfullfilled_promise);
+  REQUIRE_THROWS_AS(all_done.get(), Unfullfilled_promise);
 
   worker.join();
 }
 
-TEST(Stream, simple_stream) {
+SUBCASE("simple_stream") {
   Stream_promise<int> prom;
   auto fut = prom.get_future();
 
@@ -83,22 +84,22 @@ TEST(Stream, simple_stream) {
     total = -1;
   });
 
-  EXPECT_EQ(total, 0);
+  REQUIRE_EQ(total, 0);
 
   prom.push(1);
-  EXPECT_EQ(total, 1);
+  REQUIRE_EQ(total, 1);
 
   prom.push(2);
-  EXPECT_EQ(total, 3);
+  REQUIRE_EQ(total, 3);
 
   prom.push(3);
-  EXPECT_EQ(total, 6);
+  REQUIRE_EQ(total, 6);
 
   prom.complete();
-  EXPECT_EQ(total, -1);
+  REQUIRE_EQ(total, -1);
 }
 
-TEST(Stream, no_data_completed_stream) {
+SUBCASE("no_data_completed_stream") {
   Stream_promise<int> prom;
   auto fut = prom.get_future();
 
@@ -109,10 +110,10 @@ TEST(Stream, no_data_completed_stream) {
   prom.complete();
   done.get();
 
-  EXPECT_EQ(total, 0);
+  REQUIRE_EQ(total, 0);
 }
 
-TEST(Stream, no_data_failed_stream) {
+SUBCASE("no_data_failed_stream") {
   Stream_promise<int> prom;
   auto fut = prom.get_future();
 
@@ -122,12 +123,12 @@ TEST(Stream, no_data_failed_stream) {
 
   prom.set_exception(std::make_exception_ptr(std::runtime_error("")));
 
-  EXPECT_THROW(done.get(), std::runtime_error);
+  REQUIRE_THROWS_AS(done.get(), std::runtime_error);
 
-  EXPECT_EQ(total, 0);
+  REQUIRE_EQ(total, 0);
 }
 
-TEST(Stream, pre_fill_failure) {
+SUBCASE("pre_fill_failure") {
   Stream_promise<int> prom;
   auto fut = prom.get_future();
 
@@ -138,11 +139,11 @@ TEST(Stream, pre_fill_failure) {
   int total = 0;
   auto done = fut.for_each([&](int v) { total += v; });
 
-  EXPECT_EQ(total, 2);
-  EXPECT_THROW(done.get(), std::runtime_error);
+  REQUIRE_EQ(total, 2);
+  REQUIRE_THROWS_AS(done.get(), std::runtime_error);
 }
 
-TEST(Stream, partially_failed_stream) {
+SUBCASE("partially_failed_stream") {
   Stream_promise<int> prom;
   auto fut = prom.get_future();
 
@@ -154,12 +155,12 @@ TEST(Stream, partially_failed_stream) {
   prom.push(2);
   prom.set_exception(std::make_exception_ptr(std::runtime_error("")));
 
-  EXPECT_THROW(done.get(), std::runtime_error);
+  REQUIRE_THROWS_AS(done.get(), std::runtime_error);
 
-  EXPECT_EQ(total, 4);
+  REQUIRE_EQ(total, 4);
 }
 
-TEST(Stream, string_stream) {
+SUBCASE("string_stream") {
   Stream_promise<std::string> prom;
   auto fut = prom.get_future();
 
@@ -172,13 +173,13 @@ TEST(Stream, string_stream) {
   prom.push("");
   prom.push("");
   prom.push("");
-  EXPECT_EQ(total, 6);
+  REQUIRE_EQ(total, 6);
 
   prom.complete();
   done.get();
 }
 
-TEST(Stream, dynamic_mem_stream) {
+SUBCASE("dynamic_mem_stream") {
   Stream_promise<std::unique_ptr<int>> prom;
   auto fut = prom.get_future();
 
@@ -192,13 +193,13 @@ TEST(Stream, dynamic_mem_stream) {
   prom.push(std::make_unique<int>(1));
   prom.push(std::make_unique<int>(1));
   prom.push(std::make_unique<int>(1));
-  EXPECT_EQ(total, 6);
+  REQUIRE_EQ(total, 6);
 
   prom.complete();
   done.get();
 }
 
-TEST(Stream, dynamic_mem_dropped) {
+SUBCASE("dynamic_mem_dropped") {
   Stream_promise<std::unique_ptr<int>> prom;
   auto fut = prom.get_future();
 
@@ -211,14 +212,14 @@ TEST(Stream, dynamic_mem_dropped) {
   prom.push(std::make_unique<int>(1));
   prom.push(std::make_unique<int>(1));
   prom.push(std::make_unique<int>(1));
-  EXPECT_EQ(total, 6);
+  REQUIRE_EQ(total, 6);
 
   { auto killer = std::move(prom); }
 
-  EXPECT_THROW(done.get(), Unfullfilled_promise);
+  REQUIRE_THROWS_AS(done.get(), Unfullfilled_promise);
 }
 
-TEST(Stream, multiple_pre_filled) {
+SUBCASE("multiple_pre_filled") {
   Stream_promise<int> prom;
   auto fut = prom.get_future();
 
@@ -227,13 +228,13 @@ TEST(Stream, multiple_pre_filled) {
   int total = 0;
   auto done = fut.for_each([&](int v) { total += v; });
 
-  EXPECT_EQ(total, 3);
+  REQUIRE_EQ(total, 3);
 
   prom.complete();
   done.get();
 }
 
-TEST(Stream, uncompleted_stream) {
+SUBCASE("uncompleted_stream") {
   Stream_promise<int> prom;
   auto fut = prom.get_future();
 
@@ -243,17 +244,17 @@ TEST(Stream, uncompleted_stream) {
 
   {
     Stream_promise<int> destroyer = std::move(prom);
-    EXPECT_EQ(total, 0);
+    REQUIRE_EQ(total, 0);
     destroyer.push(1);
-    EXPECT_EQ(total, 1);
+    REQUIRE_EQ(total, 1);
     destroyer.push(2);
-    EXPECT_EQ(total, 3);
+    REQUIRE_EQ(total, 3);
   }
 
-  EXPECT_THROW(done.get(), Unfullfilled_promise);
+  REQUIRE_THROWS_AS(done.get(), Unfullfilled_promise);
 }
 
-TEST(Stream, mt_random_timing) {
+SUBCASE("mt_random_timing") {
   std::random_device rd;
   std::mt19937 e2(rd());
   std::uniform_real_distribution<> dist(0, 0.002);
@@ -275,11 +276,11 @@ TEST(Stream, mt_random_timing) {
   auto done = fut.for_each([&](int v) { total += v; });
 
   done.get();
-  EXPECT_EQ(total, 10000);
+  REQUIRE_EQ(total, 10000);
   worker.join();
 }
 
-TEST(Stream, delayed_assignment) {
+SUBCASE("delayed_assignment") {
   Stream_promise<int> prom;
   auto fut = prom.get_future();
 
@@ -287,22 +288,22 @@ TEST(Stream, delayed_assignment) {
 
   {
     Stream_promise<int> destroyer = std::move(prom);
-    EXPECT_EQ(total, 0);
+    REQUIRE_EQ(total, 0);
     destroyer.push(1);
-    EXPECT_EQ(total, 0);
+    REQUIRE_EQ(total, 0);
     destroyer.push(2);
-    EXPECT_EQ(total, 0);
+    REQUIRE_EQ(total, 0);
     destroyer.complete();
-    EXPECT_EQ(total, 0);
+    REQUIRE_EQ(total, 0);
   }
 
   auto done = fut.for_each([&](int v) { total += v; });
 
   done.get();
-  EXPECT_EQ(total, 3);
+  REQUIRE_EQ(total, 3);
 }
 
-TEST(Stream, stream_to_queue) {
+SUBCASE("stream_to_queue") {
   std::queue<std::function<void()>> queue;
 
   Stream_promise<int> prom;
@@ -319,20 +320,20 @@ TEST(Stream, stream_to_queue) {
   prom.push(1);
   prom.complete();
 
-  EXPECT_EQ(0, total);
-  EXPECT_EQ(queue.size(), 4);
-  EXPECT_FALSE(all_done);
+  REQUIRE_EQ(0, total);
+  REQUIRE_EQ(queue.size(), 4);
+  REQUIRE_FALSE(all_done);
 
   while (!queue.empty()) {
     queue.front()();
     queue.pop();
   }
 
-  EXPECT_EQ(3, total);
-  EXPECT_TRUE(all_done);
+  REQUIRE_EQ(3, total);
+  REQUIRE(all_done);
 }
 
-TEST(Stream, stream_to_queue_alt) {
+SUBCASE("stream_to_queue_alt") {
   std::queue<std::function<void()>> queue;
 
   Stream_promise<int> prom;
@@ -344,27 +345,27 @@ TEST(Stream, stream_to_queue_alt) {
   prom.push(1);
   prom.push(1);
 
-  EXPECT_EQ(queue.size(), 0);
+  REQUIRE_EQ(queue.size(), 0);
 
   fut.for_each(queue, [&](int v) { total += v; }).finally([&](expected<void>) {
     all_done = true;
   });
 
-  EXPECT_EQ(queue.size(), 3);
+  REQUIRE_EQ(queue.size(), 3);
 
   prom.complete();
 
-  EXPECT_EQ(0, total);
-  EXPECT_EQ(queue.size(), 4);
-  EXPECT_FALSE(all_done);
+  REQUIRE_EQ(0, total);
+  REQUIRE_EQ(queue.size(), 4);
+  REQUIRE_FALSE(all_done);
 
   while (!queue.empty()) {
     queue.front()();
     queue.pop();
   }
 
-  EXPECT_EQ(3, total);
-  EXPECT_TRUE(all_done);
+  REQUIRE_EQ(3, total);
+  REQUIRE(all_done);
 }
 
 struct Synced_queue {
@@ -387,7 +388,7 @@ struct Synced_queue {
   std::mutex mtx_;
 };
 
-TEST(Stream, stream_to_queue_random_timing) {
+SUBCASE("stream_to_queue_random_timing") {
   std::random_device rd;
   std::mt19937 e2(rd());
   std::uniform_real_distribution<> dist(0, 0.002);
@@ -422,6 +423,7 @@ TEST(Stream, stream_to_queue_random_timing) {
   while (!queue.pop()) {
   }
 
-  EXPECT_EQ(10000, total);
-  EXPECT_TRUE(all_done);
+  REQUIRE_EQ(10000, total);
+  REQUIRE(all_done);
+}
 }

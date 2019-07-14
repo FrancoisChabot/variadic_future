@@ -15,24 +15,24 @@
 #include <iostream>
 #include "var_future/future.h"
 
-#include "gtest/gtest.h"
+#include "doctest.h"
 
 #include <queue>
 
 using namespace aom;
 
-TEST(async, simple_case) {
+TEST_CASE("async function") {
   std::queue<std::function<void()>> queue;
 
   auto fut = async(queue, []() { return 12; });
 
-  EXPECT_EQ(1, queue.size());
+  REQUIRE_EQ(1, queue.size());
   int dst = 0;
   fut.finally([&](expected<int> x) { dst = x.value(); });
-  EXPECT_EQ(0, dst);
+  REQUIRE_EQ(0, dst);
 
   queue.front()();
   queue.pop();
 
-  EXPECT_EQ(12, dst);
+  REQUIRE_EQ(12, dst);
 }

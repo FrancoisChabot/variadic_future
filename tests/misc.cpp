@@ -15,19 +15,20 @@
 #include <iostream>
 #include "var_future/future.h"
 
-#include "gtest/gtest.h"
+#include "doctest.h"
 
 #include <queue>
 
 using namespace aom;
 
-TEST(Future, ignored_promise) {
+TEST_CASE("misc futures tests") {
+SUBCASE("ignored_promise") {
   Promise<int> prom;
 
   (void)prom;
 }
 
-TEST(Future, prom_filled_future) {
+SUBCASE("prom_filled_future") {
   {
     Promise<void> prom;
     auto fut = prom.get_future();
@@ -39,7 +40,7 @@ TEST(Future, prom_filled_future) {
       }
     });
 
-    EXPECT_EQ(1, dst);
+    REQUIRE_EQ(1, dst);
   }
 
   {
@@ -47,7 +48,7 @@ TEST(Future, prom_filled_future) {
     auto fut = prom.get_future();
     prom.set_value(12);
 
-    EXPECT_EQ(12, fut.std_future().get());
+    REQUIRE_EQ(12, fut.std_future().get());
   }
 
   {
@@ -55,21 +56,21 @@ TEST(Future, prom_filled_future) {
     auto fut = prom.get_future();
     prom.set_value(12, "hi");
 
-    EXPECT_EQ(std::make_tuple(12, "hi"), fut.std_future().get());
+    REQUIRE_EQ(std::make_tuple(12, "hi"), fut.std_future().get());
   }
 }
 
-TEST(Future, simple_then_expect) {
+SUBCASE("simple_then_expect") {
   Promise<int> p;
   auto f = p.get_future();
 
   auto r = f.then_expect([](expected<int> e) { return e.value() * 4; });
   p.set_value(3);
 
-  EXPECT_EQ(r.std_future().get(), 12);
+  REQUIRE_EQ(r.std_future().get(), 12);
 }
 
-TEST(Future, prom_post_filled_future) {
+SUBCASE("prom_post_filled_future") {
   {
     Promise<void> prom;
     auto fut = prom.get_future();
@@ -83,7 +84,7 @@ TEST(Future, prom_post_filled_future) {
 
     prom.set_value();
 
-    EXPECT_EQ(1, dst);
+    REQUIRE_EQ(1, dst);
   }
 
   {
@@ -98,7 +99,7 @@ TEST(Future, prom_post_filled_future) {
     });
     prom.set_value(12);
 
-    EXPECT_EQ(12, dst);
+    REQUIRE_EQ(12, dst);
   }
 
   {
@@ -115,12 +116,12 @@ TEST(Future, prom_post_filled_future) {
     });
     prom.set_value(12, "hi");
 
-    EXPECT_EQ(12, dst);
-    EXPECT_EQ("hi", str);
+    REQUIRE_EQ(12, dst);
+    REQUIRE_EQ("hi", str);
   }
 }
 
-TEST(Future, simple_then) {
+SUBCASE("simple_then") {
   // Post-filled
   {
     Promise<int> prom;
@@ -129,7 +130,7 @@ TEST(Future, simple_then) {
     auto res = fut.then([&](expected<int> v) { return v.value() + 4; });
 
     prom.set_value(3);
-    EXPECT_EQ(7, res.std_future().get());
+    REQUIRE_EQ(7, res.std_future().get());
   }
 
   // Pre-filled
@@ -140,11 +141,11 @@ TEST(Future, simple_then) {
 
     auto res = fut.then([&](expected<int> v) { return v.value() + 4; });
 
-    EXPECT_EQ(7, res.std_future().get());
+    REQUIRE_EQ(7, res.std_future().get());
   }
 }
 
-TEST(Future, simple_null_then) {
+SUBCASE("simple_null_then") {
   // Post-filled
   {
     Promise<void> prom;
@@ -153,7 +154,7 @@ TEST(Future, simple_null_then) {
     auto res = fut.then([&]() { return 4; });
 
     prom.set_value();
-    EXPECT_EQ(4, res.std_future().get());
+    REQUIRE_EQ(4, res.std_future().get());
   }
 
   // Pre-filled
@@ -164,11 +165,11 @@ TEST(Future, simple_null_then) {
 
     auto res = fut.then([&]() { return 4; });
 
-    EXPECT_EQ(4, res.std_future().get());
+    REQUIRE_EQ(4, res.std_future().get());
   }
 }
 
-TEST(Future, simple_null_then_exptec) {
+SUBCASE("simple_null_then_exptec") {
   // Post-filled
   {
     Promise<void> prom;
@@ -177,7 +178,7 @@ TEST(Future, simple_null_then_exptec) {
     auto res = fut.then_expect([&](expected<void>) { return 4; });
 
     prom.set_value();
-    EXPECT_EQ(4, res.std_future().get());
+    REQUIRE_EQ(4, res.std_future().get());
   }
 
   // Pre-filled
@@ -188,11 +189,11 @@ TEST(Future, simple_null_then_exptec) {
 
     auto res = fut.then_expect([&](expected<void>) { return 4; });
 
-    EXPECT_EQ(4, res.std_future().get());
+    REQUIRE_EQ(4, res.std_future().get());
   }
 }
 
-TEST(Future, simple_then_failure) {
+SUBCASE("simple_then_failure") {
   // Post-filled
   {
     Promise<int> prom;
@@ -201,7 +202,7 @@ TEST(Future, simple_then_failure) {
     auto res = fut.then([&](expected<int> v) { return v.value() + 4; });
 
     prom.set_exception(std::make_exception_ptr(std::runtime_error("nope")));
-    EXPECT_THROW(res.std_future().get(), std::runtime_error);
+    REQUIRE_THROWS_AS(res.std_future().get(), std::runtime_error);
   }
 
   // Pre-filled
@@ -212,29 +213,29 @@ TEST(Future, simple_then_failure) {
 
     auto res = fut.then([&](expected<int> v) { return v.value() + 4; });
 
-    EXPECT_THROW(res.std_future().get(), std::runtime_error);
+    REQUIRE_THROWS_AS(res.std_future().get(), std::runtime_error);
   }
 }
 
-TEST(Future, Forgotten_promise) {
+SUBCASE("Forgotten_promise") {
   Future<int> fut;
   {
     Promise<int> prom;
     fut = prom.get_future();
   }
 
-  EXPECT_THROW(fut.std_future().get(), Unfullfilled_promise);
+  REQUIRE_THROWS_AS(fut.std_future().get(), Unfullfilled_promise);
 }
 
-TEST(Future, simple_get) {
+SUBCASE("simple_get") {
   Promise<int> prom;
   auto fut = prom.get_future();
 
   prom.set_value(3);
-  EXPECT_EQ(3, fut.std_future().get());
+  REQUIRE_EQ(3, fut.std_future().get());
 }
 
-TEST(Future, simple_join) {
+SUBCASE("simple_join") {
   Promise<int> p_a;
   Promise<std::string> p_b;
 
@@ -245,10 +246,10 @@ TEST(Future, simple_join) {
   p_a.set_value(3);
   p_b.set_value("yo");
 
-  EXPECT_EQ(3, f.std_future().get());
+  REQUIRE_EQ(3, f.std_future().get());
 }
 
-TEST(Future, partial_join_failure) {
+SUBCASE("partial_join_failure") {
   Promise<int> p_a;
   Promise<std::string> p_b;
 
@@ -256,17 +257,17 @@ TEST(Future, partial_join_failure) {
   join(p_a.get_future(), p_b.get_future())
       .finally([&](expected<int> a, expected<std::string> b) {
         dst = a.value();
-        EXPECT_FALSE(b.has_value());
+        REQUIRE_FALSE(b.has_value());
       });
-  EXPECT_EQ(0, dst);
+  REQUIRE_EQ(0, dst);
   p_a.set_value(3);
-  EXPECT_EQ(0, dst);
+  REQUIRE_EQ(0, dst);
   p_b.set_exception(std::make_exception_ptr(std::runtime_error("nope")));
 
-  EXPECT_EQ(3, dst);
+  REQUIRE_EQ(3, dst);
 }
 
-TEST(Future, handler_returning_future) {
+SUBCASE("handler_returning_future") {
   Promise<int> p;
   auto f = p.get_future();
 
@@ -280,24 +281,24 @@ TEST(Future, handler_returning_future) {
 
   p.set_value(3);
 
-  EXPECT_EQ(3, f2.std_future().get());
+  REQUIRE_EQ(3, f2.std_future().get());
 }
 
-TEST(Future, void_promise) {
+SUBCASE("void_promise") {
   Promise<void> prom;
   auto fut = prom.get_future();
 
   int dst = 0;
   fut.finally([&](expected<void> v) {
-    EXPECT_TRUE(v.has_value());
+    REQUIRE(v.has_value());
     dst = 4;
   });
 
   prom.set_value();
-  EXPECT_EQ(4, dst);
+  REQUIRE_EQ(4, dst);
 }
 
-TEST(Future, variadic_get) {
+SUBCASE("variadic_get") {
   static_assert(std::is_same_v<Future<void>::value_type, void>);
   static_assert(std::is_same_v<Future<int>::value_type, int>);
   static_assert(std::is_same_v<Future<void, void>::value_type, void>);
@@ -310,16 +311,16 @@ TEST(Future, variadic_get) {
       std::is_same_v<Future<int, void, int>::value_type, std::tuple<int, int>>);
 }
 
-TEST(Future, variadic_get_failure) {
+SUBCASE("variadic_get_failure") {
   Promise<void, void> p;
   auto f = p.get_future();
 
   p.set_exception(std::make_exception_ptr(std::runtime_error("dead")));
 
-  EXPECT_THROW(f.get(), std::runtime_error);
+  REQUIRE_THROWS_AS(f.get(), std::runtime_error);
 }
 
-TEST(Future, segmented_callback) {
+SUBCASE("segmented_callback") {
   Promise<void> p;
 
   auto f = p.get_future()
@@ -328,10 +329,10 @@ TEST(Future, segmented_callback) {
 
   p.set_value();
 
-  EXPECT_EQ(24, f.get());
+  REQUIRE_EQ(24, f.get());
 }
 
-TEST(Future, defered_returned_future) {
+SUBCASE("defered_returned_future") {
   Promise<int> p;
 
   auto f = p.get_future().then([](int) {
@@ -345,5 +346,6 @@ TEST(Future, defered_returned_future) {
   });
 
   p.set_value(1);
-  EXPECT_EQ(f.get(), 15);
+  REQUIRE_EQ(f.get(), 15);
+}
 }
