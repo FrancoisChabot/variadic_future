@@ -12,7 +12,7 @@ jobs:
           command: |
             mkdir _bld 
             cd _bld 
-            cmake -DVAR_FUTURES_BUILD_EXAMPLES=ON -DVAR_FUTURES_BUILD_TESTS=ON -DVAR_FUTURES_TEST_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug ..
+            cmake -DCMAKE_BUILD_TYPE=Debug ..
 
       - run:
           name: Build
@@ -25,13 +25,6 @@ jobs:
           command: |
             cd _bld 
             ctest -j $(nproc) -T memcheck
-
-      - run:
-          name: Coverage
-          command: |
-            cd _bld
-            make coverage
-            bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"
   
   release_build:
     docker:
@@ -45,7 +38,7 @@ jobs:
           command: |
             mkdir _bld 
             cd _bld 
-            cmake -DVAR_FUTURES_BUILD_EXAMPLES=ON -DVAR_FUTURES_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release ..
+            cmake -DCMAKE_BUILD_TYPE=Release ..
 
       - run:
           name: Build
