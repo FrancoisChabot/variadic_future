@@ -10,7 +10,7 @@ High-performance variadic completion-based futures for C++17.
 
 ## Why?
 
-In short, I need this to properly implement [another project](https://github.com/FrancoisChabot/easy_grpc) of mine, and it was an interesting exercise.
+This was needed to properly implement [Easy gRPC](https://github.com/FrancoisChabot/easy_grpc), and it was an interesting exercise.
 
 More specifically, completion-based futures are a non-blocking, callback-based, synchronization mechanism that hides the callback logic from the asynchronous code, while properly handling error conditions. 
 
@@ -48,79 +48,87 @@ You can find the auto-generated API reference [here](https://francoischabot.gith
 ## Usage
 ### Prerequisites
 
-I am assuming you are already familiar with the [expected<>](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0323r7.html) concept/syntax.
+I am assuming you are already familiar with the [expected<>](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0323r7.html) concept/syntax. `aom::expected<T>` is simply a `std::expected<T, std::exception_ptr>`. 
 
 ### Consuming futures
 
-Let's say that you are using a function that happens to return a `Future<...>`, and you want to execute a callback when the value becomes available:
+Let's say that you are using a function that happens to return a `Future<...>`, and you want to execute a callback when the values becomes available:
 
 ```cpp
-Future<int> get_value_eventually();
+Future<int, float> get_value_eventually();
 ```
 
-#### The Method
+The `Future<int, float>` will **eventually** be **fullfilled** with an `int` and a `float` or **failed** with one or more `std::exception_ptr`, up to one per field.
 
-Which method to use depends on two factors:
+The simplest thing you can do is call `finally()` on it. This will register a callback that will be invoked when both  values are available or failed:
 
-1. Is your operation part of a future chain, or is it terminating?
-1. Do you want to handle failures yourself, or let them propagate automatically?
+```cpp
+auto f = get_value_eventually();
 
-You can use the following matrix to determine which method to use:
+f.finally([](expected<int> v, expected<float> f) { 
+  if(v.has_value() && f.has_value()) {
+    std::cout << "values are " << *v << " and " << *f << "\n"; 
+  }
+ });
+```
+
+Alternatively, if you want to create a future that is **completed** once the callback has **completed**, you can use `then_expect()`.
+
+Like `finally()`, `then_expect()` invokes its callback when all values are either fullfilled or failed. However, this time, the return value of the callback is used to populate a `Future<T>` (even if the callback returns `void`). If the callback happens to throw an exception (like invoking `value()` on an `expected` containing an error), then that exception becomes the result's failure.
+
+Rules:
+
+- if the callback returns a `Future<T>`, that produces a `Future<T>`.
+- if the callback returns a `expected<T>`, that produces a `Future<T>`.
+- if the callback returns `segmented(T, U)`, that produces a `Future<T, U>`.
+- Otherwise if the callback returns `T`, that produces a `Future<T>`
+  
+```cpp
+auto f = get_value_eventually();
+
+Future<float> result = f.then_expect([](expected<int> v, expected<float> f) {
+  // Reminder: expected::value() throws an exception if it contains an error.
+  return f.value() * v.value(); 
+ });
+```
+
+Finally, this pattern of propagating a future's failure as the failure of its callback's result is so common that a third method does that all at once: `then()`.
+
+Here, if `f` contains one or more **failures**, then the callback is never invoked at all, and the first error is immediately propagated as the `result`'s failure.
+
+The same return value rules as `then_expect()` apply.
+
+```cpp
+auto f = get_value_eventually();
+
+Future<float> result = f.then([](int v, float f) {
+  return f * v; 
+ });
+```
+
+In short:
 
 |                | error-handling          | error-propagating |
 |----------------|-------------------------|-------------------|
 | **chains**     | `then_expect()`         | `then()`          |
 | **terminates** | `finally()`             | N/A               |
 
-#### The Callback
 
-The **arguments** of a callback for a `Future<T, U, V>` will be:
+#### Void fields
 
-* In error-handling mode: `cb(expected<T>, expected<U>, expected<V>`)
-* In error-propagating mode: `cb(T, U, V)` where void arguments are ommited.
+If a callback attached to `then_expect()` or `then()` returns `void`, that produces a `Future<void>`.
 
-```cpp
-  Future<void> f1;
-
-  auto f11 = f1.then([](){});
-  f1.finally([](expected<void>){});
-
-
-  Future<int, float> f2;
-
-  auto f22 = f2.then([](int, float){});
-  f.finally([](expected<int>, expected<int>){});
-
-
-  Future<void, int> f3;
-
-  auto f33 = f3.then([](int){});
-  f3.finally([](expected<void>, expected<int>){});
-```
-
-* The **return value** of a chaining callback will become a future of the matching type. 
-  * If your callback returns a `Future<T>`, then the result is a `Future<T>` that propagates directly.
-  * If your callback returns an `expected<T>`, then the result is a `Future<T>` that gets set or failed appropriately. 
-  * if your callback returns `aom::segmented(T, U, ...)`, then the result is a `Future<T, U, ...>`
-* The **return value** of a terminating callback is ignored.
+`Future<void>::then()` has special handling of void fields: They are ommited entirely from the callback arguments:
 
 ```cpp
-Future<int> get_value_eventually();
+Future<void> f_a;
+Future<void, int> f_b;
+Future<float, void, int> f_c;
 
-void sync_proc(int v);
-int sync_op(int v);
-Future<int> async_op(int v);
-
-Future<void> x = get_value_eventually().then(sync_proc);
-get_value_eventually().finally(sync_proc);
-
-Future<int> y = get_value_eventually().then(sync_op);
-Future<int> z = get_value_eventually().then(async_op);
-
-Future<int, int> w = get_value_eventually().then([](int x){ return aom::segmented(x+x, x*x); });
+f_a.then([](){});
+f_b.then([](int v){});
+f_c.then([](float f, int v){});
 ```
-
-If a chaining callback throws an exception. That exception becomes the error associated with its result future. **Terminating callbacks must not throw exceptions.**
 
 #### The Executor
 
@@ -131,15 +139,14 @@ The callback can either
 
 **immediate** mode is used by default, just pass your callback to your chosen method and you are done.
 
-<aside class="notice">
-N.B. If the future is already fullfilled by the time a callback is attached in <strong>immediate</strong> mode, the callback will be invoked in the thread attaching the callback as the callback is being attached.
-</aside>
+N.B. If the future is already fullfilled by the time a callback is attached in **immediate** mode, the callback will be invoked in the thread attaching the callback as the callback is being attached.
 
 For **deferred** mode, you need to pass your queue (or an adapter) as the first parameter to the method. The queue only needs to be some type that implements `void push(T&&)` where `T` is a `Callable<void()>`.
 
 ```cpp
 
 struct Queue {
+  // In almost all cases, this needs to be thread-safe.
   void push(std::function<void()> cb);
 };
 
@@ -148,7 +155,7 @@ void foo(Queue& queue) {
     .then([](int v){ return v * v;})             
     .finally(queue, [](expected<int> v) {
       if(v.has_value()) {
-        std::cerr << "final value: " << v << "\n";
+        std::cerr << "final value: " << *v << "\n";
       }
     });
 }
@@ -234,6 +241,8 @@ void foo() {
 ```
 
 ### Future Streams
+
+**Warning:** The stream API and performance are not nearly as mature and tested as `Future<>`/`Promise<>`.
 
 #### Producing Future streams
 ```cpp
