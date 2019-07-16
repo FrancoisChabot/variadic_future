@@ -280,7 +280,7 @@ aom::Stream_future<int> get_stream() {
 ## Performance notes
 
 The library assumes that, more often than not, a callback is attached to the
-future before a value or error is, produced and is tuned this way. Everything
+future before a value or error is produced, and is tuned this way. Everything
 will still work if the value is produced before the callback arrives, but 
 perhaps not as fast as possible.
 
