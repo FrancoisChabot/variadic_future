@@ -8,6 +8,10 @@
 
 High-performance variadic completion-based futures for C++17.
 
+* No external dependency
+* Header-only
+* Lockless
+
 ## Why?
 
 This was needed to properly implement [Easy gRPC](https://github.com/FrancoisChabot/easy_grpc), and it was an interesting exercise.
