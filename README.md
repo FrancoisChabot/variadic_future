@@ -240,6 +240,20 @@ void foo() {
 }
 ```
 
+#### get_std_future()
+
+`Future<>` provides a convenience `get_std_future()`, as well as `get()`, which is the exact same as `get_std_future().get()` as a convenience for explicit synchronization. 
+
+This was added primarily to simplify writing unit tests, and using it extensively in other contexts is probably a bit of a code smell. If you find yourself that a lot, then perhaps you should just be using `std::future<>` directly instead.
+
+```cpp
+Future<int> f1 = ...;
+std::future<int> x_f = f1.get_std_future();
+
+Future<int> f2 = ...;
+int x = f2.get();
+```
+
 ### Future Streams
 
 **Warning:** The stream API and performance are not nearly as mature and tested as `Future<>`/`Promise<>`.
