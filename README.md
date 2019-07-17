@@ -47,6 +47,8 @@ void foo() {
   });
 ```
 
+It *looks* essentially the same, but now implementing `do_something()` is a lot more straightforward, less error-prone, and supports many more operation modes out of the box.
+
 ## But why variadic?
 
 Because it allows for the `join()` function, which provides a very nice way to asynchronously wait on multiple futures at once:
