@@ -18,6 +18,35 @@ This was needed to properly implement [Easy gRPC](https://github.com/FrancoisCha
 
 More specifically, completion-based futures are a non-blocking, callback-based, synchronization mechanism that hides the callback logic from the asynchronous code, while properly handling error conditions. 
 
+## What
+
+A fairly common pattern is to have some long operation perform a callback upon its completion. At first glance, this seems pretty straightforward:
+
+```cpp
+void do_something(int x, int y, std::function<int> on_complete);
+
+void foo() {
+  do_something(1, 12, [](int val) {
+    std::cout << val << "\n";
+  });
+}
+```
+
+However, there's a few hidden complexities at play here. The code code within `do_something()` it has to make decisions about what to do with `on_complete`. Should `on_complete` be called inline or put in a work pool? Can we accept a default constructed `on_complete`? What should we do with error? The path of least resistance led us to writing code with no error handling whatsoever.
+
+With Futures, these decisions are delegated to the *caller* of `do_something()`, which prevents `do_something()` from having to know much about the context within which it is operating. Error handling is also not optional, so you will never have an error be dropped on the floor.
+
+```cpp
+Future<int> do_something(int x, int y);
+
+void foo() {
+  do_something(1, 12).finally([](expected<int> val) {
+    if(val.has_value()) {
+      std::cout << val << "\n";
+    }
+  });
+```
+
 ## But why variadic?
 
 Because it allows for the `join()` function, which provides a very nice way to asynchronously wait on multiple futures at once:
