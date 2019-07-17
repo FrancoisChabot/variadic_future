@@ -49,23 +49,23 @@ void foo() {
 
 It *looks* essentially the same, but now implementing `do_something()` is a lot more straightforward, less error-prone, and supports many more operation modes out of the box.
 
-## But why variadic?
-
-Because it allows for the `join()` function, which provides a very nice way to asynchronously wait on multiple futures at once:
+Once you start combining things, you can express some fairly complicated synchronization relationships in a clear and concise manner:
 
 ```cpp
 Future<void> foo() {
-  Future<int> fut_a = ...;
-  Future<bool> fut_b = ...;
+  Future<int> fut_a = do_something_that_produces_an_int();
+  Future<bool> fut_b = do_something_that_produces_a_bool();
  
+  // Create a future that triggers once both fut_a and fut_b are ready
   Future<int, bool> combined_fut = join(fut_a, fut_b);
- 
+
+  // This callback will only be invoked if bot fut_a and fut_b are successfully fullfilledm otherwise,
+  // The failure gets automatically propagated to the resulting future.
   Future<void> result = combined_fut.then([](int a, bool b) {
-    // This is called once both fut_a and fut_b have been successfully completed.
     std::cout << a << " - " << b;
   });
   
-  // If either fut_a or fut_b fails, the result will contain that failure.
+
   return result;
 }
 ```
