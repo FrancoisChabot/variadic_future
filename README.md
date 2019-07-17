@@ -59,7 +59,7 @@ Future<void> foo() {
   // Create a future that triggers once both fut_a and fut_b are ready
   Future<int, bool> combined_fut = join(fut_a, fut_b);
 
-  // This callback will only be invoked if bot fut_a and fut_b are successfully fullfilledm otherwise,
+  // This callback will only be invoked if both fut_a and fut_b are successfully fullfilled. Otherwise,
   // The failure gets automatically propagated to the resulting future.
   Future<void> result = combined_fut.then([](int a, bool b) {
     std::cout << a << " - " << b;
