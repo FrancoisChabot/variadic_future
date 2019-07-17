@@ -32,9 +32,9 @@ void foo() {
 }
 ```
 
-However, there's a few hidden complexities at play here. The code code within `do_something()` it has to make decisions about what to do with `on_complete`. Should `on_complete` be called inline or put in a work pool? Can we accept a default constructed `on_complete`? What should we do with error? The path of least resistance led us to writing code with no error handling whatsoever.
+However, there's a few hidden complexities at play here. The code code within `do_something()` has to make decisions about what to do with `on_complete`. Should `on_complete` be called inline or put in a work pool? Can we accept a default constructed `on_complete`? What should we do with error? The path of least resistance led us to writing code with no error handling whatsoever.
 
-With Futures, these decisions are delegated to the *caller* of `do_something()`, which prevents `do_something()` from having to know much about the context within which it is operating. Error handling is also not optional, so you will never have an error be dropped on the floor.
+With Futures, these decisions are delegated to the *caller* of `do_something()`, which prevents `do_something()` from having to know much about the context within which it is operating. Error handling is also not optional, so you will never have an error dropped on the floor.
 
 ```cpp
 Future<int> do_something(int x, int y);
