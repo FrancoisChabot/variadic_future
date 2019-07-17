@@ -151,7 +151,7 @@ In short:
 
 If a callback attached to `then_expect()` or `then()` returns `void`, that produces a `Future<void>`.
 
-`Future<void>::then()` has special handling of void fields: They are ommited entirely from the callback arguments:
+`Future<>::then()` has special handling of void fields: They are ommited entirely from the callback arguments:
 
 ```cpp
 Future<void> f_a;
