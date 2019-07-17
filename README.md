@@ -16,9 +16,9 @@ High-performance variadic completion-based futures for C++17.
 
 This was needed to properly implement [Easy gRPC](https://github.com/FrancoisChabot/easy_grpc), and it was an interesting exercise.
 
-More specifically, completion-based futures are a non-blocking, callback-based, synchronization mechanism that hides the callback logic from the asynchronous code, while properly handling error conditions. 
-
 ## What
+
+Completion-based futures are a non-blocking, callback-based, synchronization mechanism that hides the callback logic from the asynchronous code, while properly handling error conditions. 
 
 A fairly common pattern is to have some long operation perform a callback upon its completion. At first glance, this seems pretty straightforward:
 
@@ -32,7 +32,7 @@ void foo() {
 }
 ```
 
-However, there's a few hidden complexities at play here. The code code within `do_something()` has to make decisions about what to do with `on_complete`. Should `on_complete` be called inline or put in a work pool? Can we accept a default constructed `on_complete`? What should we do with error conditions? The path of least resistance led us to writing code with no error handling whatsoever...
+However, there's a few hidden complexities at play here. The code within `do_something()` has to make decisions about what to do with `on_complete`. Should `on_complete` be called inline or put in a work pool? Can we accept a default constructed `on_complete`? What should we do with error conditions? The path of least resistance led us to writing code with no error handling whatsoever...
 
 With Futures, these decisions are delegated to the *caller* of `do_something()`, which prevents `do_something()` from having to know much about the context within which it is operating. Error handling is also not optional, so you will never have an error dropped on the floor.
 
